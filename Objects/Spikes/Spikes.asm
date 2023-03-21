@@ -16,7 +16,7 @@ byte_23F74:
 
 Obj_Spikes:
 		ori.b	#4,render_flags(a0)
-	;	move.w	#make_priority(4),priority(a0)
+		move.w	#make_priority(4),priority(a0)
 		move.b	subtype(a0),d0
 		andi.w	#$F0,d0
 		lsr.w	#3,d0
