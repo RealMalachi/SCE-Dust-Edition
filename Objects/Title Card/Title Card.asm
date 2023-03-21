@@ -60,8 +60,8 @@ Obj_TitleCardCreate:
 		beq.s	.loop
 		lea	ObjArray_TtlCard2(pc),a2
 		moveq	#1-1,d1
-
-.loop	addq.w	#1,$30(a0)
+.loop:
+		addq.w	#1,$30(a0)
 		move.l	(a2)+,address(a1)
 		move.w	(a2)+,$46(a1)
 		move.w	(a2)+,x_pos(a1)
@@ -72,6 +72,7 @@ Obj_TitleCardCreate:
 		move.b	d2,$28(a1)
 		move.b	#$40,render_flags(a1)
 		move.l	#Map_TitleCard,mappings(a1)
+		move.w	#make_priority(0),priority(a1)
 		move.w	a0,parent2(a1)
 		jsr	(Create_New_Sprite4).w
 		dbne	d1,.loop

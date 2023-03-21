@@ -114,13 +114,13 @@ RobotnikShipFlame_Main:
 ObjDat_RobotnikHead:
 		dc.l Map_RobotnikShip
 		dc.w $52E
-		dc.w $280
+		dc.w make_priority(5)
 		dc.b 32/2
 		dc.b 16/2
 		dc.b 0
 		dc.b 0
 ObjDat2_RoboShipFlame:
-		dc.w $280
+		dc.w make_priority(5)
 		dc.b 16/2
 		dc.b 8/2
 		dc.b 8

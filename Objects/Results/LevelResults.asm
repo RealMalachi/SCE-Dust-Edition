@@ -101,6 +101,7 @@ Obj_LevelResultsCreate:
 		move.b	d2,$28(a1)
 		move.b	#$40,render_flags(a1)
 		move.l	#Map_Results,mappings(a1)
+		move.w	#make_priority(0),priority(a1)
 		move.w	a0,parent2(a1)
 		jsr	(Create_New_Sprite4).w
 		dbne	d1,-

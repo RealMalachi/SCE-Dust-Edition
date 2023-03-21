@@ -134,7 +134,7 @@ loc_2C8B8:
 		move.b	#24/2,y_radius(a0)
 		move.b	#4,render_flags(a0)
 		bset	#0,render_flags(a0)
-		move.w	#$300,priority(a0)
+		move.w	#make_priority(6),priority(a0)
 		move.b	#16/2,width_pixels(a0)
 		move.b	#7,anim_frame_timer(a0)
 		jmp	(Draw_Sprite).w
@@ -164,7 +164,7 @@ loc_2C924:
 		move.b	#24/2,y_radius(a0)
 		move.b	#4,render_flags(a0)
 		bset	#0,render_flags(a0)
-		move.w	#$300,priority(a0)
+		move.w	#make_priority(6),priority(a0)
 		move.b	#16/2,width_pixels(a0)
 		move.b	#7,anim_frame_timer(a0)
 		move.b	#2,mapping_frame(a0)
@@ -281,7 +281,7 @@ loc_2CB02:
 		subq.w	#1,$36(a0)
 		bne.s	+
 		move.b	#2,routine(a0)
-		move.w	#$80,priority(a0)
+		move.w	#make_priority(1),priority(a0)
 +		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 

@@ -184,10 +184,10 @@ Obj_SignpostSparkleMain:
 		cmp.w	$3A(a0),d1
 		blo.s		+
 		neg.w	d0
-+		move.w	#$280,d1
++		move.w	#make_priority(5),d1
 		add.w	d0,x_vel(a0)		; Do rotation around sign
 		bpl.s	+
-		move.w	#$380,d1
+		move.w	#make_priority(7),d1
 +		move.w	d1,priority(a0)
 		jsr	(MoveSprite2).w
 		lea	AniRaw_SignpostSparkle(pc),a1
@@ -285,9 +285,9 @@ locret_83B02:
 ; =============== S U B R O U T I N E =======================================
 
 EndSign_Range:			dc.w -$20, $40, -$18, $30
-ObjSlot_EndSigns:		subObjSlotData 0, $5CA, $C, 0, Map_EndSigns, $300, $18, $10, 0, 0
-ObjDat_SignpostStub:		subObjData Map_SignpostStub, $5E2, $300, 4, 8, 0, 0
-ObjDat_SignpostSparkle:	subObjData Map_Ring, make_art_tile(ArtTile_Ring,1,0), $280, 8, 8, 4, 0
+ObjSlot_EndSigns:		subObjSlotData 0, $5CA, $C, 0, Map_EndSigns, make_priority(6), $18, $10, 0, 0
+ObjDat_SignpostStub:		subObjData Map_SignpostStub, $5E2, make_priority(6), 4, 8, 0, 0
+ObjDat_SignpostSparkle:	subObjData Map_Ring, make_art_tile(ArtTile_Ring,1,0), make_priority(5), 8, 8, 4, 0
 Child6_EndSign:
 		dc.w 1-1
 		dc.l Obj_EndSign

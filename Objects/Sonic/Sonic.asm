@@ -55,7 +55,7 @@ Sonic_Init:	; Routine 0
 		move.w	#bytes_to_word(38/2,18/2),y_radius(a0)	; set y_radius and x_radius	; this sets Sonic's collision height (2*pixels)
 		move.w	#bytes_to_word(38/2,18/2),default_y_radius(a0)	; set default_y_radius and default_x_radius
 		move.l	#Map_Sonic,mappings(a0)
-		move.w	#$100,priority(a0)
+		move.w	#make_priority(2),priority(a0)
 		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)		; set height and width
 		move.b	#4,render_flags(a0)
 		clr.b	character_id(a0)
@@ -179,7 +179,7 @@ Sonic_Display:
 		bcc.s	Sonic_ChkInvin
 
 loc_10CA6:
-		jsr	(Draw_Sprite).w
+		DrawSpriteUnsafe_macro		; it's the first thing to render
 
 Sonic_ChkInvin:										; checks if invincibility has expired and disables it if it has.
 		btst	#Status_Invincible,status_secondary(a0)
@@ -2139,7 +2139,7 @@ loc_12344:
 		move.w	d0,ground_vel(a0)
 		move.b	d0,object_control(a0)
 		clr.b	anim(a0)	; id_Walk
-		move.w	#$100,priority(a0)
+		move.w	#make_priority(2),priority(a0)
 		move.b	#id_SonicControl,routine(a0)
 		move.b	#2*60,invulnerability_timer(a0)
 		clr.b	spin_dash_flag(a0)

@@ -55,7 +55,7 @@ Tails_Init:
 		move.b	#$F,default_y_radius(a0)
 		move.b	#9,default_x_radius(a0)
 		move.l	#Map_Tails,mappings(a0)
-		move.w	#$100,priority(a0)
+		move.w	#make_priority(2),priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$18,height_pixels(a0)
 		move.b	#$84,render_flags(a0)
@@ -229,7 +229,9 @@ Tails_Display:
 		bcc.s	loc_13912
 
 loc_1390C:
-		jsr	(Draw_Sprite).w
+		DrawSpriteUnsafe_macro		; it's either the first thing to render or the second
+		lea	(v_Tails_tails).w,a1
+		DrawOtherSpriteUnsafe_macro	; render Tails' tails directly after the main body to fix rendering bugs
 
 loc_13912:
 		btst	#1,$2B(a0)
@@ -359,7 +361,7 @@ loc_13B50:
 loc_13B78:
 		move.w	d0,$14(a0)
 		ori.w	#$8000,$A(a0)
-		move.w	#$100,8(a0)
+		move.w	#make_priority(2),priority(a0)
 		moveq	#0,d0
 		move.w	d0,$18(a0)
 		move.w	d0,$1A(a0)
@@ -2860,7 +2862,7 @@ loc_15742:
 		move.w	d0,$1C(a0)
 		move.b	d0,$2E(a0)
 		move.b	#0,anim(a0)
-		move.w	#$100,8(a0)
+		move.w	#make_priority(2),priority(a0)
 		move.b	#2,5(a0)
 		move.b	#$78,$34(a0)
 		move.b	#0,$3D(a0)

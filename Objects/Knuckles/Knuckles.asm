@@ -53,7 +53,7 @@ Knuckles_Init:
 		move.b	#$13,default_y_radius(a0)
 		move.b	#9,default_x_radius(a0)
 		move.l	#Map_Knuckles,mappings(a0)
-		move.w	#$100,priority(a0)
+		move.w	#make_priority(2),priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$18,height_pixels(a0)
 		move.b	#4,render_flags(a0)
@@ -181,7 +181,7 @@ Knuckles_Display:
 		bcc.s	loc_1665E
 
 loc_16658:
-		jsr	(Draw_Sprite).w
+		DrawSpriteUnsafe_macro		; it's the first thing to render
 
 loc_1665E:
 		btst	#1,$2B(a0)
@@ -2360,7 +2360,7 @@ loc_17C3C:
 		move.w	d0,$1C(a0)
 		move.b	d0,$2E(a0)
 		move.b	#0,anim(a0)
-		move.w	#$100,8(a0)
+		move.w	#make_priority(2),priority(a0)
 		move.b	#2,5(a0)
 		move.b	#$78,$34(a0)
 		move.b	#0,$3D(a0)

@@ -2,11 +2,10 @@
 ; =============== S U B R O U T I N E =======================================
 
 Obj_Tails_Tail:
-
 		; init
 		move.l	#Map_Tails_Tail,mappings(a0)
 		move.w	#ArtTile_Player_2_Tail,art_tile(a0)
-		move.w	#$100,priority(a0)
+	;	move.w	#make_priority(2),priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$18,height_pixels(a0)
 		move.b	#4,render_flags(a0)
@@ -55,8 +54,8 @@ loc_1613C:
 		eori.b	#2,render_flags(a0)	; Reverse the vertical mirror render_flag bit (On if Off beforehand and vice versa)
 
 loc_1615A:
-		bsr.w	Tails_Tail_Load_PLC
-		jmp	(Draw_Sprite).w
+		bra.w	Tails_Tail_Load_PLC
+	;	jmp	(Draw_Sprite).w		; main tails object renders it to fix layering bugs
 ; ---------------------------------------------------------------------------
 ; animation master script table for the tails
 ; chooses which animation script to run depending on what Tails is doing

@@ -186,7 +186,7 @@ locret_5C528:
 Obj_Continue_SonicWTails:
 		move.l	#Map_ContinueSprites,$C(a0)
 		move.w	#$8C,$A(a0)
-		move.w	#$280,8(a0)
+		move.w	#make_priority(5),priority(a0)
 		move.b	#$C,7(a0)
 		move.b	#$14,6(a0)
 		move.w	#$118,$10(a0)
@@ -317,7 +317,7 @@ loc_5C684:
 		move.b	#2,5(a0)
 		move.l	#Map_Sonic,$C(a0)
 		move.w	#ArtTile_Player_1,$A(a0)
-		move.w	#$280,8(a0)
+		move.w	#make_priority(5),priority(a0)
 		move.b	#$C,7(a0)
 		move.b	#$14,6(a0)
 		move.w	#$120,$10(a0)
@@ -367,7 +367,7 @@ locret_5C716:
 Obj_Continue_TailsWSonic:
 		move.l	#Map_ContinueSprites,$C(a0)
 		move.w	#$8C,$A(a0)
-		move.w	#$200,8(a0)
+		move.w	#make_priority(4),priority(a0)
 		move.b	#$10,7(a0)
 		move.b	#$14,6(a0)
 		move.w	#$12C,$10(a0)
@@ -415,7 +415,7 @@ loc_5C7B2:
 		addq.b	#2,5(a0)
 		move.l	#Map_Tails,$C(a0)
 		move.w	#ArtTile_Player_2,$A(a0)
-		move.w	#$280,8(a0)
+		move.w	#make_priority(5),priority(a0)
 		clr.b	(Player_prev_frame_P2).w
 		move.w	#$500,$20(a0)
 		move.w	#-$5300,$22(a0)
@@ -472,7 +472,7 @@ loc_5C854:
 loc_5C85A:
 		move.l	#Map_ContinueSprites,$C(a0)
 		move.w	#$608C,$A(a0)
-		move.w	#$200,8(a0)
+		move.w	#make_priority(4),priority(a0)
 		move.b	#$10,7(a0)
 		move.b	#$18,6(a0)
 		move.w	#$11C,$10(a0)
@@ -518,7 +518,7 @@ loc_5C8EA:
 		addq.b	#2,5(a0)
 		move.l	#Map_Knuckles,$C(a0)
 		move.w	#make_art_tile(ArtTile_CutsceneKnux,3,0),$A(a0)
-		move.w	#$80,8(a0)
+		move.w	#make_priority(1),priority(a0)
 		move.b	#7,$22(a0)
 		move.b	#$20,7(a0)
 		move.b	#$30,6(a0)
@@ -603,7 +603,7 @@ loc_91994:
 loc_5C9DC:
 		move.l	#Map_ContinueSprites,$C(a0)
 		move.w	#$408C,$A(a0)
-		move.w	#$380,8(a0)
+		move.w	#make_priority(7),priority(a0)
 		move.b	#7,$22(a0)
 		move.b	#8,7(a0)
 		move.b	#8,6(a0)
@@ -624,7 +624,7 @@ loc_5CA1A:
 		move.w	#$60D9,$A(a0)
 
 loc_5CA36:
-		move.w	#$380,8(a0)
+		move.w	#make_priority(7),priority(a0)
 		move.b	#8,7(a0)
 		move.b	#8,6(a0)
 		bsr.w	sub_5CB4A
@@ -684,7 +684,7 @@ locret_66234:
 Obj_5CA78:
 		move.l	#Map_ContinueIcons,$C(a0)
 		move.w	#$D9,$A(a0)
-		move.w	#$280,8(a0)
+		move.w	#make_priority(5),priority(a0)
 		move.b	#8,7(a0)
 		move.b	#8,6(a0)
 		move.l	#loc_5CA9E,address(a0)

@@ -8,7 +8,7 @@ Obj_AutoSpin:
 		move.l	#Map_PathSwap,mappings(a0)
 		move.w	#make_art_tile(ArtTile_Ring,0,0),art_tile(a0)
 		ori.b	#4,render_flags(a0)
-		move.w	#$280,priority(a0)
+		move.w	#make_priority(5),priority(a0)
 		move.w	#bytes_to_word(256/2,256/2),height_pixels(a0)		; set height and width
 		move.b	subtype(a0),d0
 		btst	#2,d0

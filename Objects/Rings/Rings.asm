@@ -24,7 +24,7 @@ Obj_RingInit:
 		move.l	#Map_Ring,mappings(a0)
 		move.w	#make_art_tile(ArtTile_Ring,1,1),art_tile(a0)
 		move.b	#4,render_flags(a0)
-		move.w	#$100,priority(a0)
+		move.w	#make_priority(2),priority(a0)
 		move.b	#7|$40,collision_flags(a0)
 		move.b	#16/2,width_pixels(a0)
 
@@ -35,7 +35,7 @@ Obj_RingAnimate:
 Obj_RingCollect:
 		addq.b	#2,routine(a0)
 		clr.b	collision_flags(a0)
-		move.w	#$80,priority(a0)
+		move.w	#make_priority(1),priority(a0)
 		jsr	(GiveRing).w
 
 Obj_RingSparkle:
@@ -112,7 +112,7 @@ loc_1A6B6:
 		move.l	#Map_Ring,mappings(a1)
 		move.w	#make_art_tile(ArtTile_Ring,1,1),art_tile(a1)
 		move.b	#$84,render_flags(a1)
-		move.w	#$180,priority(a1)
+		move.w	#make_priority(3),priority(a1)
 		move.b	#7|$40,collision_flags(a1)
 		move.b	#16/2,width_pixels(a1)
 		st	(Ring_spill_anim_counter).w
@@ -181,7 +181,7 @@ loc_1A7B0:
 loc_1A7C2:
 		addq.b	#2,routine(a0)
 		clr.b	collision_flags(a0)
-		move.w	#$80,priority(a0)
+		move.w	#make_priority(1),priority(a0)
 		jsr	(GiveRing).w
 
 loc_1A7D6:
@@ -235,7 +235,7 @@ Obj_Attracted_Ring:
 		move.l	#Map_Ring,mappings(a0)
 		move.w	#make_art_tile(ArtTile_Ring,1,1),art_tile(a0)
 		move.b	#4,render_flags(a0)
-		move.w	#$100,priority(a0)
+		move.w	#make_priority(2),priority(a0)
 		move.b	#7|$40,collision_flags(a0)
 		move.w	#bytes_to_word(16/2,16/2),height_pixels(a0)		; set height and width
 		move.w	#bytes_to_word(16/2,16/2),y_radius(a0)	; set y_radius and x_radius
@@ -275,7 +275,7 @@ loc_1A8FC:
 
 AttractedRing_GiveRing:
 		clr.b	collision_flags(a0)
-		move.w	#$80,priority(a0)
+		move.w	#make_priority(1),priority(a0)
 		jsr	(GiveRing).w
 		move.l	#loc_1A920,address(a0)
 		clr.b	routine(a0)

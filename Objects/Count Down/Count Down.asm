@@ -34,7 +34,7 @@ loc_1819E:
 		move.w	#$570,art_tile(a0)
 		move.b	#$84,render_flags(a0)
 		move.b	#32/2,width_pixels(a0)
-		move.w	#$80,priority(a0)
+		move.w	#make_priority(1),priority(a0)
 		move.b	subtype(a0),d0
 		bpl.s	loc_181CC
 		addq.b	#8,routine(a0)

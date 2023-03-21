@@ -20,7 +20,7 @@ loc_2D5F2:
 		move.w	#$F0,y_pos(a0)
 		move.l	#Map_GameOver,mappings(a0)
 		move.w	#make_art_tile(ArtTile_Shield,0,1),art_tile(a0)
-		clr.w	priority(a0)
+		move.w	#make_priority(0),priority(a0)
 		move.l	#loc_2D612,address(a0)
 
 loc_2D612:

@@ -234,6 +234,7 @@ Add_SpriteToCollisionResponseList:
 
 Obj_WaitOffscreen:
 		move.l	#Map_Offscreen,mappings(a0)
+		move.w	#make_priority(0),priority(a0)	; Set (most likely temporary) priority
 		bset	#2,render_flags(a0)
 		move.w	#bytes_to_word(64/2,64/2),height_pixels(a0)		; set height and width
 		move.l	(sp)+,objoff_34(a0)

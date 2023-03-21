@@ -285,7 +285,7 @@ loc_8683E:
 		subq.w	#1,$2E(a0)
 		bpl.s	loc_86850
 		move.l	#loc_86854,address(a0)
-		move.w	#$80,priority(a0)
+		move.w	#make_priority(1),priority(a0)
 
 loc_86850:
 		jmp	(Sprite_CheckDelete).w
@@ -326,7 +326,7 @@ loc_8689C:
 		subq.w	#1,$2E(a0)
 		bpl.s	loc_868B2
 		move.l	#loc_868B6,address(a0)
-		move.w	#$80,priority(a0)
+		move.w	#make_priority(1),priority(a0)
 
 loc_868B2:
 		jmp	(Sprite_CheckDelete).w
@@ -568,13 +568,13 @@ word_86B16:
 ObjDat3_86B32:
 		dc.l Map_EggCapsule
 		dc.w $843E
-		dc.w $200
+		dc.w make_priority(4)
 		dc.b $20
 		dc.b $20
 		dc.b 0
 		dc.b 0
 word_86B3E:
-		dc.w $200
+		dc.w make_priority(4)
 		dc.b $10
 		dc.b 8
 		dc.b 5
@@ -582,19 +582,19 @@ word_86B3E:
 ObjDat3_86B44:
 		dc.l Map_EggCapsule
 		dc.w $843E
-		dc.w $180
+		dc.w make_priority(3)
 		dc.b $C
 		dc.b $C
 		dc.b 0
 		dc.b 0
 word_86B50:
-		dc.w $280
+		dc.w make_priority(5)
 		dc.b 8
 		dc.b 8
 		dc.b 2
 		dc.b 0
 word_86B56:
-		dc.w $200
+		dc.w make_priority(4)
 		dc.b $14
 		dc.b 4
 		dc.b 6
@@ -648,6 +648,7 @@ ChildObjDat_86B9A:
 		dc.w $FCFC
 		dc.l loc_86820
 		dc.w $4FC
+
 		dc.l loc_86820
 		dc.w $CFC
 		dc.l loc_86820

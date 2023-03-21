@@ -169,10 +169,10 @@ Obj_Spikebonker_SpikeBall:
 .main
 		move.b	objoff_3C(a0),d0	; angle
 		bsr.s	.findangle
-		move.w	#$200,d1
+		move.w	#make_priority(4),d1
 		addi.b	#$40,d0
 		bpl.s	.highpriority
-		move.w	#$280,d1
+		move.w	#make_priority(5),d1
 
 .highpriority
 		move.w	d1,priority(a0)
@@ -210,13 +210,13 @@ Obj_Spikebonker_SpikeBall:
 ObjDat_Spikebonker:
 		dc.l Map_Spikebonker
 		dc.w $8100
-		dc.w $280
+		dc.w make_priority(5)
 		dc.b 40/2
 		dc.b 40/2
 		dc.b 0
 		dc.b $1A
 ObjDat3_Spikebonker_SpikeBall:
-		dc.w $200
+		dc.w make_priority(4)
 		dc.b 32/2
 		dc.b 32/2
 		dc.b 1

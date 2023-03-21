@@ -25,7 +25,7 @@ loc_2CFC0:
 		move.w	#make_art_tile(ArtTile_StarPost+8,0,0),art_tile(a0)
 		move.b	#4,render_flags(a0)
 		move.w	#bytes_to_word(80/2,16/2),height_pixels(a0)		; set height and width
-		move.w	#$280,priority(a0)
+		move.w	#make_priority(5),priority(a0)
 		move.w	respawn_addr(a0),d0							; get address in respawn table
 		beq.s	loc_2D012									; if it's zero, it isn't remembered
 		movea.w	d0,a2										; load address into a2
@@ -80,7 +80,7 @@ sub_2D028:
 		move.w	art_tile(a0),art_tile(a1)
 		move.b	#4,render_flags(a1)
 		move.w	#bytes_to_word(16/2,16/2),height_pixels(a1)		; set height and width
-		move.w	#$200,priority(a1)
+		move.w	#make_priority(4),priority(a1)
 		move.b	#2,mapping_frame(a1)
 		move.w	#$20,$36(a1)
 		move.w	a0,$3E(a1)
