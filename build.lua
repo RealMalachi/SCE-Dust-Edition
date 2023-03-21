@@ -52,14 +52,14 @@ if assemble_result == "crash" then
 
 	os.exit(false)
 elseif assemble_result == "error" then
-	for line in io.lines("_error.log") do
+	for line in io.lines("Main.log") do
 		print(line)
 	end
 
 	print "\n\z
 		**********************************************************************\n\z
 		*                                                                    *\n\z
-		*      There were build errors. See _error.log for more details.      *\n\z
+		*      There were build errors. See Main.log for more details.       *\n\z
 		*                                                                    *\n\z
 		**********************************************************************\n\z"
 
@@ -70,14 +70,14 @@ end
 common.fix_header("ROM.bin")
 
 if assemble_result == "warning" then
-	for line in io.lines("_error.log") do
+	for line in io.lines("Main.log") do
 		print(line)
 	end
 
 	print "\n\z
 		**********************************************************************\n\z
 		*                                                                    *\n\z
-		*     There were build warnings. See _error.log for more details.     *\n\z
+		*     There were build warnings. See Main.log for more details.      *\n\z
 		*                                                                    *\n\z
 		**********************************************************************\n\z"
 
