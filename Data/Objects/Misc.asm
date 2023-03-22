@@ -208,9 +208,10 @@ Song_Fade_Transition_Return:
 Song_Fade_Transition_Wait:
 		tst.b	(Clone_Driver_RAM+SMPS_RAM.variables.v_fadeout_counter).w
 		bne.s	Song_Fade_Transition_Return
+		moveq	#0,d0
 		move.b	subtype(a0),d0
 		move.w	d0,(Current_music).w
-		jsr	(SMPS_QueueSound1).w	; play music
+		music	; play music
 		jmp	(Delete_Current_Sprite).w
 
 ; =============== S U B R O U T I N E =======================================
@@ -241,7 +242,8 @@ Restore_LevelMusic:
 		btst	#Status_Invincible,(Player_1+status_secondary).w
 		beq.s	+
 		moveq	#signextendB(mus_Invincible),d0	; if invincible, play invincibility music
-+		jmp	(SMPS_QueueSound1).w				; play music
++
+		music ,1				; play music
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -475,7 +477,7 @@ StartNewLevel:
 Play_SFX_Continuous:
 		and.b	(V_int_run_count+3).w,d1
 		bne.s	StartNewLevel.return
-		jmp	(SMPS_QueueSound2).w	; play sfx
+		sfx ,1	; play sfx
 
 ; =============== S U B R O U T I N E =======================================
 

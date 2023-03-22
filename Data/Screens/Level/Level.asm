@@ -101,7 +101,7 @@ Level_Screen:
 		lea	(LevelMusic_Playlist).l,a1									; load music playlist
 		move.b	(a1,d0.w),d0
 		move.w	d0,(Current_music).w
-		jsr	(SMPS_QueueSound1).w									; play music
+		music								; play music
 		move.l	#Obj_TitleCard,(Dynamic_object_RAM+(object_size*5)).w	; load title card object
 
 .wait

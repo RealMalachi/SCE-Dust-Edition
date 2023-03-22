@@ -196,9 +196,9 @@ Sonic_ChkInvin:										; checks if invincibility has expired and disables it i
 		tst.b	(Boss_flag).w								; don't change music if in a boss fight
 		bne.s	Sonic_RmvInvin
 		cmpi.b	#12,air_left(a0)						; don't change music if drowning
-		blo.s		Sonic_RmvInvin
+		blo.s	Sonic_RmvInvin
 		move.w	(Current_music).w,d0
-		jsr	(SMPS_QueueSound1).w					; stop playing invincibility theme and resume normal level music
+		music					; stop playing invincibility theme and resume normal level music
 
 Sonic_RmvInvin:
 		bclr	#Status_Invincible,status_secondary(a0)

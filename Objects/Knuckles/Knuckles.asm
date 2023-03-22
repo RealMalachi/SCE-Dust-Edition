@@ -200,7 +200,7 @@ loc_1665E:
 		cmpi.b	#$C,$2C(a0)
 		blo.s		loc_16694
 		move.w	(Current_music).w,d0
-		jsr	(SMPS_QueueSound1).w					; stop playing invincibility theme and resume normal level music
+		music					; stop playing invincibility theme and resume normal level music
 
 loc_16694:
 		bclr	#1,$2B(a0)

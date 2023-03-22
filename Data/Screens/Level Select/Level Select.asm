@@ -190,7 +190,7 @@ LevelSelect_LoadMusicNumber:
 		beq.s	LevelSelect_LoadCharacterNumber.return
 		move.w	d3,d0
 		addq.w	#mus__First,d0		; $00 is reserved for silence
-		jmp	(SMPS_QueueSound1).w	; play music
+		music ,1	; play music
 
 ; ---------------------------------------------------------------------------
 ; Load Sound
@@ -207,7 +207,7 @@ LevelSelect_LoadSoundNumber:
 		beq.s	LevelSelect_LoadCharacterNumber.return
 		move.w	d3,d0
 		addi.w	#sfx__First,d0
-		jmp	(SMPS_QueueSound2).w	; play sfx
+		sfx ,1	; play sfx
 
 ; ---------------------------------------------------------------------------
 ; Load Sample
