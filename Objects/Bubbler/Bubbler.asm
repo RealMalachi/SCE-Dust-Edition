@@ -17,7 +17,7 @@ off_2F946: offsetTable
 		offsetTableEntry.w loc_2F9CA	; 4
 		offsetTableEntry.w loc_2FA2C	; 6
 		offsetTableEntry.w loc_2FB8A	; 8
-		offsetTableEntry.w loc_2FA50	; A
+	;	offsetTableEntry.w loc_2FA50	; A
 ; ---------------------------------------------------------------------------
 
 loc_2F952:
@@ -25,15 +25,16 @@ loc_2F952:
 		move.l	#Map_Bubbler,mappings(a0)
 		move.w	#$570,art_tile(a0)
 		move.b	#$84,render_flags(a0)
-		move.b	#32/2,width_pixels(a0)
+		move.w	#bytes_to_word(32/2,32/2),height_pixels(a0)
 		move.w	#make_priority(1),priority(a0)
 		move.b	subtype(a0),d0
 		bpl.s	loc_2F996
-		addq.b	#8,routine(a0)
+	;	addq.b	#8,routine(a0)
 		andi.w	#$7F,d0
 		move.b	d0,$32(a0)
 		move.b	d0,$33(a0)
 		move.b	#8,anim(a0)
+		move.l	#loc_2FA50,address(a0)
 		bra.w	loc_2FA50
 ; ---------------------------------------------------------------------------
 
@@ -176,22 +177,20 @@ loc_2FB5C:
 		out_of_xrange.s	loc_2FB7E
 		move.w	(Water_level).w,d0
 		cmp.w	y_pos(a0),d0
-		blo.s		loc_2FB90
+		bhs.s	+
+		jmp	(Draw_Sprite).w
++
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_2FB7E:
 		move.w	respawn_addr(a0),d0
-		beq.s	loc_2FB8A
+		beq.s	+
 		movea.w	d0,a2
 		bclr	#7,(a2)
-
++
 loc_2FB8A:
 		jmp	(Delete_Current_Sprite).w
-; ---------------------------------------------------------------------------
-
-loc_2FB90:
-		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 ; bubble production sequence
 
@@ -204,29 +203,28 @@ Bub_BblTypes:	dc.b 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0
 
 sub_2FBA8:
 		lea	(Player_1).w,a1
-		bsr.s	loc_2FBB2
+		bsr.s	+
 		lea	(Player_2).w,a1
-
-loc_2FBB2:
++
 		tst.b	object_control(a1)
-		bmi.w	locret_2FC7C
+		bmi.w	.rts
+		btst	#Status_BublShield,shield_reaction(a1)
+		bne.w	.rts
 		move.w	x_pos(a1),d0
 		move.w	x_pos(a0),d1
 		subi.w	#$10,d1
 		cmp.w	d0,d1
-		bhs.w	locret_2FC7C
+		bhs.w	.rts
 		addi.w	#$20,d1
 		cmp.w	d0,d1
-		blo.w	locret_2FC7C
+		blo.w	.rts
 		move.w	y_pos(a1),d0
 		move.w	y_pos(a0),d1
 		cmp.w	d0,d1
-		bhs.w	locret_2FC7C
+		bhs.s	.rts
 		addi.w	#$10,d1
 		cmp.w	d0,d1
-		blo.s		locret_2FC7C
-		btst	#Status_BublShield,shield_reaction(a1)
-		bne.s	locret_2FC7C
+		blo.s	.rts
 		bsr.w	Player_ResetAirTimer
 		sfx	sfx_Bubble
 		clr.l	x_vel(a1)
@@ -236,27 +234,26 @@ loc_2FBB2:
 		clr.b	jumping(a1)
 		bclr	#Status_Push,status(a1)
 		bclr	#Status_RollJump,status(a1)
-		btst	#Status_Roll,status(a1)
-		beq.s	loc_2FC6A
-		cmpi.l	#Obj_Sonic,address(a1)
-		bne.s	loc_2FC5A
 		bclr	#Status_Roll,status(a1)
-		move.w	#bytes_to_word(38/2,18/2),y_radius(a1)	; set y_radius and x_radius
-		subq.w	#5,y_pos(a1)
-		bra.s	loc_2FC6A
-; ---------------------------------------------------------------------------
-
-loc_2FC5A:
-		move.w	#bytes_to_word(30/2,18/2),y_radius(a1)	; set y_radius and x_radius
-		subq.w	#1,y_pos(a1)
-
-loc_2FC6A:
+		beq.s	.notroll	; if we weren't rolling, branch
+		move.b	y_radius(a0),d1
+		sub.b	default_y_radius(a0),d1
+;	if ReverseGravity = 1
+;		tst.b	(Reverse_gravity_flag).w
+;		beq.s	+
+;		neg.b	d1
+;+
+;	endif
+		ext.w	d1
+		add.w	d1,d0		; adjust position to different hitbox to prevent clipping issues
+		move.w	default_y_radius(a1),y_radius(a1)	; set y_radius and x_radius
+.notroll:
+	;	addq.w	#4,sp	; don't do the other players
 		cmpi.b	#6,routine(a0)
-		beq.s	locret_2FC7C
+		beq.s	.rts
 		move.b	#6,routine(a0)
 		addq.b	#4,anim(a0)
-
-locret_2FC7C:
+.rts:
 		rts
 ; ---------------------------------------------------------------------------
 
