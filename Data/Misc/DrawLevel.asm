@@ -994,9 +994,8 @@ LoadLevelLoadBlock:
 		movea.l	d0,a1
 		moveq	#0,d2
 		bsr.w	Queue_Kos_Module
-
+		move.l	#VInt_Fade,(V_int_routine).w
 .waitplc
-		move.b	#VintID_Fade,(V_int_routine).w
 		jsr	(Process_Kos_Queue).w
 		jsr	(Wait_VSync).w
 		jsr	(Process_Kos_Module_Queue).w

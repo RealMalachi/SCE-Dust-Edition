@@ -15,7 +15,7 @@ Pause_Game:
 		SMPS_PauseMusic
 
 Pause_Loop:
-		move.b	#VintID_Level,(V_int_routine).w
+;		move.l	#VInt_Level,(V_int_routine).w	;
 		bsr.w	Wait_VSync
 	if GameDebug
 		btst	#button_A,(Ctrl_1_pressed).w				; is button A pressed?

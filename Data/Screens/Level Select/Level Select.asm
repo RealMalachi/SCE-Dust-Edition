@@ -72,21 +72,19 @@ LevelSelect_Screen:
 		bsr.w	LevelSelect_LoadCharacter
 		move.w	#palette_line_1,d3
 		bsr.w	LevelSelect_MarkFields
-
+		move.l	#VInt_Fade,(V_int_routine).w
 .waitplc
-		move.b	#VintID_Fade,(V_int_routine).w
 		jsr	(Process_Kos_Queue).w
 		jsr	(Wait_VSync).w
 		jsr	(Process_Kos_Module_Queue).w
 		tst.w	(Kos_modules_left).w
 		bne.s	.waitplc
-		move.b	#VintID_Main,(V_int_routine).w
+		move.l	#VInt_Main,(V_int_routine).w
 		jsr	(Wait_VSync).w
 		enableScreen
 		jsr	(Pal_FadeFromBlack).w
-
+		move.l	#VInt_Main,(V_int_routine).w
 .loop
-		move.b	#VintID_Main,(V_int_routine).w
 		jsr	(Wait_VSync).w
 		bsr.w	LevelSelect_Deform
 		disableInts

@@ -30,10 +30,9 @@ Pal_FadeFromBlack:
 		move.w	#64-1,(Palette_fade_info).w
 		bsr.s	Pal_FillBlack
 		moveq	#$15,d4
-
+		move.l	#VInt_Fade,(V_int_routine).w
 .nextframe
 		move.w	d4,-(sp)
-		move.b	#VintID_Fade,(V_int_routine).w
 		bsr.w	Process_Kos_Queue
 		bsr.w	Wait_VSync
 		bsr.s	Pal_FromBlack
@@ -119,10 +118,9 @@ PaletteFadeOut:
 Pal_FadeToBlack:
 		move.w	#64-1,(Palette_fade_info).w
 		moveq	#$15,d4
-
+		move.l	#VInt_Fade,(V_int_routine).w
 .nextframe
 		move.w	d4,-(sp)
-		move.b	#VintID_Fade,(V_int_routine).w
 		bsr.w	Process_Kos_Queue
 		bsr.w	Wait_VSync
 		bsr.s	Pal_ToBlack
@@ -219,10 +217,9 @@ Pal_FromBlackWhite:
 		move.w	#64-1,(Palette_fade_info).w
 		bsr.s	Pal_FillWhite
 		moveq	#$15,d4
-
+		move.l	#VInt_Fade,(V_int_routine).w
 .nextframe
 		move.w	d4,-(sp)
-		move.b	#VintID_Fade,(V_int_routine).w
 		bsr.w	Process_Kos_Queue
 		bsr.w	Wait_VSync
 		bsr.s	Pal_FromWhite
@@ -301,10 +298,9 @@ Pal_DecColor2:
 Pal_FadeToWhite:
 		move.w	#$3F,(Palette_fade_info).w
 		moveq	#$15,d4
-
+		move.l	#VInt_Fade,(V_int_routine).w
 .nextframe
 		move.w	d4,-(sp)
-		move.b	#VintID_Fade,(V_int_routine).w
 		bsr.w	Process_Kos_Queue
 		bsr.w	Wait_VSync
 		bsr.s	Pal_ToWhite

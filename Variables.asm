@@ -139,10 +139,11 @@ Plane_buffer:							ds.b $480				; Used by level drawing routines
 
 v_snddriver_ram:						ds.b $400				; Start of RAM for the sound driver data
 
-v_gamemode:						= *
-Game_mode:							ds.b 1
-V_int_routine:						= *
-v_vbla_routine:						ds.b 1
+v_gamemode:					= *
+Game_mode:					ds.b 1
+V_int_flag:					ds.b 1	; If 0, game hasn't reached Vsync, lag. If 1, waiting for Vsync. If -1, Vsync has occurred
+V_int_routine:					= *
+v_vbla_routine:					ds.l 1	; address to routine that V-int will run if not lagging
 
 SonicControl:							= *
 Ctrl_1_logical:						= *

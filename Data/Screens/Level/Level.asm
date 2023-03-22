@@ -103,9 +103,8 @@ Level_Screen:
 		move.w	d0,(Current_music).w
 		music								; play music
 		move.l	#Obj_TitleCard,(Dynamic_object_RAM+(object_size*5)).w	; load title card object
-
+		move.l	#VInt_Fade,(V_int_routine).w
 .wait
-		move.b	#VintID_Fade,(V_int_routine).w
 		jsr	(Process_Kos_Queue).w
 		jsr	(Wait_VSync).w
 		jsr	(Process_Sprites).w
@@ -176,10 +175,9 @@ Level_Screen:
 		move.w	#$7F00,(Ctrl_2).w
 		andi.b	#$7F,(Last_star_post_hit).w
 		bclr	#GameModeFlag_TitleCard,(Game_mode).w		; subtract $80 from mode to end pre-level stuff
-
+		move.l	#VInt_Level,(V_int_routine).w
 .loop
 		jsr	(Pause_Game).w
-		move.b	#VintID_Level,(V_int_routine).w
 		jsr	(Process_Kos_Queue).w
 		jsr	(Wait_VSync).w
 		addq.w	#1,(Level_frame_counter).w

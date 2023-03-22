@@ -7,8 +7,8 @@ VInt:
 		lea	(VDP_data_port).l,a6
 		lea	VDP_control_port-VDP_data_port(a6),a5
 
-		tst.b	(V_int_routine).w
-		beq.s	VInt_Lag_Main
+		tst.b	(V_int_flag).w	; has the game finished its routines before the end of the frame?
+		beq.s	VInt_Lag_Main	; if not, handle lag
 
 .wait
 		move.w	VDP_control_port-VDP_control_port(a5),d0
@@ -23,12 +23,10 @@ VInt:
 		dbf	d0,*										; otherwise, waste a bit of time here
 
 .notpal
-		move.b	(V_int_routine).w,d0
-		clr.b	(V_int_routine).w
-		st	(H_int_flag).w							; allow H Interrupt code to run
-		andi.w	#$3E,d0
-		move.w	VInt_Table(pc,d0.w),d0
-		jsr	VInt_Table(pc,d0.w)
+		st	(H_int_flag).w		; allow Horizontal Interrupt code to run
+		st	(V_int_flag).w		; set that Vsync was successful
+		movea.l	(V_int_routine).w,a0	; load address to special Vint routine in a1
+		jsr	(a0)			; run code
 
 VInt_Music:
 		UpdateSoundDriver						; update SMPS	; warning: a5-a6 will be overwritten
@@ -41,15 +39,6 @@ VInt_Done:
 	endif
 		movem.l	(sp)+,d0-a6							; return saved registers from the stack
 		rte
-; ---------------------------------------------------------------------------
-
-VInt_Table: offsetTable
-ptr_VInt_Lag:		offsetTableEntry.w VInt_Lag		; 0
-ptr_VInt_Main:		offsetTableEntry.w VInt_Main		; 2
-ptr_VInt_Sega:		offsetTableEntry.w VInt_Sega		; 4
-ptr_VInt_Menu:		offsetTableEntry.w VInt_Menu		; 6
-ptr_VInt_Level:		offsetTableEntry.w VInt_Level		; 8
-ptr_VInt_Fade:		offsetTableEntry.w VInt_Fade		; A
 
 ; ---------------------------------------------------------------------------
 ; Lag
@@ -58,7 +47,7 @@ ptr_VInt_Fade:		offsetTableEntry.w VInt_Fade		; A
 ; =============== S U B R O U T I N E =======================================
 
 VInt_Lag:
-		addq.w	#4,sp
+;		addq.w	#4,sp
 
 VInt_Lag_Main:
 		addq.b	#1,(Lag_frame_count).w

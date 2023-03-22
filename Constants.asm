@@ -73,27 +73,12 @@ offset :=	Game_Modes
 ptrsize :=	1
 idstart :=	0
 
-id_LevelSelectScreen =				id(ptr_LevelSelect)			; 0
-id_LevelScreen =					id(ptr_Level)					; 4
-id_ContinueScreen =				id(ptr_Continue)				; 8
+id_LevelSelectScreen =			id(ptr_LevelSelect)		; 0
+id_LevelScreen =			id(ptr_Level)			; 4
+id_ContinueScreen =			id(ptr_Continue)		; 8
 
-GameModeFlag_TitleCard =		7							; flag bit
+GameModeFlag_TitleCard =		7				; flag bit
 GameModeID_TitleCard =			1<<GameModeFlag_TitleCard	; flag mask
-
-; ---------------------------------------------------------------------------
-; V-Int routines
-; ---------------------------------------------------------------------------
-
-offset :=	VInt_Table
-ptrsize :=	1
-idstart :=	0
-
-VintID_Lag =						id(ptr_VInt_Lag)			; 0
-VintID_Main =					id(ptr_VInt_Main)		; 2
-VintID_Sega =					id(ptr_VInt_Sega)			; 4
-VintID_Menu =					id(ptr_VInt_Menu)		; 6
-VintID_Level =					id(ptr_VInt_Level)		; 8
-VintID_Fade =					id(ptr_VInt_Fade)		; A
 
 ; ---------------------------------------------------------------------------
 ; Sonic routines
@@ -103,13 +88,13 @@ offset :=	Sonic_Index
 ptrsize :=	1
 idstart :=	0
 
-id_SonicInit =					id(ptr_Sonic_Init)			; 0
-id_SonicControl =					id(ptr_Sonic_Control)		; 2
-id_SonicHurt =					id(ptr_Sonic_Hurt)		; 4
-id_SonicDeath =					id(ptr_Sonic_Death)		; 6
-id_SonicRestart =					id(ptr_Sonic_Restart)		; 8
+id_SonicInit =				id(ptr_Sonic_Init)		; 0
+id_SonicControl =			id(ptr_Sonic_Control)		; 2
+id_SonicHurt =				id(ptr_Sonic_Hurt)		; 4
+id_SonicDeath =				id(ptr_Sonic_Death)		; 6
+id_SonicRestart =			id(ptr_Sonic_Restart)		; 8
 
-id_SonicDrown =					id(ptr_Sonic_Drown)		; C
+id_SonicDrown =				id(ptr_Sonic_Drown)		; C
 
 ; ---------------------------------------------------------------------------
 ; Levels

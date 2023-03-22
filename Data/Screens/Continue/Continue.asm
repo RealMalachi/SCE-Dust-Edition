@@ -62,9 +62,8 @@ Continue_Screen:
 
 
 
-
+		move.l	#VInt_Fade,(V_int_routine).w
 .waitplc
-		move.b	#VintID_Fade,(V_int_routine).w
 		jsr	(Process_Kos_Queue).w
 		jsr	(Wait_VSync).w
 		jsr	(Process_Kos_Module_Queue).w
@@ -112,14 +111,13 @@ loc_5C3FE:
 		bsr.w	sub_5CB1C
 		jsr	(Process_Sprites).w
 		jsr	(Render_Sprites).w
-		move.b	#VintID_Menu,(V_int_routine).w
+		move.l	#VInt_Menu,(V_int_routine).w
 		jsr	(Wait_VSync).w
 		music	mus_Continue
 		enableScreen
 		jsr	(Pal_FadeFromBlack).w
-
+;		move.l	#VInt_Menu,(V_int_routine).w
 loc_5C454:
-		move.b	#VintID_Menu,(V_int_routine).w
 		jsr	(Process_Kos_Queue).w
 		jsr	(Wait_VSync).w
 		jsr	(Process_Sprites).w
