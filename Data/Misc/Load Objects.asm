@@ -323,7 +323,7 @@ loc_1BA64:
 		move.l	(a4,d2.w),address(a1)
 		move.b	(a0)+,subtype(a1)
 		move.w	a3,respawn_addr(a1)
-		bra.s	Create_New_Sprite4
+		bra.w	Create_New_Sprite4
 ; ---------------------------------------------------------------------------
 
 loc_1BA92:
@@ -368,15 +368,7 @@ loc_1BAB6:
 		move.l	(a4,d2.w),address(a1)
 		move.b	(a0)+,subtype(a1)
 		move.w	a3,respawn_addr(a1)
-
-Create_New_Sprite4:
-		subq.w	#1,d0
-		bmi.s	+
-
--		lea	next_object(a1),a1
-		tst.l	address(a1)
-		dbeq	d0,-
-+		rts
+		bra.w	Create_New_Sprite4
 ; ---------------------------------------------------------------------------
 ; Changes the coarse back- and forward-camera edges to match new Camera_X value.
 ; Also seeks to appropriate object locations in the level's object layout, so

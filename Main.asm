@@ -464,7 +464,7 @@ EndOfHeader:
 ; ---------------------------------------------------------------
 
 	include "Misc Data/Debugger/Error_Priority.asm"
-
+	include "Misc Data/Debugger/TriedFindingSlotsBeyondObjectRAM.asm"
 	include "Misc Data/Debugger/ErrorHandler/ErrorHandler.asm"
 
 ; end of 'ROM'

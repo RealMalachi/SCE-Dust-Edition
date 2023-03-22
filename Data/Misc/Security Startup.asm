@@ -196,6 +196,8 @@ Game_Program:
 		move.l	#Ref_Checksum_String,(Checksum_string).w	; set flag so checksum won't run again
 
 .init
+	move.b	#1<<7,(ObjectRamMarker).w	; set marker for object RAM
+
 		jsr	(Init_MSU_Driver).l
 		seq	(SegaCD_Mode).w
 		bsr.w	Init_DMA_Queue

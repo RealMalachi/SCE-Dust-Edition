@@ -4,32 +4,19 @@
 
 ; RAM variables - General
 	phase	ramaddr($FFFF0000)	; Pretend we're in the RAM
-RAM_start:							= *
-Chunk_table:							ds.b $8000				; Chunk (128x128) definitions, $80 bytes per definition
-Chunk_table_end						= *
+RAM_start:					= *
+Chunk_table:					ds.b $8000		; Chunk (128x128) definitions, $80 bytes per definition
+Chunk_table_end					= *
 
-Player_1:								= *						; Main character in 1 player mode
-v_player:								= *
-Object_RAM:							ds.b object_size
-Player_2:							ds.b object_size
-Reserved_object_3:					ds.b object_size			; During a level, an object whose sole purpose is to clear the collision response list is stored here
-Dynamic_object_RAM:				ds.b object_size*90		; 90 objects
+Player_1:					= *			; Main character in 1 player mode
+v_player:					= *
+Object_RAM:					ds.b object_size
+Player_2:					ds.b object_size
+Reserved_object_3:				ds.b object_size	; During a level, an object whose sole purpose is to clear the collision response list is stored here
+Dynamic_object_RAM:				ds.b object_size*90	; 90 objects
 Dynamic_object_RAM_end				= *
-									ds.b object_size
-v_Breathing_bubbles:					ds.b object_size
+v_Breathing_bubbles:				ds.b object_size
 v_Breathing_bubbles_P2:				ds.b object_size
-									ds.b object_size
-v_Tails_tails:							ds.b object_size
-v_Dust:								ds.b object_size
-v_Dust_P2:							ds.b object_size
-v_Shield:							ds.b object_size
-v_Shield_P2:							ds.b object_size
-v_Invincibility_stars:					ds.b object_size*4			; 4 objects
-v_Invincibility_stars_P2:				ds.b object_size*3			; 4 objects
-v_WaterWave:						ds.b object_size
-									ds.b $34					; null
-Object_RAM_end						= *
-
 Kos_decomp_buffer:					ds.b $1000				; Each module in a KosM archive is decompressed here and then DMAed to VRAM
 
 H_scroll_buffer:						ds.l 224					; Horizontal scroll table is built up here and then DMAed to VRAM
@@ -43,6 +30,21 @@ Stat_table							 = *						; used by Tails' AI in a Sonic and Tails game
 Pos_table_P2:						ds.l 64					; Recorded player XY position buffer
 Pos_table:							ds.l 64					; Recorded player XY position buffer
 Ring_status_table:					ds.w RingTable_Count		; Ring status table(1 word)
+v_Dust:						ds.b object_size
+v_Dust_P2:					ds.b object_size
+v_Shield:					ds.b object_size
+v_Shield_P2:					ds.b object_size
+v_Invincibility_stars:				ds.b object_size*4
+v_Invincibility_stars_P2:			ds.b object_size*4
+v_Tails_tails:					ds.b object_size
+v_Tails_tails_2P:				ds.b object_size
+v_WaterWave:					ds.b object_size
+Object_RAM_end					= *
+
+ObjectRamMarker			ds.b 1	; a fast failsafe to end dynamic object checking routines dynamically, set during game init
+ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects
+
+
 Ring_status_table_end				= *
 Object_respawn_table:					ds.b ObjectTable_Count	; Object respawn table(1 byte)
 Object_respawn_table_end				= *

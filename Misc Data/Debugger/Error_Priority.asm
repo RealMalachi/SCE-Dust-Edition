@@ -12,6 +12,6 @@ Debug_Priority:
 	Console.BreakLine
 	divu.w	#object_size,d0
 	Console.Write "Priority ID: %<.w d0> "
-;	Console.BreakLine
-;	Console.Write "RAM Marker: %<.b ObjectRamMarker> "
+	Console.BreakLine
+	Console.Write "RAM Marker: %<.b ObjectRamMarker> "
 	rts
