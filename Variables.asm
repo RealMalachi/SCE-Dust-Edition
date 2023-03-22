@@ -17,19 +17,6 @@ Dynamic_object_RAM:				ds.b object_size*90	; 90 objects
 Dynamic_object_RAM_end				= *
 v_Breathing_bubbles:				ds.b object_size
 v_Breathing_bubbles_P2:				ds.b object_size
-Kos_decomp_buffer:					ds.b $1000				; Each module in a KosM archive is decompressed here and then DMAed to VRAM
-
-H_scroll_buffer:						ds.l 224					; Horizontal scroll table is built up here and then DMAed to VRAM
-H_scroll_table:						ds.b 512					; offsets for background scroll positions, used by ApplyDeformation
-H_scroll_buffer_end					= *
-V_scroll_buffer:						ds.l 320/16				; vertical scroll buffer used in various levels(320 pixels for MD1, 512 pixels for MD2)
-V_scroll_buffer_end					= *
-
-Collision_response_list:				ds.b 128					; Only objects in this list are processed by the collision response routines
-Stat_table							 = *						; used by Tails' AI in a Sonic and Tails game
-Pos_table_P2:						ds.l 64					; Recorded player XY position buffer
-Pos_table:							ds.l 64					; Recorded player XY position buffer
-Ring_status_table:					ds.w RingTable_Count		; Ring status table(1 word)
 v_Dust:						ds.b object_size
 v_Dust_P2:					ds.b object_size
 v_Shield:					ds.b object_size
@@ -45,6 +32,19 @@ ObjectRamMarker			ds.b 1	; a fast failsafe to end dynamic object checking routin
 ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects
 
 
+Kos_decomp_buffer:				ds.b $1000		; Each module in a KosM archive is decompressed here and then DMAed to VRAM
+
+H_scroll_buffer:				ds.l 224		; Horizontal scroll table is built up here and then DMAed to VRAM
+H_scroll_table:					ds.b 512		; offsets for background scroll positions, used by ApplyDeformation
+H_scroll_buffer_end				= *
+V_scroll_buffer:				ds.l 320/16		; vertical scroll buffer used in various levels(320 pixels for MD1, 512 pixels for MD2)
+V_scroll_buffer_end				= *
+
+Collision_response_list:			ds.b 128		; Only objects in this list are processed by the collision response routines
+Stat_table					= *			; used by Tails' AI in a Sonic and Tails game
+Pos_table_P2:					ds.l 64			; Recorded player XY position buffer
+Pos_table:					ds.l 64			; Recorded player XY position buffer
+Ring_status_table:				ds.w RingTable_Count	; Ring status table(1 word)
 Ring_status_table_end				= *
 Object_respawn_table:					ds.b ObjectTable_Count	; Object respawn table(1 byte)
 Object_respawn_table_end				= *
