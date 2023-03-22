@@ -17,11 +17,10 @@ VInt:
 
 		move.l	#vdpComm($0000,VSRAM,WRITE),VDP_control_port-VDP_control_port(a5)
 		move.l	(V_scroll_value).w,VDP_data_port-VDP_data_port(a6) ; send screen ypos to VSRAM
-		btst	#6,(Graphics_flags).w
-		beq.s	.notpal								; branch if it's not a PAL system
-		move.w	#$700,d0
-		dbf	d0,*										; otherwise, waste a bit of time here
-
+	;	btst	#6,(Graphics_flags).w
+	;	beq.s	.notpal								; branch if it's not a PAL system
+	;	move.w	#$700,d0
+	;	dbf	d0,*										; otherwise, waste a bit of time here
 .notpal
 		st	(H_int_flag).w		; allow Horizontal Interrupt code to run
 		st	(V_int_flag).w		; set that Vsync was successful
@@ -64,10 +63,10 @@ VInt_Lag_Level:
 		tst.b	(Water_flag).w
 		beq.w	VInt_Lag_NoWater
 		move.w	VDP_control_port-VDP_control_port(a5),d0
-		btst	#6,(Graphics_flags).w
-		beq.s	.notpal								; branch if it isn't a PAL system
-		move.w	#$700,d0
-		dbf	d0,*										; otherwise waste a bit of time here
+	;	btst	#6,(Graphics_flags).w
+	;	beq.s	.notpal								; branch if it isn't a PAL system
+	;	move.w	#$700,d0
+	;	dbf	d0,*										; otherwise waste a bit of time here
 
 .notpal
 		st	(H_int_flag).w							; set HInt flag
@@ -89,10 +88,10 @@ VInt_Lag_Water_Cont:
 
 VInt_Lag_NoWater:
 		move.w	VDP_control_port-VDP_control_port(a5),d0
-		btst	#6,(Graphics_flags).w
-		beq.s	.notpal	; branch if it isn't a PAL system
-		move.w	#$700,d0
-		dbf	d0,*		; otherwise, waste a bit of time here
+	;	btst	#6,(Graphics_flags).w
+	;	beq.s	.notpal	; branch if it isn't a PAL system
+	;	move.w	#$700,d0
+	;	dbf	d0,*		; otherwise, waste a bit of time here
 
 .notpal
 		st	(H_int_flag).w
