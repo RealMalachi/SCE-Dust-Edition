@@ -1,3 +1,6 @@
+UpdateSoundDriver macro
+	SMPS_UpdateSoundDriver
+	endm
 Size_of_Snd_driver_guess	= Size_of_Mega_PCM_guess
 Size_of_Snd_driver2_guess	= 0
 

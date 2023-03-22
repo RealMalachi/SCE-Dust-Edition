@@ -31,7 +31,7 @@ VInt:
 		jsr	VInt_Table(pc,d0.w)
 
 VInt_Music:
-		SMPS_UpdateSoundDriver						; update SMPS	; warning: a5-a6 will be overwritten
+		UpdateSoundDriver						; update SMPS	; warning: a5-a6 will be overwritten
 
 VInt_Done:
 		jsr	(Random_Number).w
@@ -325,10 +325,10 @@ HInt:
 		tst.b	(Do_Updates_in_H_int).w
 		beq.s	HInt_Done
 		clr.b	(Do_Updates_in_H_int).w
-		movem.l	d0-a6,-(sp)			; move all the registers to the stack
+		movem.l	d0-a6,-(sp)		; move all the registers to the stack
 		bsr.w	Do_Updates
 		SMPS_UpdateSoundDriver		; Update SMPS
-		movem.l	(sp)+,d0-a6			; load saved registers from the stack
+		movem.l	(sp)+,d0-a6		; load saved registers from the stack
 
 HInt_Done:
 		rte
