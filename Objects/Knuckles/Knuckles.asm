@@ -373,9 +373,8 @@ Knuckles_Glide:
 		asr.w	x_vel(a0)
 		asr.w	x_vel(a0)
 
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
-
+		move.w	default_y_radius(a0),y_radius(a0)
+;		move.b	default_x_radius(a0),x_radius(a0)
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_1690A:
@@ -2040,16 +2039,34 @@ Knux_Test_For_Glide:
 		move.w	#0,$1A(a0)
 
 loc_17898:
+		move.w	#$400,d1
+		move.w	#$800,d2
+		btst	#Status_Underwater,status(a0)	; are you underwater?
+		beq.s	+		; if not, branch
+		move.w	#$280,d1
+		move.w	#$580,d2
++
+		move.w	x_vel(a0),d0	; get absolute value of x_vel
+		bpl.s	+
+		neg.w	d0
++
+		cmp.w	d2,d0		; is it more then the cap?
+		ble.s	+		; if not, branch
+		move.w	d2,d0
+		bra.s	++
++
+		cmp.w	d1,d0		; is it less then the cap?
+		bhs.s	+		; if so, branch
+		move.w	d1,d0
++
+		move.w	d0,ground_vel(a0)
 		moveq	#0,d1
-		move.w	#$400,d0
-		move.w	d0,$1C(a0)
-		btst	#0,$2A(a0)
-		beq.s	loc_178AE
+		btst	#0,status(a0)	; are you facing left?
+		beq.s	+		; if not, branch
 		neg.w	d0
 		moveq	#-$80,d1
-
-loc_178AE:
-		move.w	d0,$18(a0)
++
+		move.w	d0,x_vel(a0)
 		move.b	d1,$25(a0)
 		move.w	#0,$26(a0)
 		move.b	#0,(Gliding_collision_flags).w
