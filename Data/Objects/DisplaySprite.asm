@@ -36,15 +36,15 @@ DisplaySprite:
 	movea.w	priority(a0),a1
 ;	lea	(Sprite_table_input).w,a1
 ;	adda.w	priority(a0),a1
-  if GameDebug=1
-	cmpa.w	#make_priority(0),a1	; is it in the table input?
+  if ErrorChecks<>0
+	cmpa.w	#Sprite_table_input,a1	; is it in the table input?
 	blo.s	.error			; if not, branch
-	cmpa.w	#make_priority(7)+next_priority,a1	; is it in the table input?
-	bhs.s	.error			; if not, branch
+	cmpa.w	#Sprite_table_input+(next_priority*7),a1	; is it in the table input?
+	bhi.s	.error			; if not, branch
   endif
 	move.w	(a1),d0			; get the amount of objects in the queue
 	cmp.w	#next_priority-2,d0	; is it full?
-;	blo.s	.queue			; if you want to save space over speed
+;	blo.s	.queue		; if you want to save space over speed
 	bhs.s	.loop			; if so, branch
 	addq.w	#2,d0			; add to the queue amount
 	move.w	d0,(a1)			; copy the addition to the queue amount
@@ -63,7 +63,7 @@ DisplaySprite:
 	move.w	a0,(a1,d0.w)
 .rts:
 	rts
-  if GameDebug=1
+  if ErrorChecks<>0
 .error:
 	RaiseError "Object render priority not set:", Debug_Priority
 	rts

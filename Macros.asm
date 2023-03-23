@@ -150,18 +150,27 @@ subObjData	macro mappings,vram,priority,width,height,frame,collision
 	dc.l mappings
 	dc.w vram,priority
 	dc.b width,height,frame,collision
+	if priority < Sprite_table_input
+	fatal "Priority is not properly filled in"
+	endif
     endm
 
 ; macro to declare sub-object data
 subObjData2	macro vram,priority,width,height,frame,collision
 	dc.w vram,priority
 	dc.b width,height,frame,collision
+	if priority < Sprite_table_input
+	fatal "Priority is not properly filled in"
+	endif
     endm
 
 ; macro to declare sub-object data
 subObjData3	macro priority,width,height,frame,collision
 	dc.w priority
 	dc.b width,height,frame,collision
+	if priority < Sprite_table_input
+	fatal "Priority is not properly filled in"
+	endif
     endm
 
 ; macro to declare sub-object slotted data

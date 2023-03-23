@@ -6,10 +6,11 @@
 ZoneCount:		= 1	; discrete zones are: DEZ
 GameDebug:		= 1	; if 1, enable debug mode for Sonic
 GameDebugAlt:		= 0	; if 1, enable alt debug mode for Sonic
+ErrorChecks:		= 0	; if 1, enable in-game error handler codes
 Lagometer:		= 1	; if 1, enable debug lagometer
 ExtendedCamera:		= 0	; if 1, enable extended camera
 RollInAir:		= 1	; if 1, enable roll in air for Sonic
-OptimiseSound:	  	= 1	; change to 1 to optimise sound queuing
+;OptimiseSound:	  	= 1	; change to 1 to optimise sound queuing
 OptimiseStopZ80:	= 2	; if 1, remove stopZ80 and startZ80, if 2, use only for controllers(ignores sound driver)
 ZeroOffsetOptimization:	= 1	; if 1, makes a handful of zero-offset instructions smaller
 AllOptimizations:	= 1	; if 1, enables all optimizations
@@ -462,9 +463,10 @@ EndOfHeader:
 ; ---------------------------------------------------------------
 ; Error handling module
 ; ---------------------------------------------------------------
-
+	if ErrorChecks<>0
 	include "Misc Data/Debugger/Error_Priority.asm"
 	include "Misc Data/Debugger/TriedFindingSlotsBeyondObjectRAM.asm"
+	endif
 	include "Misc Data/Debugger/ErrorHandler/ErrorHandler.asm"
 
 ; end of 'ROM'

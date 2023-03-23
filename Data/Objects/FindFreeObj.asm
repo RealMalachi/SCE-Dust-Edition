@@ -42,7 +42,7 @@ Create_New_Sprite4:
 	lea	next_object(a1),a1	; advance from the main object to the next slot
 ; find free slot starting in an arbitrary position (assumed to be in Dynamic_Object_RAM)
 Create_New_Sprite5:
-	if GameDebug=1
+	if ErrorChecks<>0
 	cmpa.w	#Object_RAM,a1		; if before the start, force crash
 	blo.s	+
 	cmpa.w	#Object_RAM_end,a1	; if beyond the end, force crash
