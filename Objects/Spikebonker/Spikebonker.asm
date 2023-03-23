@@ -208,19 +208,11 @@ Obj_Spikebonker_SpikeBall:
 ; =============== S U B R O U T I N E =======================================
 
 ObjDat_Spikebonker:
-		dc.l Map_Spikebonker
-		dc.w $8100
-		dc.w make_priority(5)
-		dc.b 40/2
-		dc.b 40/2
-		dc.b 0
-		dc.b $1A
+	subObjData Map_Spikebonker,make_art_tile($100,0,1),make_priority(5),40/2,40/2,0,$1A
+
 ObjDat3_Spikebonker_SpikeBall:
-		dc.w make_priority(4)
-		dc.b 32/2
-		dc.b 32/2
-		dc.b 1
-		dc.b $1A|$80
+	subObjData3 make_priority(4),32/2,32/2,1,$1A|$80
+
 ChildObjDat_Spikebonker_Control:
 		dc.w 1-1
 		dc.l Obj_Spikebonker_Control

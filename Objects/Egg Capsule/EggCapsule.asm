@@ -561,44 +561,25 @@ word_86B0E:
 		dc.w -$280
 		dc.w -$200
 word_86B16:
-		dc.w $8580
-		dc.w $8592
-		dc.w $842E
-		dc.w $8440
+		dc.w make_art_tile($580,0,1)
+		dc.w make_art_tile($592,0,1)
+		dc.w make_art_tile($42E,0,1)
+		dc.w make_art_tile($440,0,1)
 ObjDat3_86B32:
-		dc.l Map_EggCapsule
-		dc.w $843E
-		dc.w make_priority(4)
-		dc.b $20
-		dc.b $20
-		dc.b 0
-		dc.b 0
+	subObjData Map_EggCapsule,make_art_tile($43E,0,1),make_priority(4),$20,$20,0,0
+
 word_86B3E:
-		dc.w make_priority(4)
-		dc.b $10
-		dc.b 8
-		dc.b 5
-		dc.b 0
+	subObjData3 make_priority(4),$10,8,5,0
+
 ObjDat3_86B44:
-		dc.l Map_EggCapsule
-		dc.w $843E
-		dc.w make_priority(3)
-		dc.b $C
-		dc.b $C
-		dc.b 0
-		dc.b 0
+	subObjData Map_EggCapsule,make_art_tile($43E,0,1),make_priority(3),$C,$C,0,0
+
 word_86B50:
-		dc.w make_priority(5)
-		dc.b 8
-		dc.b 8
-		dc.b 2
-		dc.b 0
+	subObjData3 make_priority(5),8,8,2,0
+
 word_86B56:
-		dc.w make_priority(4)
-		dc.b $14
-		dc.b 4
-		dc.b 6
-		dc.b 0
+	subObjData3 make_priority(4),$14,4,6,0
+
 ChildObjDat_EggCapsule:
 		dc.w 1-1
 		dc.l Obj_EggCapsule

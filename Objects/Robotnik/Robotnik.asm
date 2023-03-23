@@ -112,19 +112,11 @@ RobotnikShipFlame_Main:
 ; =============== S U B R O U T I N E =======================================
 
 ObjDat_RobotnikHead:
-		dc.l Map_RobotnikShip
-		dc.w $52E
-		dc.w make_priority(5)
-		dc.b 32/2
-		dc.b 16/2
-		dc.b 0
-		dc.b 0
+	subObjData Map_RobotnikShip,make_art_tile($52E,0,0),make_priority(5),32/2,16/2,0,0
+
 ObjDat2_RoboShipFlame:
-		dc.w make_priority(5)
-		dc.b 16/2
-		dc.b 8/2
-		dc.b 8
-		dc.b 0
+	subObjData3 make_priority(5),16/2,8/2,8,0
+
 AniRaw_RobotnikHead:
 		dc.b 5, 0, 1, arfEnd
 AniRaw_RobotnikHead_Laugh:

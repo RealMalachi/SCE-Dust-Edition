@@ -214,21 +214,9 @@ Obj_BossExplosionOffsetAnim:
 ; =============== S U B R O U T I N E =======================================
 
 ObjDat_BossExplosion1:
-		dc.l Map_BossExplosion
-		dc.w $8500
-		dc.w 0
-		dc.b 24/2
-		dc.b 24/2
-		dc.b 0
-		dc.b 0
+	subObjData Map_BossExplosion,make_art_tile($500,0,1),make_priority(0),24/2,24/2,0,0
 ObjDat_BossExplosion2:
-		dc.l Map_BossExplosion
-		dc.w $84D2
-		dc.w 0
-		dc.b 24/2
-		dc.b 24/2
-		dc.b 0
-		dc.b 0
+	subObjData Map_BossExplosion,make_art_tile($4D2,0,1),make_priority(0),24/2,24/2,0,0
 Child6_MakeBossExplosion1:
 		dc.w 1-1
 		dc.l Obj_BossExplosion1

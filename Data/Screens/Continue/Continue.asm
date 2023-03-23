@@ -1119,13 +1119,8 @@ aCONTINUE:		dc.b "C O N T I N U E",0
 	even
 
 ObjDat3_919A6:
-		dc.l Map_EggRobo
-		dc.w $8500
-		dc.w $280
-		dc.b $14
-		dc.b $18
-		dc.b 1
-		dc.b 6
+	subObjData Map_EggRobo,make_art_tile($500,0,1),make_priority(5),$14,$18,1,6
+
 byte_5CBAE:
 		dc.b 0
 		dc.b 1
@@ -1176,23 +1171,13 @@ ChildObjDat_919DE:
 		dc.b $FC
 
 word_919BE:
-		dc.w $280
-		dc.b $C
-		dc.b $10
-		dc.b 6
-		dc.b 0
+	subObjData3 make_priority(5),$C,$10,6,0
+
 word_919C4:
-		dc.w $280
-		dc.b $10
-		dc.b $C
-		dc.b 2
-		dc.b 0
+	subObjData3 make_priority(5),$10,$C,2,0
+
 word_919CA:
-		dc.w $280
-		dc.b $20
-		dc.b 4
-		dc.b 7
-		dc.b 0
+	subObjData3 make_priority(5),$20,4,7,0
 
 PLC_Continue: plrlistheader
 		plreq 1, ArtKosM_ContinueDigits
