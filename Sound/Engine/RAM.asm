@@ -193,6 +193,16 @@ f_continuous_sfx		= 4
 	SMPS_running_flag:	ds.b 1
 SMPS_RAM ENDSTRUCT
 
+;    if MOMPASS=1
+;	message "Sonic 2 Clone Driver v2 RAM size is $\{SMPS_RAM.len} bytes."
+;    endif
+    if SMPS_RAM.len>(v_snddriver_ram_end-v_snddriver_ram)	; if given less space then needed, force dev to increase it
+	fatal "Sound driver RAM exceeds the allocated space for it by $\{SMPS_RAM.len-(v_snddriver_ram_end-v_snddriver_ram)} bytes"
+    endif
     if MOMPASS=1
-	message "Sonic 2 Clone Driver v2 RAM size is $\{SMPS_RAM.len} bytes."
+      if ((v_snddriver_ram_end-v_snddriver_ram)-SMPS_RAM.len)=0	; if no wasted space, don't prompt dev to shrink it
+	message "Sonic 2 Clone Driver v2 RAM size is $\{SMPS_RAM.len} bytes"
+      else
+	message "Sonic 2 Clone Driver v2 RAM size is $\{SMPS_RAM.len} bytes, with an additional $\{(v_snddriver_ram_end-v_snddriver_ram)-SMPS_RAM.len} unused"
+      endif
     endif
