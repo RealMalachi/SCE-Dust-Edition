@@ -1,0 +1,32 @@
+{
+    "Flex": 2,
+    "name": "",
+    "node": "b20d4d21-4377-4968-a351-f8a37deb289d",
+    "objects": [
+        {
+            "uuid": "b20d4d21-4377-4968-a351-f8a37deb289d",
+            "format": "Sonic 3&K Player.js",
+            "name": "Sonic",
+            "palettes": [
+                {
+                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                    "length": 1
+                }
+            ],
+            "art": {
+                "path": "Objects\\Sonic\\Uncompressed Art\\Sonic.bin",
+                "compression": "Uncompressed",
+                "offset": 0
+            },
+            "mappings": {
+                "path": "Objects\\Sonic\\Object Data\\Map - Sonic.asm",
+                "label": ""
+            },
+            "dplcs": {
+                "enabled": true,
+                "path": "Objects\\Sonic\\Object Data\\Sonic pattern load cues.asm",
+                "label": ""
+            }
+        }
+    ]
+}
