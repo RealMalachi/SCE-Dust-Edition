@@ -3213,7 +3213,7 @@ Tails_Tail_Load_PLC:
 		subq.w	#1,d5
 		bmi.s	locret_15CCE
 		move.w	#tiles_to_bytes(ArtTile_Player_2_Tail),d4
-		move.l	#ArtUnc_Tails_Tail>>1,d6
+		move.l	#dmaSource(ArtUnc_Tails_Tail),d6
 		bra.s	loc_15CA6
 
 ; =============== S U B R O U T I N E =======================================
@@ -3233,10 +3233,10 @@ Tails_Load_PLC2:
 		subq.w	#1,d5
 		bmi.s	locret_15CCE
 		move.w	#tiles_to_bytes(ArtTile_Player_2),d4
-		move.l	#ArtUnc_Tails>>1,d6
+		move.l	#dmaSource(ArtUnc_Tails),d6
 		cmpi.w	#$D1*2,d0
-		blo.s		loc_15CA6
-		move.l	#ArtUnc_Tails_Extra>>1,d6
+		blo.s	loc_15CA6
+		move.l	#dmaSource(ArtUnc_Tails_Extra),d6
 
 loc_15CA6:
 		moveq	#0,d1

@@ -464,6 +464,9 @@ EndOfHeader:
 ; Error handling module
 ; ---------------------------------------------------------------
 	if ErrorChecks<>0
+		if (Use128kbSafeDMA=0)&&(CrashIfHit128kbDMA<>0)
+	include "Misc Data/Debugger/DMA128kbError.asm"
+		endif
 	include "Misc Data/Debugger/Error_Priority.asm"
 	include "Misc Data/Debugger/TriedFindingSlotsBeyondObjectRAM.asm"
 	endif

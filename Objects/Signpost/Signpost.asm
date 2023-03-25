@@ -302,7 +302,7 @@ Child6_EndSignScore:
 		dc.w 1-1
 		dc.l Obj_EnemyScore
 PLCPtr_EndSigns:
-		dc.l ArtUnc_EndSigns>>1, DPLC_EndSigns
+		dc.l dmaSource(ArtUnc_EndSigns), DPLC_EndSigns
 AniRaw_EndSigns1:
 		dc.b	1,   0
 		dc.b	4,   5

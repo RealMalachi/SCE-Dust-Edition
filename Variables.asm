@@ -54,7 +54,7 @@ Sprite_table_input:				ds.b $80*8		; Sprite table input buffer
 Sprite_table_input_end				= *
 
 DMA_queue:					= *
-VDP_Command_Buffer:				ds.w $12*7		; Stores all the VDP commands necessary to initiate a DMA transfer
+VDP_Command_Buffer:				ds.b 18*14	; 18 queues, 14 bytes each ; Stores all the VDP commands necessary to initiate a DMA transfer
 DMA_queue_slot:					= *
 VDP_Command_Buffer_Slot:			ds.w 1			; Points to the next free slot on the queue
 

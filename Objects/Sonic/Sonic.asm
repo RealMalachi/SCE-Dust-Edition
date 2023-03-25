@@ -2708,10 +2708,10 @@ Sonic_Load_PLC2:
 		subq.w	#1,d5
 		bmi.s	.return
 		move.w	#tiles_to_bytes(ArtTile_Player_1),d4
-		move.l	#ArtUnc_Sonic>>1,d6
+		move.l	#dmaSource(ArtUnc_Sonic),d6
 		cmpi.w	#$DA*2,d0
-		blo.s		.loop
-		move.l	#ArtUnc_Sonic_Extra>>1,d6
+		blo.s	.loop
+		move.l	#dmaSource(ArtUnc_Sonic_Extra),d6
 
 .loop
 		moveq	#0,d1

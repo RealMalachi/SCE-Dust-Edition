@@ -113,6 +113,32 @@ UseRAMSourceSafeDMA = 1&(AssumeSourceAddressIsRAMSafe==0)
 ; issue altogether. It is here so that you have a high-performance routine to do
 ; the job in situations where you can't align it in ROM.
 Use128kbSafeDMA = 1
+
+; these are new features relating to the 128kb bug... Hackish features.
+; This option saves the d2 and d3 register during the 128kb fixing process, at the cost of 22(5/0)
+; "So, why?" Well, it allows you to do this.
+;	move.w	#tiles_to_bytes(ArtTile_Player_1),d2
+;	...
+;.loop
+;	...
+;	jsr	(Add_To_DMA_Queue).w
+;	add.w	d3,d2
+;	add.w	d3,d2
+;	dbf	d5,.loop
+SaveRegistersOn128kbCut	= 1
+
+; This option crashes the game if you end up hitting the 128kb mark
+; Setting Use128kbSafeDMA to 1, naturally, disables this
+CrashIfHit128kbDMA = ErrorChecks
+
+; If needed, pad ROM to fix 128kb bug
+DMA128kbpad macro
+    if Use128kbSafeDMA=0
+	align $8000
+    else
+	even
+    endif
+	endm
 ; ===========================================================================
 ; option UseVIntSafeDMA
 ;
@@ -267,7 +293,11 @@ Add_To_DMA_Queue:
 		sub.w	d3,d0										; Using sub instead of move and add allows checking edge cases
 		sub.w	d1,d0										; Does the transfer cross over to the next 128kB block?
 		bcs.s	.doubletransfer								; Branch if yes
-	endif	; Use128kbSafeDMA
+	elseif CrashIfHit128kbDMA<>0
+		sub.w	d3,d0			; Using sub instead of move and add allows checking edge cases
+		sub.w	d1,d0			; Does the transfer cross over to the next 128kB block?
+		bcs.s	.triggercrash		; if so, force a crash
+	endif	; Use128kbSafeDMA/CrashIfHit128kbDMA
 	; It does not cross a 128kB boundary. So just finish writing it.
 	movep.w	d3,DMAEntry.Size(a1)							; Write DMA length, overwriting useless top byte of source address
 
@@ -288,39 +318,58 @@ Add_To_DMA_Queue:
 	if Use128kbSafeDMA<>0
 .doubletransfer:
 		; We need to split the DMA into two parts, since it crosses a 128kB block
-		add.w	d3,d0										; Set d0 to the number of words until end of current 128kB block
-		movep.w	d0,DMAEntry.Size(a1)						; Write DMA length of first part, overwriting useless top byte of source addres
+		add.w	d3,d0						; Set d0 to the number of words until end of current 128kB block
+		movep.w	d0,DMAEntry.Size(a1)				; Write DMA length of first part, overwriting useless top byte of source addres
 
 		cmpa.w	#VDP_Command_Buffer_Slot-DMAEntry.len,a1	; Does the queue have enough space for both parts?
-		beq.s	.finishxfer									; Branch if not
+		beq.s	.finishxfer					; Branch if not
+	; Get second transfer's source, destination, and length
+		sub.w	d0,d3						; Set d3 to the number of words remaining
+		add.l	d0,d1						; Offset the source address of the second part by the length of the first part
+	  if SaveRegistersOn128kbCut=0
+		add.w	d0,d0						; Convert to number of bytes
+		add.w	d2,d0						; Set d0 to the VRAM destination of the second part
+	; If we know top word of d2 is clear, the following vdpCommReg can be set to not clear it.
+	; There is, unfortunately, no faster way to clear it than this.
+		vdpCommReg d2,VRAM,DMA,1				; Convert destination address of first part to VDP DMA command
+		move.l	d2,DMAEntry.Command(a1)				; Write VDP DMA command for destination address of first part
+	  else
+	; same here; no faster way
+		move.w	d2,-(sp)				; save d2
+		vdpCommReg d2,VRAM,DMA,1				; Convert destination address of first part to VDP DMA command
+		move.l	d2,DMAEntry.Command(a1)				; Write VDP DMA command for destination address of first part
+		move.w	(sp)+,d2				; restore d2
+	  endif
+	; Do second transfer
+		movep.l	d1,DMAEntry.len+DMAEntry.Source(a1)		; Write source address of second part; useless top byte will be overwritten later
+		movep.w	d3,DMAEntry.len+DMAEntry.Size(a1)		; Write DMA length of second part, overwriting useless top byte of source address
+	  if SaveRegistersOn128kbCut<>0
+		add.w	d0,d3					; add back to d3 to restore its original value
+		add.w	d0,d0						; Convert to number of bytes
+		add.w	d2,d0						; Set d0 to the VRAM destination of the second part
+	  endif
+	; Command to specify destination address and begin DMA
+		vdpCommReg d0,VRAM,DMA,0				; Convert destination address to VDP DMA command; we know top half of d0 is zero
+		lea	DMAEntry.len+DMAEntry.Command(a1),a1		; Seek to correct RAM address to store VDP DMA command of second part
+		move.l	d0,(a1)+					; Write VDP DMA command for destination address of second part
 
-		; Get second transfer's source, destination, and length
-		sub.w	d0,d3										; Set d3 to the number of words remaining
-		add.l	d0,d1										; Offset the source address of the second part by the length of the first part
-		add.w	d0,d0										; Convert to number of bytes
-		add.w	d2,d0										; Set d0 to the VRAM destination of the second part
+		move.w	a1,(VDP_Command_Buffer_Slot).w			; Write next queue slot
 
-		; If we know top word of d2 is clear, the following vdpCommReg can be set to not
-		; clear it. There is, unfortunately, no faster way to clear it than this.
-		vdpCommReg d2,VRAM,DMA,1							; Convert destination address of first part to VDP DMA command
-		move.l	d2,DMAEntry.Command(a1)						; Write VDP DMA command for destination address of first part
-
-		; Do second transfer
-		movep.l	d1,DMAEntry.len+DMAEntry.Source(a1)			; Write source address of second part; useless top byte will be overwritten later
-		movep.w	d3,DMAEntry.len+DMAEntry.Size(a1)			; Write DMA length of second part, overwriting useless top byte of source addres
-
-		; Command to specify destination address and begin DMA
-		vdpCommReg d0,VRAM,DMA,0							; Convert destination address to VDP DMA command; we know top half of d0 is zero
-		lea	DMAEntry.len+DMAEntry.Command(a1),a1			; Seek to correct RAM address to store VDP DMA command of second part
-		move.l	d0,(a1)+									; Write VDP DMA command for destination address of second part
-
-		move.w	a1,(VDP_Command_Buffer_Slot).w				; Write next queue slot
-		if UseVIntSafeDMA==1
-			move.w	(sp)+,sr								; Restore interrupts to previous state
-		endif ;UseVIntSafeDMA==1
+	  if UseVIntSafeDMA==1
+		move.w	(sp)+,sr					; Restore interrupts to previous state
+	  endif ;UseVIntSafeDMA==1
 		rts
-	endif	; Use128kbSafeDMA
-
+	elseif CrashIfHit128kbDMA<>0
+.triggercrash:
+	  if ErrorChecks<>0
+	RaiseError "Attempted DMA between 128kb border:", Debug_DMA128kbError
+	  else
+	move.w	1(a0),1(a0)	; copy word size on an odd address (deliberate crash)
+	nop	; just in case
+	rts	; just in case
+	  endif
+	endif	; Use128kbSafeDMA/CrashIfHit128kbDMA
+; End of function Add_To_DMA_Queue
 ; ---------------------------------------------------------------------------
 ; Subroutine for issuing all VDP commands that were queued
 ; (by earlier calls to QueueDMATransfer)
@@ -337,8 +386,8 @@ Process_DMA_Queue:
 .jump_table:
 	rts
 	rept 6
-		trap	#0											; Just in case
-	endr
+		trap	#0										; Just in case
+	endm
 ; ---------------------------------------------------------------------------
 	set	.c,1
 	rept QueueSlotCount
@@ -348,18 +397,19 @@ Process_DMA_Queue:
 			bra.w	.jump0 - .c*8
 		endif
 		set	.c,.c + 1
-	endr
+	endm
 ; ---------------------------------------------------------------------------
 	rept QueueSlotCount
 		move.l	(a1)+,(a5)									; Transfer length
 		move.l	(a1)+,(a5)									; Source address high
 		move.l	(a1)+,(a5)									; Source address low + destination high
 		move.w	(a1)+,(a5)									; Destination low, trigger DMA
-	endr
+	endm
 
 .jump0:
 	ResetDMAQueue
 	rts
+; End of function Process_DMA_Queue
 ; ---------------------------------------------------------------------------
 ; Subroutine for initializing the DMA queue.
 ; ---------------------------------------------------------------------------
@@ -376,7 +426,8 @@ Init_DMA_Queue:
 		move.b	d0,.c + DMAEntry.Reg94(a0)
 		movep.l	d1,.c + DMAEntry.Reg93(a0)
 		set	.c,.c + DMAEntry.len
-	endr
+	endm
 
 	ResetDMAQueue
 	rts
+; End of function Init_DMA_Queue

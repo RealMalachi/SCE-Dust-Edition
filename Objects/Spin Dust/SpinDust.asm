@@ -71,7 +71,7 @@ loc_18BEC:
 		andi.w	#$7FFF,art_tile(a0)
 +		lea	Ani_DashSplashDrown(pc),a1
 		jsr	(Animate_Sprite).w
-		move.l	#ArtUnc_SplashDrown>>1,d6
+		move.l	#dmaSource(ArtUnc_SplashDrown),d6
 		bsr.w	SplashDrown_Load_DPLC
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
@@ -180,7 +180,7 @@ loc_18CE4:
 ; =============== S U B R O U T I N E =======================================
 
 DashDust_Load_DPLC:
-		move.l	#ArtUnc_DashDust>>1,d6
+		move.l	#dmaSource(ArtUnc_DashDust),d6
 
 SplashDrown_Load_DPLC:
 		moveq	#0,d0

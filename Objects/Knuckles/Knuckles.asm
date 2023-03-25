@@ -2672,7 +2672,7 @@ loc_18122:
 		move.w	(a2)+,d5
 		subq.w	#1,d5
 		bmi.s	locret_18162
-		move.l	#ArtUnc_Knux>>1,d6
+		move.l	#dmaSource(ArtUnc_Knux),d6
 
 loc_1813A:
 		moveq	#0,d1

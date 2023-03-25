@@ -163,9 +163,13 @@ Do_ControllerPal:
 .skipwater
 		dma68kToVDP Sprite_table_buffer,vram_sprites,$280,VRAM
 		dma68kToVDP H_scroll_buffer,vram_hscroll,(224<<2),VRAM
+		if OptimiseStopZ80=0
 		jsr	(Process_DMA_Queue).w
 		startZ80
 		rts
+		else
+		jmp	(Process_DMA_Queue).w
+		endif
 
 ; ---------------------------------------------------------------------------
 ; Sega
