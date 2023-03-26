@@ -27,6 +27,12 @@ v_Tails_tails:					ds.b object_size
 v_Tails_tails_2P:				ds.b object_size
 v_WaterWave:					ds.b object_size
 Object_RAM_end					= *
+v_GameOver_Game	=	v_Invincibility_stars
+v_GameOver_Over	=	v_Invincibility_stars+next_object
+
+	if ((Object_RAM_end-Object_RAM)/object_size)/10 <> 11	; TODO: figure out how to 
+	fatal "Object RAM isn't divisible by 10!!! Fix this immediately!"
+	endif
 
 ObjectRamMarker			ds.b 1	; a fast failsafe to end dynamic object checking routines dynamically, set during game init
 ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects

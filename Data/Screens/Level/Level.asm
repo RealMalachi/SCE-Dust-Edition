@@ -34,6 +34,7 @@ Level_Screen:
 
 .nostarpost
 		clearRAM Object_RAM, Object_RAM_end
+		clr.b	(ObjectFreezeFlag).w
 		clearRAM Lag_frame_count, Lag_frame_count_end
 		clearRAM Camera_RAM, Camera_RAM_end
 		clearRAM Oscillating_variables, Oscillating_variables_end
@@ -197,6 +198,7 @@ Level_Screen:
 		jsr	(Render_Sprites).w
 		cmpi.b	#id_LevelScreen,(Game_mode).w
 		beq.s	.loop
+		clr.b	(ObjectFreezeFlag).w
 		rts
 ; ---------------------------------------------------------------------------
 

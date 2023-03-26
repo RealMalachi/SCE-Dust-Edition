@@ -18,8 +18,8 @@ Obj_FireShield:
 		; init
 		move.l	#Map_FireShield,mappings(a0)
 		move.l	#DPLC_FireShield,DPLC_Address(a0)				; used by PLCLoad_Shields
-		move.l	#ArtUnc_FireShield>>1,Art_Address(a0)				; used by PLCLoad_Shields
-		move.b	#4,render_flags(a0)
+		move.l	#dmaSource(ArtUnc_FireShield),Art_Address(a0)				; used by PLCLoad_Shields
+		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.w	#make_priority(1),priority(a0)
 		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)			; set height and width
 		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
@@ -101,8 +101,8 @@ Obj_LightningShield:
 		; init
 		move.l	#Map_LightningShield,mappings(a0)
 		move.l	#DPLC_LightningShield,DPLC_Address(a0)			; used by PLCLoad_Shields
-		move.l	#ArtUnc_LightningShield>>1,Art_Address(a0)		; used by PLCLoad_Shields
-		move.b	#4,render_flags(a0)
+		move.l	#dmaSource(ArtUnc_LightningShield),Art_Address(a0)		; used by PLCLoad_Shields
+		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.w	#make_priority(1),priority(a0)
 		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)			; set height and width
 		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
@@ -207,18 +207,18 @@ Obj_LightningShield_Create_Spark:
 		moveq	#4-1,d1
 
 .loop
-		jsr	(Create_New_Sprite).w								; find free object slot
-		bne.s	.return											; if one can't be found, return
-		move.l	#Obj_LightningShield_Spark,address(a1)				; make new object a Spark
-		move.w	x_pos(a0),x_pos(a1)								; (Spark) inherit x_pos from source object (Lightning Shield, Hyper Sonic Stars)
-		move.w	y_pos(a0),y_pos(a1)								; (Spark) inherit y_pos from source object (Lightning Shield, Hyper Sonic Stars)
-		move.l	mappings(a0),mappings(a1)						; (Spark) inherit mappings from source object (Lightning Shield, Hyper Sonic Stars)
-		move.w	art_tile(a0),art_tile(a1)							; (Spark) inherit art_tile from source object (Lightning Shield, Hyper Sonic Stars)
-		move.b	#4,render_flags(a1)
+		jsr	(Create_New_Sprite).w				; find free object slot
+		bne.s	.return						; if one can't be found, return
+		move.l	#Obj_LightningShield_Spark,address(a1)		; make new object a Spark
+		move.w	x_pos(a0),x_pos(a1)				; (Spark) inherit x_pos from source object (Lightning Shield, Hyper Sonic Stars)
+		move.w	y_pos(a0),y_pos(a1)				; (Spark) inherit y_pos from source object (Lightning Shield, Hyper Sonic Stars)
+		move.l	mappings(a0),mappings(a1)			; (Spark) inherit mappings from source object (Lightning Shield, Hyper Sonic Stars)
+		move.w	art_tile(a0),art_tile(a1)			; (Spark) inherit art_tile from source object (Lightning Shield, Hyper Sonic Stars)
+		move.b	#ren_camerapos,render_flags(a1)
 		move.w	#make_priority(1),priority(a1)
-		move.w	#bytes_to_word(16/2,16/2),height_pixels(a1)			; set height and width
+		move.w	#bytes_to_word(16/2,16/2),height_pixels(a1)	; set height and width
 		move.b	d2,anim(a1)
-		move.l	(a2)+,x_vel(a1)									; (Spark) give x_vel and y_vel (unique to each of the four Sparks)
+		move.l	(a2)+,x_vel(a1)					; (Spark) give x_vel and y_vel (unique to each of the four Sparks)
 		dbf	d1,.loop
 
 .return
@@ -271,8 +271,8 @@ Obj_BubbleShield:
 		; init
 		move.l	#Map_BubbleShield,mappings(a0)
 		move.l	#DPLC_BubbleShield,DPLC_Address(a0)				; used by PLCLoad_Shields
-		move.l	#ArtUnc_BubbleShield>>1,Art_Address(a0)			; used by PLCLoad_Shields
-		move.b	#4,render_flags(a0)
+		move.l	#dmaSource(ArtUnc_BubbleShield),Art_Address(a0)			; used by PLCLoad_Shields
+		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.w	#make_priority(1),priority(a0)
 		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)			; set height and width
 		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
@@ -335,8 +335,8 @@ Obj_InstaShield:
 		; init
 		move.l	#Map_InstaShield,mappings(a0)
 		move.l	#DPLC_InstaShield,DPLC_Address(a0)				; used by PLCLoad_Shields
-		move.l	#ArtUnc_InstaShield>>1,Art_Address(a0)			; used by PLCLoad_Shields
-		move.b	#4,render_flags(a0)
+		move.l	#dmaSource(ArtUnc_InstaShield),Art_Address(a0)			; used by PLCLoad_Shields
+		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.w	#make_priority(1),priority(a0)
 		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)			; set height and width
 		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
@@ -446,7 +446,7 @@ Obj_Invincibility:
 		move.l	#Map_Invincibility,mappings(a1)
 		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a1)
 		move.w	#make_priority(1),priority(a1)
-		move.b	#$44,render_flags(a1)								; set screen coordinates and multi-draw flag
+		move.b	#ren_camerapos|ren_multidraw|objflag_continue,render_flags(a1)	; set screen coordinates and multi-draw flag
 		move.b	#32/2,width_pixels(a1)
 		move.w	#2,mainspr_childsprites(a1)
 		move.w	parent(a0),parent(a1)

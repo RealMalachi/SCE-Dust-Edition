@@ -57,7 +57,7 @@ Sonic_Init:	; Routine 0
 		move.l	#Map_Sonic,mappings(a0)
 		move.w	#make_priority(2),priority(a0)
 		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)		; set height and width
-		move.b	#4,render_flags(a0)
+		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		clr.b	character_id(a0)
 		move.w	#$600,Max_speed-Max_speed(a4)
 		move.w	#$C,Acceleration-Max_speed(a4)
@@ -2211,34 +2211,30 @@ loc_12432:
 		clr.b	(Respawn_table_keep).w
 		addq.b	#1,(Update_HUD_life_count).w
 		subq.b	#1,(Life_count).w
-		bne.s	loc_12498
-		clr.w	spin_dash_counter(a0)
-		move.l	#Obj_GameOver,(Reserved_object_3).w
-		move.l	#Obj_GameOver,(Dynamic_object_RAM).w
-		clr.b	(Reserved_object_3+mapping_frame).w
-		move.b	#1,(Dynamic_object_RAM+mapping_frame).w
-		move.w	a0,(Reserved_object_3+objoff_3E).w
+		bne.s	.test_timeover
 		clr.b	(Time_over_flag).w
-
-loc_12478:
+		moveq	#0,d0	; use Game Over frames
+		bra.s	.gameover
+.test_timeover
+		tst.b	(Time_over_flag).w
+		beq.s	locret_1258E
+		moveq	#2,d0	; use Time Over frames
+.gameover
+		clr.w	restart_timer(a0)	; don't restart with player object (use Game Over instead)
+		lea	(v_GameOver_Game).w,a1
+		lea	v_GameOver_Over-v_GameOver_Game(a1),a2
+		move.l	#Obj_GameOver,address(a1)
+		move.l	#Obj_GameOver,address(a2)
+		move.b	#ren_screenpos|objflag_continue,render_flags(a1)
+		move.b	#ren_screenpos|objflag_continue,render_flags(a2)
+		move.b	d0,mapping_frame(a1)
+		addq.w	#1,d0
+		move.b	d0,mapping_frame(a2)
 		clr.b	(Update_HUD_timer).w
-		move.b	#id_SonicRestart,routine(a0)
 		music	mus_GameOver								; play the Game Over song
 		lea	(ArtKosM_GameOver).l,a1
 		move.w	#tiles_to_bytes(ArtTile_Shield),d2
 		jmp	(Queue_Kos_Module).w
-; ---------------------------------------------------------------------------
-
-loc_12498:
-		tst.b	(Time_over_flag).w
-		beq.s	locret_1258E
-		clr.w	spin_dash_counter(a0)
-		move.l	#Obj_GameOver,(Reserved_object_3).w
-		move.l	#Obj_GameOver,(Dynamic_object_RAM).w
-		move.b	#2,(Reserved_object_3+mapping_frame).w
-		move.b	#3,(Dynamic_object_RAM+mapping_frame).w
-		move.w	a0,(Reserved_object_3+objoff_3E).w
-		bra.s	loc_12478
 
 ; =============== S U B R O U T I N E =======================================
 

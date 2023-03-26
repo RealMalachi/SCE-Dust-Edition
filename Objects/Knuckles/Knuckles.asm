@@ -56,7 +56,7 @@ Knuckles_Init:
 		move.w	#make_priority(2),priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$18,height_pixels(a0)
-		move.b	#4,render_flags(a0)
+		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.b	#2,character_id(a0)
 		move.w	#$600,Max_speed-Max_speed(a4)
 		move.w	#$C,Acceleration-Max_speed(a4)

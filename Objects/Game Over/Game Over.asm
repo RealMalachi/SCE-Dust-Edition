@@ -6,21 +6,19 @@
 
 Obj_GameOver:
 		tst.w	(Kos_modules_left).w
-		beq.s	loc_2D5CE
+		beq.s	+
 		rts
-; ---------------------------------------------------------------------------
-
-loc_2D5CE:
++
 		move.w	#$50,x_pos(a0)
 		btst	#0,mapping_frame(a0)
-		beq.s	loc_2D5F2
+		beq.s	+
 		move.w	#$1F0,x_pos(a0)
-
-loc_2D5F2:
++
 		move.w	#$F0,y_pos(a0)
 		move.l	#Map_GameOver,mappings(a0)
 		move.w	#make_art_tile(ArtTile_Shield,0,1),art_tile(a0)
 		move.w	#make_priority(0),priority(a0)
+		move.b	#ren_screenpos|objflag_continue,render_flags(a0)
 		move.l	#loc_2D612,address(a0)
 
 loc_2D612:

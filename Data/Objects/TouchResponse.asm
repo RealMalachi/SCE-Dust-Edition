@@ -533,12 +533,17 @@ Kill_Character:
 		moveq	#signextendB(sfx_Death),d0			; play normal death sound
 
 loc_1036E:
+		sfx
 		clr.b	status_secondary(a0)
 		clr.b	status_tertiary(a0)
 		move.b	#id_SonicDeath,routine(a0)
-		move.w	d0,-(sp)
+		cmpa.w	#Player_1,a0
+		bne.s	+
+		st	(ObjectFreezeFlag).w
++
+	;	move.w	d0,-(sp)
 		bsr.w	Sonic_ResetOnFloor
-		move.w	(sp)+,d0
+	;	move.w	(sp)+,d0
 		bset	#Status_InAir,status(a0)
 		move.w	#-$700,y_vel(a0)
 		clr.w	x_vel(a0)
@@ -546,7 +551,6 @@ loc_1036E:
 		move.b	#id_Death,anim(a0)
 		move.w	art_tile(a0),(Saved_art_tile).w
 		bset	#7,art_tile(a0)
-		sfx
 
 .dontdie:
 		moveq	#-1,d0

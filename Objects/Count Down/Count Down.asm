@@ -32,7 +32,7 @@ AirCountdown_Init:
 
 loc_1819E:
 		move.w	#$570,art_tile(a0)
-		move.b	#$84,render_flags(a0)
+		move.b	#ren_camerapos|ren_onscreen|objflag_continue,render_flags(a0)
 		move.b	#32/2,width_pixels(a0)
 		move.w	#make_priority(1),priority(a0)
 		move.b	subtype(a0),d0
@@ -150,7 +150,7 @@ AirCountdown_ShowNumber:
 		bhs.s	locret_1831C
 		move.w	#$F,objoff_3C(a0)
 		clr.w	y_vel(a0)
-		move.b	#$80,render_flags(a0)
+		move.b	#ren_screenpos|ren_onscreen|objflag_continue,render_flags(a0)
 		move.w	x_pos(a0),d0
 		sub.w	(Camera_X_pos).w,d0
 		addi.w	#$80,d0

@@ -58,7 +58,7 @@ Tails_Init:
 		move.w	#make_priority(2),priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$18,height_pixels(a0)
-		move.b	#$84,render_flags(a0)
+		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.b	#1,character_id(a0)
 		move.w	#$600,Max_speed_P2-Max_speed_P2(a4)
 		move.w	#$C,Acceleration_P2-Max_speed_P2(a4)
