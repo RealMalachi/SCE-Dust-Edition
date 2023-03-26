@@ -63,7 +63,7 @@ ObjectTable_Count:				= 768	; The maximum objects on the level. Even addresses o
 ; PLC queues
 ; ---------------------------------------------------------------------------
 
-PLCKosM_Count:					= 32		; The greater the queues, the more RAM is used for the buffer
+PLCKosM_Count:					= 20		; The greater the queues, the more RAM is used for the buffer
 
 ; ---------------------------------------------------------------------------
 ; Game modes

@@ -137,28 +137,30 @@ Process_Kos_Module_Queue:
 		move.w	d2,d0
 		add.w	d3,d0
 		add.w	d3,d0
-		move.w	d0,(Kos_module_destination).w	; set new destination
+		move.w	d0,(Kos_module_destination).w		; set new destination
 		move.l	(Kos_module_queue).w,d0
 		move.l	(Kos_decomp_queue).w,d1
 		sub.l	d1,d0
 		andi.l	#$F,d0
-		add.l	d0,d1						; round to the nearest $10 boundary
-		move.l	d1,(Kos_module_queue).w		; and set new source
+		add.l	d0,d1					; round to the nearest $10 boundary
+		move.l	d1,(Kos_module_queue).w			; and set new source
 		move.l	#Kos_decomp_buffer>>1,d1
 		disableIntsSave
 		bsr.w	Add_To_DMA_Queue
 		enableIntsSave
 		tst.w	(Kos_modules_left).w
-		bne.s	.Done						; return if this wasn't the last module
+		bne.s	.Done					; return if this wasn't the last module
 		lea	(Kos_module_queue).w,a0
 		lea	(Kos_module_queue+6).w,a1
-	rept bytesToXcnt(Kos_module_queue_end-Kos_module_queue,8)
-		move.l	(a1)+,(a0)+					; otherwise, shift all entries up
+	rept (Kos_module_queue_end-Kos_module_queue-6)/4	; otherwise, shift all entries up
 		move.l	(a1)+,(a0)+
 	endr
+	if (Kos_module_queue_end-Kos_module_queue-6)&2		;
+		move.w	(a1)+,(a0)+
+	endif
 		moveq	#0,d0
-		move.l	d0,(a0)+						; and mark the last slot as free
-		move.l	d0,(a0)+
+		move.l	d0,(a0)+				; and mark the last slot as free
+		move.w	d0,(a0)+
 		move.l	(Kos_module_queue).w,d0
 		beq.s	Queue_Kos.Done				; return if the queue is now empty
 		movea.l	d0,a1
