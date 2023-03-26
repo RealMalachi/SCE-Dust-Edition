@@ -515,22 +515,38 @@ next_priority	= 64*2
 ; ---------------------------------------------------------------------------
 ; Sprite render screen flags
 ; ---------------------------------------------------------------------------
+renbit_xflip		= 0
+renbit_yflip		= 1
+renbit_camerapos	= 2	; if 0, base object position on the screen position. If 1, base on camera position
+renbit_screenpos	= renbit_camerapos
+; TODO, move out of render_flags when possible
+objflagbit_continue	= 3	; if 1, continue object routine when the player has died
+;renbit_excessive	= 4	; if 1, do a more exhaustive sprite rendering check
+renbit_static		= 5	; if 1, enable static rendering
+renbit_multidraw	= 6	; if 1, enable multidraw
+renbit_onscreen		= 7	; if 1, object successfully rendered
 
-rfCoord						= %00000100	; screen coordinates flag ($04)
+ren_xflip		= 1<<renbit_xflip
+ren_yflip		= 1<<renbit_yflip
+ren_camerapos		= 1<<renbit_camerapos
+ren_screenpos		= 0<<renbit_screenpos
+objflag_continue	= 1<<objflagbit_continue
 
-rfStatic						= %00100000	; static mappings flag ($20)
-rfMulti						= %01000000	; multi-draw flag ($40)
-rfOnscreen					= %10000000	; on-screen flag ($80)
+ren_static		= 1<<renbit_static
+ren_multidraw		= 1<<renbit_multidraw
+ren_onscreen		= 1<<renbit_onscreen
 
-; ---------------------------------------------------------------------------
-; Sprite render screen bits
-; ---------------------------------------------------------------------------
 
-rbCoord						= 2		; screen coordinates bit
+; backwards compatibility
+rbCoord						= renbit_screenpos	; screen coordinates bit
+rbStatic					= renbit_static		; static mappings bit
+rbMulti						= renbit_multidraw	; multi-draw bit
+rbOnscreen					= renbit_onscreen	; on-screen bit
 
-rbStatic						= 5		; static mappings bit
-rbMulti						= 6		; multi-draw bit
-rbOnscreen					= 7		; on-screen bit
+rfCoord						= ren_camerapos		; screen coordinates flag ($04)
+rfStatic					= ren_static		; static mappings flag ($20)
+rfMulti						= ren_multidraw		; multi-draw flag ($40)
+rfOnscreen					= ren_onscreen		; on-screen flag ($80)
 
 ; ---------------------------------------------------------------------------
 ; Animation flags
@@ -538,7 +554,7 @@ rbOnscreen					= 7		; on-screen bit
 
 afEnd						= $FF	; return to beginning of animation
 afBack						= $FE	; go back (specified number) bytes
-afChange						= $FD	; run specified animation
+afChange					= $FD	; run specified animation
 afRoutine					= $FC	; increment routine counter and continue load next anim bytes
 afReset						= $FB	; move offscreen for remove(Using the Sprite_OnScreen_Test, etc...)
 
