@@ -381,8 +381,12 @@ GetFloorPosition:
 		moveq	#-1,d1
 		clr.w	d1
 		move.b	(a1),d1
-		add.w	d1,d1
-		move.w	ChunkAddrArray(pc,d1.w),d1
+	;	add.w	d1,d1
+	;	move.w	ChunkAddrArray(pc,d1.w),d1
+		lsl.w	#7,d1	; (chunk number)*$80 ; $80 is how much data a chunk takes up
+	if Chunk_table&$FFFF<>0
+		add.w	#Chunk_table&$FFFF,d1	; add address to chunk RAM
+	endif
 		move.w	d2,d0
 		andi.w	#$70,d0
 		add.w	d0,d1
@@ -392,12 +396,12 @@ GetFloorPosition:
 		rts
 ; ---------------------------------------------------------------------------
 
-ChunkAddrArray:
-.a	set	0
-	rept	$100
-		dc.w	 .a
-.a	set	.a+$80
-	endr
+;ChunkAddrArray:
+;.a	set	0
+;	rept	$100
+;		dc.w	 .a
+;.a	set	.a+$80
+;	endr
 
 ; =============== S U B R O U T I N E =======================================
 
