@@ -177,14 +177,24 @@ Touch_ChkValue:
 		bmi.w	Touch_ChkHurt						; if 10, "harmful", branch
 		; If 01...
 		move.b	collision_flags(a1),d0					; get collision_flags
-		andi.b	#$3F,d0								; get only collision size
-		cmpi.b	#6,d0								; is touch response $46 ?
-		beq.s	Touch_Monitor						; if yes, branch
+	;	andi.b	#$3F,d0								; get only collision size
+		cmpi.b	#6|$40,d0				; is touch response $46?
+		beq.s	Touch_Monitor				; if yes, branch
+		cmpi.b	#7|$40,d0				; is touch response $47?
+		beq.s	Touch_Ring				; if yes, branch
 		move.b	(Player_1+invulnerability_timer).w,d0	; get the main character's invulnerability_timer
-		cmpi.b	#90,d0								; is there more than 90 frames on the timer remaining?
-		bhs.s	.locret								; if so, branch
-		move.b	#4,routine(a1)						; set target object's routine to 4 (must be reserved for collision response)
-
+		cmpi.b	#90,d0					; is there more than 90 frames on the timer remaining?
+		bhs.s	.locret					; if so, branch
+		move.b	#4,routine(a1)				; set target object's routine to 4 (must be reserved for collision response)
+.locret:
+		rts
+; ---------------------------------------------------------------------------
+; very similar to the above code
+Touch_Ring:
+		move.b	(Player_1+invulnerability_timer).w,d0	; get the main character's invulnerability_timer
+		cmpi.b	#90,d0					; is there more than 90 frames on the timer remaining?
+		bhs.s	.locret					; if so, branch
+		move.l	#Obj_RingCollect,address(a1)		; change object into a ring sparkle
 .locret:
 		rts
 ; ---------------------------------------------------------------------------
