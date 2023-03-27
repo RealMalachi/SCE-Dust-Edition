@@ -28,7 +28,7 @@ RunSomeObjects:
 	lea	next_object(a0),a0
 	bra.s	.frzloop
 .rts:
-	if GameDebug>=2
+	if ErrorChecks<>0
 	cmpa.w	#Object_RAM_End,a0
 	beq.s	+	; if not at the end of Object_RAM, force crash
 	RaiseError "Exceeded Object RAM!!!:", Debug_ExceededObjectRAM
