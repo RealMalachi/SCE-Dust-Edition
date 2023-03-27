@@ -173,7 +173,7 @@ EndOfHeader:
 ; Objects Process Subroutines
 ; ---------------------------------------------------------------------------
 
-	include "Data/Objects/Process Sprites.asm"
+	include "Data/Objects/Run Objects.asm"	; Process Sprites
 	include "Data/Objects/Render Sprites.asm"
 
 ; ---------------------------------------------------------------------------
