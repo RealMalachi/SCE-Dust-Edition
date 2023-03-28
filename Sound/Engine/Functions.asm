@@ -6,10 +6,13 @@ SMPS_LoadDACDriver:
 	SMPS_stopZ80
 	SMPS_resetZ80
 
-	; load Mega PCM (Kosinski-compressed)
-	lea	(MegaPCM).l,a0	; source
+	; load Mega PCM (KosinskiPlus-compressed)
+	lea	(MegaPCM).l,a0		; source
 	lea	(SMPS_z80_ram).l,a1	; destination
 	bsr.w	KosDec
+;;	movem.l	d0/d2/d4-d7/a5,-(sp)	; shouldn't need these
+;	bsr.w	KosPlusDec
+;;	movem.l	(sp)+,d0/d2/d4-d7/a5
 
 	moveq	#0,d1
 	move.w	d1,(SMPS_z80_reset).l

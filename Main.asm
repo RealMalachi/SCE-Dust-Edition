@@ -112,8 +112,10 @@ EndOfHeader:
 ; ---------------------------------------------------------------------------
 
 	include "Data/Decompression/Enigma Decompression.asm"
-	include "Data/Decompression/Kosinski Decompression.asm"
+	include "Data/Decompression/Kosinski Decompression.asm"	; TODO: Remove
+	include "Data/Decompression/KosinskiPlus.asm"	; Note: Trashes these registers,d0,d2,d4,d5,d6,d7,a0,a1,a5
 	include "Data/Decompression/Kosinski Module Decompression.asm"
+;	include "Data/Decompression/KosinskiPlusM.asm"	; TODO: Add
 
 ; ---------------------------------------------------------------------------
 ; Clone Driver - Functions Subroutine

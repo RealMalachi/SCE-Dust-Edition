@@ -1020,7 +1020,9 @@ LoadLevelLoadBlock2:
 		move.l	(a2)+,(Block_table_addr_ROM).w
 		movea.l	(a2)+,a0
 		lea	(RAM_start).l,a1
-		jsr	(Kos_Decomp).w
+		movem.l	d0/d2/d4-d7/a5,-(sp)
+		jsr	(KosPlusDec).w	; load chunks
+		movem.l	(sp)+,d0/d2/d4-d7/a5
 		bsr.s	Load_Level
 		jsr	(LoadPLC_KosM).w
 		movea.l	(sp)+,a2
