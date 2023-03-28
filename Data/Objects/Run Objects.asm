@@ -29,7 +29,7 @@ RunSomeObjects:
 	bra.s	.frzloop
 .rts:
 	if ErrorChecks<>0
-	cmpa.w	#Object_RAM_End,a0
+	cmpa.w	#Object_RAM_end,a0
 	beq.s	+	; if not at the end of Object_RAM, force crash
 	RaiseError "Exceeded Object RAM!!!:", Debug_ExceededObjectRAM
 +
