@@ -6,16 +6,16 @@ SetUp_ObjAttributes:
 		move.l	(a1)+,mappings(a0)		; Mapping offset
 
 SetUp_ObjAttributes2:
-		move.w	(a1)+,art_tile(a0)			; VRAM offset
+		move.w	(a1)+,art_tile(a0)		; VRAM offset
 
 SetUp_ObjAttributes3:
 LoadObjects_ExtraData:
-		move.w	(a1)+,priority(a0)			; Priority
+		move.w	(a1)+,priority(a0)		; Priority
 		move.b	(a1)+,width_pixels(a0)		; Width
-		move.b	(a1)+,height_pixels(a0)	; Height
-		move.b	(a1)+,mapping_frame(a0)	; Frame number
+		move.b	(a1)+,height_pixels(a0)		; Height
+		move.b	(a1)+,mapping_frame(a0)		; Frame number
 		move.b	(a1)+,collision_flags(a0)	; Collision number
-		bset	#rbCoord,render_flags(a0)		; Use screen coordinates
+		bset	#rbCoord,render_flags(a0)	; Use screen coordinates
 		addq.b	#2,routine(a0)			; Next routine
 		rts
 
@@ -23,45 +23,45 @@ LoadObjects_ExtraData:
 
 SetUp_ObjAttributesSlotted:
 		moveq	#0,d0
-		move.w	(a1)+,d1					; Maximum number of objects that can be made in this array
+		move.w	(a1)+,d1			; Maximum number of objects that can be made in this array
 		move.w	d1,d2
-		move.w	(a1)+,d3					; Base VRAM offset of object
-		move.w	(a1)+,d4					; Amount to add to base VRAM offset for each slot
+		move.w	(a1)+,d3			; Base VRAM offset of object
+		move.w	(a1)+,d4			; Amount to add to base VRAM offset for each slot
 		moveq	#0,d5
-		move.w	(a1)+,d5					; Index of slot array to use (RAM shift)
+		move.w	(a1)+,d5			; Index of slot array to use (RAM shift)
 		lea	(Slotted_object_bits).w,a2
-		adda.w	d5,a2					; Get the address of the array to use
+		adda.w	d5,a2				; Get the address of the array to use
 		move.b	(a2),d5
-		beq.s	+						; If array is clear, just make the object
+		beq.s	+				; If array is clear, just make the object
 
--		lsr.b	#1,d5						; Check slot (each bit)
-		bcc.s	+						; If clear, make object
-		addq.w	#1,d0					; Increment bit number
-		add.w	d4,d3					; Add VRAM offset
-		dbf	d1,-							; Repeat max times
+-		lsr.b	#1,d5				; Check slot (each bit)
+		bcc.s	+				; If clear, make object
+		addq.w	#1,d0				; Increment bit number
+		add.w	d4,d3				; Add VRAM offset
+		dbf	d1,-				; Repeat max times
 		moveq	#0,d0
 		move.l	d0,address(a0)
 		move.l	d0,x_pos(a0)
 		move.l	d0,y_pos(a0)
 		move.b	d0,subtype(a0)
 		move.b	d0,render_flags(a0)
-		move.w	d0,status(a0)				; If no open slots, then destroy this object period
+		move.w	d0,status(a0)			; If no open slots, then destroy this object period
 		addq.w	#8,sp
 		rts
 ; ---------------------------------------------------------------------------
-+		bset	d0,(a2)						; Turn this slot on
++		bset	d0,(a2)				; Turn this slot on
 		move.b	d0,objoff_3B(a0)
-		move.w	a2,objoff_3C(a0)			; Keep track of slot address and bit number
+		move.w	a2,objoff_3C(a0)		; Keep track of slot address and bit number
 		move.w	d3,art_tile(a0)			; Use correct VRAM offset
 		move.l	(a1)+,mappings(a0)		; Mapping address
-		move.w	(a1)+,priority(a0)			; Priority
+		move.w	(a1)+,priority(a0)		; Priority
 		move.b	(a1)+,width_pixels(a0)		; Width
-		move.b	(a1)+,height_pixels(a0)	; Height
-		move.b	(a1)+,mapping_frame(a0)	; Frame number
+		move.b	(a1)+,height_pixels(a0)		; Height
+		move.b	(a1)+,mapping_frame(a0)		; Frame number
 		move.b	(a1)+,collision_flags(a0)	; Collision number
-		bset	#2,status(a0)					; Turn object slotting on
-		st	objoff_3A(a0)				; Reset DPLC frame
-		bset	#2,render_flags(a0)			; Use screen coordinates
+		bset	#2,status(a0)			; Turn object slotting on
+		st	objoff_3A(a0)			; Reset DPLC frame
+		bset	#2,render_flags(a0)		; Use screen coordinates
 		addq.b	#2,routine(a0)			; Next routine
 		rts
 
@@ -69,35 +69,33 @@ SetUp_ObjAttributesSlotted:
 
 Perform_DPLC:
 		moveq	#0,d0
-		move.b	mapping_frame(a0),d0	; Get the frame number
-		cmp.b	objoff_3A(a0),d0			; If frame number remains the same as before, don't do anything
+		move.b	mapping_frame(a0),d0		; Get the frame number
+		cmp.b	objoff_3A(a0),d0		; If frame number remains the same as before, don't do anything
 		beq.s	.return
 		move.b	d0,objoff_3A(a0)
-		movea.l	(a2)+,a3					; Source address of art
+		movea.l	(a2)+,a3			; Source address of art
 		move.w	art_tile(a0),d4
-		andi.w	#$7FF,d4				; Isolate tile location offset
-		lsl.w	#5,d4						; Convert to VRAM address
-		movea.l	(a2)+,a2					; Address of DPLC script
+		andi.w	#$7FF,d4			; Isolate tile location offset
+		lsl.w	#5,d4				; Convert to VRAM address
+		movea.l	(a2)+,a2			; Address of DPLC script
 		add.w	d0,d0
-		adda.w	(a2,d0.w),a2				; Apply offset to script
-		move.w	(a2)+,d5					; Get number of DMA transactions
-		bmi.s	.return					; skip if zero queues
+		adda.w	(a2,d0.w),a2			; Apply offset to script
+		move.w	(a2)+,d5			; Get number of DMA transactions
+		bmi.s	.return				; skip if zero queues
 		moveq	#0,d3
-
 .loop
-		move.w	(a2)+,d3					; Art source offset
+		move.w	(a2)+,d3			; Art source offset
 		move.l	d3,d1
-		andi.w	#$FFF0,d1				; Isolate all but lower 4 bits
-		add.l	a3,d1					; Get final source address of art
-		move.w	d4,d2					; Destination VRAM address
+		andi.w	#$FFF0,d1			; Isolate all but lower 4 bits
+		add.l	a3,d1				; Get final source address of art
+		move.w	d4,d2				; Destination VRAM address
 		andi.w	#$F,d3
 		addq.w	#1,d3
-		lsl.w	#4,d3						; d3 is the total number of words to transfer (maximum 16 tiles per transaction)
+		lsl.w	#4,d3				; d3 is the total number of words to transfer (maximum 16 tiles per transaction)
 		add.w	d3,d4
 		add.w	d3,d4
 		jsr	(Add_To_DMA_Queue).w		; Add to queue
-		dbf	d5,.loop						; Keep going
-
+		dbf	d5,.loop			; Keep going
 .return
 		rts
 
@@ -116,44 +114,44 @@ Set_IndexedVelocity:
 ; ---------------------------------------------------------------------------
 
 Obj_VelocityIndex:
-		dc.w -$100, -$100		; 0
-		dc.w $100, -$100		; 4
+		dc.w -$100, -$100	; 0
+		dc.w  $100, -$100	; 4
 		dc.w -$200, -$200	; 8
-		dc.w $200, -$200		; Ñ
+		dc.w  $200, -$200	; C
 		dc.w -$300, -$200	; 10
-		dc.w $300, -$200		; 14
+		dc.w  $300, -$200	; 14
 		dc.w -$200, -$200	; 18
-		dc.w 0, -$200		; 1Ñ
+		dc.w     0, -$200	; 1C
 		dc.w -$400, -$300	; 20
-		dc.w $400, -$300		; 24
-		dc.w $300, -$300		; 28
-		dc.w -$400, -$300	; 2Ñ
-		dc.w $400, -$300		; 30
+		dc.w  $400, -$300	; 24
+		dc.w  $300, -$300	; 28
+		dc.w -$400, -$300	; 2C
+		dc.w  $400, -$300	; 30
 		dc.w -$200, -$200	; 34
-		dc.w $200, -$200		; 38
-		dc.w 0, -$100			; 3Ñ
-		dc.w -$40, -$700		; 40
-		dc.w -$80, -$700		; 44
-		dc.w -$180, -$700		; 48
-		dc.w -$100, -$700		; 4Ñ
+		dc.w  $200, -$200	; 38
+		dc.w     0, -$100	; 3C
+		dc.w  -$40, -$700	; 40
+		dc.w  -$80, -$700	; 44
+		dc.w -$180, -$700	; 48
+		dc.w -$100, -$700	; 4C
 		dc.w -$200, -$700	; 50
 		dc.w -$280, -$700	; 54
 		dc.w -$300, -$700	; 58
-		dc.w 0, -$100			; 5Ñ
-		dc.w -$100, -$100		; 60
-		dc.w $100, -$100		; 64
-		dc.w -$200, -$100		; 68
-		dc.w $200, -$100		; 6Ñ
+		dc.w     0, -$100	; 5C
+		dc.w -$100, -$100	; 60
+		dc.w  $100, -$100	; 64
+		dc.w -$200, -$100	; 68
+		dc.w  $200, -$100	; 6C
 		dc.w -$200, -$200	; 70
-		dc.w $200, -$200		; 74
+		dc.w  $200, -$200	; 74
 		dc.w -$300, -$200	; 78
-		dc.w $300, -$200		; 7Ñ
+		dc.w  $300, -$200	; 7C
 		dc.w -$300, -$300	; 80
-		dc.w $300, -$300		; 84
+		dc.w  $300, -$300	; 84
 		dc.w -$400, -$300	; 88
-		dc.w $400, -$300		; 8Ñ
+		dc.w  $400, -$300	; 8C
 		dc.w -$200, -$300	; 90
-		dc.w $200, -$300		; 94
+		dc.w  $200, -$300	; 94
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -193,19 +191,21 @@ Go_CheckPlayerRelease:
 		bsr.w	CheckPlayerReleaseFromObj
 +
 		movem.l	(sp)+,d7-a0/a2-a3
+
+Song_Fade_Transition_Return:
+Song_Fade_ToLevelMusic_Return:
 		rts
 
 ; =============== S U B R O U T I N E =======================================
 
 Obj_Song_Fade_Transition:
-		music	mus_Fade	; fade out music
 		move.l	#Song_Fade_Transition_Wait,address(a0)
-
-Song_Fade_Transition_Return:
-		rts
-; ---------------------------------------------------------------------------
+;	move.w	#90,wait(a0)	; S3K method, easier on Z80 drivers
+		music	mus_Fade,1	; fade out music
 
 Song_Fade_Transition_Wait:
+;	subq.w	#1,wait(a0)
+;	bpl.s	Song_Fade_ToLevelMusic_Return	; TODO: Find a way to make Z80 drivers do the M68K version
 		tst.b	(Clone_Driver_RAM+SMPS_RAM.variables.v_fadeout_counter).w
 		bne.s	Song_Fade_Transition_Return
 		moveq	#0,d0
@@ -217,14 +217,13 @@ Song_Fade_Transition_Wait:
 ; =============== S U B R O U T I N E =======================================
 
 Obj_Song_Fade_ToLevelMusic:
-		music	mus_Fade	; fade out music
 		move.l	#Song_Fade_ToLevelMusic_Wait,address(a0)
-
-Song_Fade_ToLevelMusic_Return:
-		rts
-; ---------------------------------------------------------------------------
+;	move.w	#90,wait(a0)	; same as above
+		music	mus_Fade,1	; fade out music
 
 Song_Fade_ToLevelMusic_Wait:
+;	subq.w	#1,wait(a0)
+;	bpl.s	Song_Fade_ToLevelMusic_Return
 		tst.b	(Clone_Driver_RAM+SMPS_RAM.variables.v_fadeout_counter).w
 		bne.s	Song_Fade_ToLevelMusic_Return
 		bsr.s	Restore_LevelMusic
@@ -300,20 +299,20 @@ EnemyDefeated:
 EnemyDefeat_Score:
 		bset	#7,status(a0)
 		clr.b	collision_flags(a0)
-		moveq	#0,d0
+;		moveq	#0,d0
 		move.w	(Chain_bonus_counter).w,d0
 		addq.w	#2,(Chain_bonus_counter).w
-		cmpi.w	#6,d0
-		blo.s		.notreachedlimit
-		moveq	#6,d0
+		cmpi.w	#3*2,d0
+		blo.s	.notreachedlimit
+		moveq	#3*2,d0
 
 .notreachedlimit:
 		move.w	d0,objoff_3E(a0)
 		lea	Enemy_Points(pc),a2
 		move.w	(a2,d0.w),d0
-		cmpi.w	#16*2,(Chain_bonus_counter).w		; have 16 enemies been destroyed?
-		blo.s		.notreachedlimit2					; if not, branch
-		move.w	#1000,d0						; fix bonus to 10000
+		cmpi.w	#16*2,(Chain_bonus_counter).w	; have 16 enemies been destroyed?
+		blo.s	.notreachedlimit2		; if not, branch
+		move.w	#1000,d0			; fix bonus to 10000
 		move.w	#10,objoff_3E(a0)
 
 .notreachedlimit2:
@@ -434,14 +433,9 @@ Set_PlayerEndingPose:
 		move.b	#$81,object_control(a1)
 		move.b	#id_Landing,anim(a1)
 		clr.b	spin_dash_flag(a1)
-		clr.l	x_vel(a1)
-		clr.w	ground_vel(a1)
 		bclr	#Status_Push,status(a0)
 		bclr	#Status_Underwater,status(a0)
 		bclr	#Status_Push,status(a1)
-		rts
-
-; =============== S U B R O U T I N E =======================================
 
 Stop_Object:
 		clr.l	x_vel(a1)
@@ -482,34 +476,34 @@ Play_SFX_Continuous:
 ; =============== S U B R O U T I N E =======================================
 
 Wait_NewDelay:
-		subq.w	#1,$2E(a0)
+		subq.w	#1,wait(a0)
 		bmi.s	.end
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 
 .end
 		bclr	#7,render_flags(a0)
-		move.w	#(2*60)-1,$2E(a0)
-		movea.l	$34(a0),a1
+		move.w	#(2*60)-1,wait(a0)
+		movea.l	jump(a0),a1
 		jmp	(a1)
 
 ; =============== S U B R O U T I N E =======================================
 
 Wait_FadeToLevelMusic:
-		subq.w	#1,$2E(a0)
+		subq.w	#1,wait(a0)
 		bmi.s	.end
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 
 .end
 		bclr	#7,render_flags(a0)
-		move.w	#(2*60)-1,$2E(a0)
+		move.w	#(2*60)-1,wait(a0)
 		jsr	(Create_New_Sprite).w
 		bne.s	.notfree
 		move.l	#Obj_Song_Fade_ToLevelMusic,address(a1)
 
 .notfree
-		movea.l	$34(a0),a1
+		movea.l	jump(a0),a1
 		jmp	(a1)
 
 ; =============== S U B R O U T I N E =======================================
@@ -518,7 +512,7 @@ BossDefeated_StopTimer:
 		clr.b	(Update_HUD_timer).w
 
 BossDefeated:
-		move.w	#$3F,$2E(a0)
+		move.w	#$3F,wait(a0)
 
 BossDefeated_NoTime:
 		bclr	#7,render_flags(a0)
@@ -592,7 +586,7 @@ Check_CameraXBoundary:
 +		move.w	(Camera_X_pos).w,d0
 		addi.w	#$10,d0
 		cmp.w	x_pos(a0),d0
-		blo.s		+
+		blo.s	+
 		clr.w	x_vel(a0)
 +		rts
 
@@ -639,7 +633,7 @@ Obj_DecLevStartXGradual:
 		swap	d1
 		sub.w	d1,d0
 		cmp.w	(Camera_stored_min_X_pos).w,d0
-		ble.s		+
+		ble.s	+
 		move.w	d0,(Camera_min_X_pos).w
 		rts
 ; ---------------------------------------------------------------------------
