@@ -179,6 +179,9 @@ subObjSlotData macro slots,vram,offset,index,mappings,priority,width,height,fram
 	dc.l mappings
 	dc.w priority
 	dc.b width,height,frame,collision
+	if priority < Sprite_table_input
+	fatal "Priority is not properly filled in"
+	endif
     endm
 
 ; calculates initial loop counter value for a dbf loop

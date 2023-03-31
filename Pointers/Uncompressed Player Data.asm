@@ -6,14 +6,17 @@ ArtUnc_Sonic:			binclude "Objects/Sonic/Uncompressed Art/Sonic.bin"
 	even
 ArtUnc_Sonic_Extra:		binclude "Objects/Sonic/Uncompressed Art/Sonic Extra.bin"
 	even
+	DMA128kbpad
 ArtUnc_Tails:			binclude "Objects/Tails/Uncompressed Art/Tails.bin"
 	even
 ArtUnc_Tails_Extra:		binclude "Objects/Tails/Uncompressed Art/Tails Extra.bin"
 	even
 ArtUnc_Tails_Tail:		binclude "Objects/Tails/Uncompressed Art/Tails tails.bin"
 	even
+	DMA128kbpad
 ArtUnc_Knux:			binclude "Objects/Knuckles/Uncompressed Art/Knuckles.bin"
 	even
+	DMA128kbpad
 ArtUnc_DashDust:		binclude "Objects/Spin Dust/Uncompressed Art/Dash Dust.bin"
 	even
 ArtUnc_AirCountDown:	binclude "Objects/Count Down/Uncompressed Art/Air Countdown.bin"

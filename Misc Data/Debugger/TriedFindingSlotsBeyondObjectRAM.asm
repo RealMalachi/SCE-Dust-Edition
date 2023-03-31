@@ -1,5 +1,5 @@
 ; Called when Create_New_Sprite goes before of beyond Object_RAM
-; TODO: Add it to inlined macro version
+; TODO: Maybe add it to unsafe macro version
 Debug_TriedFindingSlotsBeyondObjectRAM:
 	lea	(Object_RAM_end).w,a0	;
 	Console.Write "Intended RAM End: %<.l a0> "

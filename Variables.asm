@@ -38,7 +38,7 @@ ObjectRamMarker			ds.b 1	; a fast failsafe to end dynamic object checking routin
 ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects
 
 
-Kos_decomp_buffer:				ds.b $1000		; Each module in a KosM archive is decompressed here and then DMAed to VRAM
+Kos_decomp_buffer:				ds.w $800		; Each module in a KosM archive is decompressed here and then DMAed to VRAM
 
 H_scroll_buffer:				ds.l 224		; Horizontal scroll table is built up here and then DMAed to VRAM
 H_scroll_table:					ds.b 512		; offsets for background scroll positions, used by ApplyDeformation
