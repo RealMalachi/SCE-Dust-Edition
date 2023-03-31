@@ -152,32 +152,71 @@ V_int_flag:					ds.b 1	; If 0, game hasn't reached Vsync, lag. If 1, waiting for
 V_int_routine:					= *
 v_vbla_routine:					ds.l 1	; address to routine that V-int will run if not lagging
 
+; ---------------------------------------------------------------------------
+; joypad control
+Ctrl1:			; longword
+Ctrl1_Hd:		; word
+Ctrl1_Hd_XYZ:		ds.b 1
+Ctrl1_Hd_ABC:		ds.b 1
+Ctrl1_Pr:		; word
+Ctrl1_Pr_XYZ:		ds.b 1
+Ctrl1_Pr_ABC:		ds.b 1
+Ctrl2:			; longword
+Ctrl2_Hd:		; word
+Ctrl2_Hd_XYZ:		ds.b 1
+Ctrl2_Hd_ABC:		ds.b 1
+Ctrl2_Pr:		; word
+Ctrl2_Pr_XYZ:		ds.b 1
+Ctrl2_Pr_ABC:		ds.b 1
+; TODO: Merge logical with player variables
+Ctrl1_Player:		; longword
+Ctrl1_Player_Hd:	; word
+Ctrl1_Player_Hd_XYZ:	ds.b 1
+Ctrl1_Player_Hd_ABC:	ds.b 1
+Ctrl1_Player_Pr:	; word
+Ctrl1_Player_Pr_XYZ:	ds.b 1
+Ctrl1_Player_Pr_ABC:	ds.b 1
+Ctrl2_Player:		; longword
+Ctrl2_Player_Hd:	; word
+Ctrl2_Player_Hd_XYZ:	ds.b 1
+Ctrl2_Player_Hd_ABC:	ds.b 1
+Ctrl2_Player_Pr:	; word
+Ctrl2_Player_Pr_XYZ:	ds.b 1
+Ctrl2_Player_Pr_ABC:	ds.b 1
 
-SonicControl:					= *
-Ctrl_1_logical:					= *
-v_jpadhold2:					= *
-Ctrl_1_held_logical:				ds.b 1
-v_jpadpress2:					= *
-Ctrl_1_pressed_logical:				ds.b 1
-Joypad:						= *
-Ctrl_1:						= *
-Ctrl_1_held:					= *
-Ctrl_1_hold:					= *
-v_jpadhold1:					ds.b 1
-v_jpadpress1:					= *
-Ctrl_1_press:					= *
-Ctrl_1_pressed:					ds.b 1
-Ctrl_2:						= *
-Ctrl_2_held:					= *
-Ctrl_2_hold:					= *
-v_jpad2hold1:					ds.b 1
-v_jpad2press1:					= *
-Ctrl_2_press:					= *
-Ctrl_2_pressed:					ds.b 1
-Ctrl_2_logical:					 = *			 ; both held and pressed
-Ctrl_2_held_logical:				ds.b 1
-Ctrl_2_pressed_logical:				ds.b 1
+Ctrl1State:		ds.b 1		; controller type (0 = 3 button, -1 = 6 button)
+Ctrl2State:		ds.b 1		; ditto
 
+; backwards compatibility...ish
+Joypad:			= Ctrl1_Hd_ABC
+Ctrl_1:			= Ctrl1_Hd_ABC
+Ctrl_1_held:		= Ctrl1_Hd_ABC
+Ctrl_1_hold:		= Ctrl1_Hd_ABC
+v_jpadhold1:		= Ctrl1_Hd_ABC
+v_jpadpress1:		= Ctrl1_Pr_ABC
+Ctrl_1_press:		= Ctrl1_Pr_ABC
+Ctrl_1_pressed:		= Ctrl1_Pr_ABC
+
+Ctrl_2:			= Ctrl2_Hd_ABC
+Ctrl_2_held:		= Ctrl2_Hd_ABC
+Ctrl_2_hold:		= Ctrl2_Hd_ABC
+v_jpad2hold1:		= Ctrl2_Hd_ABC
+v_jpad2press1:		= Ctrl2_Pr_ABC
+Ctrl_2_press:		= Ctrl2_Pr_ABC
+Ctrl_2_pressed:		= Ctrl2_Pr_ABC
+
+; player control
+SonicControl:			= Ctrl1_Player_Hd_ABC
+Ctrl_1_logical:			= Ctrl1_Player_Hd_ABC
+v_jpadhold2:			= Ctrl1_Player_Hd_ABC
+Ctrl_1_held_logical:		= Ctrl1_Player_Hd_ABC
+v_jpadpress2:			= Ctrl1_Player_Pr_ABC
+Ctrl_1_pressed_logical:		= Ctrl1_Player_Pr_ABC
+
+Ctrl_2_logical:			= Ctrl2_Player_Hd_ABC	; both held and pressed
+Ctrl_2_held_logical:		= Ctrl2_Player_Hd_ABC
+Ctrl_2_pressed_logical:		= Ctrl2_Player_Pr_ABC
+; ---------------------------------------------------------------------------
 
 
 v_vdp_buffer1:					= *

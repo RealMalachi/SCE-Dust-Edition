@@ -129,10 +129,10 @@ Level_Screen:
 		jsr	(Load_Solids).w
 		jsr	(Handle_Onscreen_Water_Height).l
 		moveq	#0,d0
-		move.w	d0,(Ctrl_1_logical).w
-		move.w	d0,(Ctrl_2_logical).w
-		move.w	d0,(Ctrl_1).w
-		move.w	d0,(Ctrl_2).w
+		move.w	d0,(Ctrl1).w
+		move.w	d0,(Ctrl2).w
+		move.l	d0,(Ctrl1_Player).w
+		move.w	d0,(Ctrl2_Player).w
 		move.b	d0,(HUD_RAM.status).w
 		tst.b	(Last_star_post_hit).w							; are you starting from a starpost?
 		bne.s	.starpost									; if yes, branch
@@ -172,8 +172,8 @@ Level_Screen:
 		moveq	#22,d0
 		move.w	d0,(Palette_fade_timer).w								; time for Pal_FromBlack
 		move.w	d0,(Dynamic_object_RAM+(object_size*5)+objoff_2E).w	; time for Title Card
-		move.w	#$7F00,(Ctrl_1).w
-		move.w	#$7F00,(Ctrl_2).w
+		move.b	#$7F,(Ctrl_1_held).w
+		move.b	#$7F,(Ctrl_2_held).w
 		andi.b	#$7F,(Last_star_post_hit).w
 		bclr	#GameModeFlag_TitleCard,(Game_mode).w		; subtract $80 from mode to end pre-level stuff
 		move.l	#VInt_Level,(V_int_routine).w

@@ -132,11 +132,11 @@ locret_13806:
 loc_13808:
 		cmpa.w	#Player_1,a0
 		bne.s	loc_13830
-		move.w	(Ctrl_1_logical).w,(Ctrl_2_logical).w
+		move.l	(Ctrl1_Player).w,(Ctrl2_Player).w
 		tst.b	(Ctrl_1_locked).w
 		bne.s	loc_1384A
-		move.w	(Ctrl_1).w,(Ctrl_2_logical).w
-		move.w	(Ctrl_1).w,(Ctrl_1_logical).w
+		move.l	(Ctrl1).w,(Ctrl2_Player).w
+		move.l	(Ctrl1).w,(Ctrl1_Player).w
 		cmpi.w	#$1A,(Tails_CPU_routine).w
 		bhs.s	loc_13840
 		bra.s	loc_1384A
@@ -150,7 +150,7 @@ loc_13830:
 ; ---------------------------------------------------------------------------
 
 loc_1383A:
-		move.w	(Ctrl_2).w,(Ctrl_2_logical).w
+		move.l	(Ctrl2).w,(Ctrl2_Player).w
 
 loc_13840:
 		bsr.w	Tails_CPU_Control
@@ -366,27 +366,27 @@ loc_13B78:
 		move.w	d0,$18(a0)
 		move.w	d0,$1A(a0)
 		move.w	d0,$1C(a0)
-		move.b	d0,$2D(a0)
+		move.b	d0,flip_type(a0)
 		move.b	d0,double_jump_flag(a0)
 		move.b	#2,$2A(a0)
 		move.b	#$1E,$2C(a0)
 		move.b	#$81,$2E(a0)
-		move.b	d0,$30(a0)
+		move.b	d0,flips_remaining(a0)
 		move.b	d0,$31(a0)
 		move.w	d0,$32(a0)
 		move.b	d0,$34(a0)
 		move.b	d0,$35(a0)
 		move.b	d0,$36(a0)
 		move.b	d0,$37(a0)
-		move.b	d0,$39(a0)
+		move.b	d0,scroll_delay_counter(a0)
 		move.w	d0,$3A(a0)
 		move.b	d0,$3C(a0)
 		move.b	d0,$3D(a0)
 		move.b	d0,$3D(a0)
 		move.w	d0,$3E(a0)
-		move.b	d0,$40(a0)
+		move.b	d0,jumping(a0)
 		move.b	d0,$41(a0)
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		bsr.w	Tails_Set_Flying_Animation
 
 locret_13BF6:
@@ -405,13 +405,13 @@ Tails_FlySwim_Unknown:
 		move.b	#2,$2A(a0)
 		move.w	#0,$10(a0)
 		move.w	#0,$14(a0)
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		bsr.w	Tails_Set_Flying_Animation
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_13C3A:
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		ori.b	#2,$2A(a0)
 		bsr.w	Tails_Set_Flying_Animation
 		move.w	#0,(Tails_CPU_flight_timer).w
@@ -536,12 +536,11 @@ loc_13D78:
 		tst.b	$37(a1)
 		bmi.w	loc_13EBE
 		tst.w	$32(a0)
-		beq.s	loc_13DA6
+		beq.s	+
 		tst.w	$1C(a0)
-		bne.s	loc_13DA6
+		bne.s	+
 		move.w	#8,(Tails_CPU_routine).w
-
-loc_13DA6:
++
 		lea	(Pos_table).w,a2
 		move.w	#$10,d1
 		lsl.b	#2,d1
@@ -550,83 +549,78 @@ loc_13DA6:
 		sub.b	d1,d0
 		move.w	(a2,d0.w),d2
 		btst	#3,$2A(a1)
-		bne.s	loc_13DD0
+		bne.s	+
 		cmpi.w	#$400,$1C(a1)
-		bge.s	loc_13DD0
+		bge.s	+
 		subi.w	#$20,d2
-
-loc_13DD0:
++
 		move.w	2(a2,d0.w),d3
 		lea	(Stat_table).w,a2
 		move.w	(a2,d0.w),d1
 		move.b	2(a2,d0.w),d4
 		move.w	d1,d0
 		btst	#5,$2A(a0)
-		beq.s	loc_13DF2
+		beq.s	+
 		btst	#5,d4
 		beq.w	loc_13E9C
-
-loc_13DF2:
-		sub.w	$10(a0),d2
-		beq.s	loc_13E50
-		bpl.s	loc_13E26
++
+		sub.w	x_pos(a0),d2
+		beq.s	.null
+		bpl.s	.right
+;.left
 		neg.w	d2
 		cmpi.w	#$30,d2
-		blo.s	loc_13E0A
-		andi.w	#$F3F3,d1
-		ori.w	#$404,d1
-
-loc_13E0A:
-		tst.w	$1C(a0)
+		blo.s	+
+		andi.w	#$F3F3,d1	; 11110011
+		ori.w	#(button_left_mask)<<8|button_left_mask,d1
++
+		tst.w	ground_vel(a0)
 		beq.s	loc_13E64
-		btst	#0,$2A(a0)
+		btst	#0,status(a0)
 		beq.s	loc_13E64
 		btst	#0,$2E(a0)
 		bne.s	loc_13E64
-		subq.w	#1,$10(a0)
+		subq.w	#1,x_pos(a0)
 		bra.s	loc_13E64
 ; ---------------------------------------------------------------------------
 
-loc_13E26:
+.right:
 		cmpi.w	#$30,d2
-		blo.s	loc_13E34
+		blo.s	+
 		andi.w	#$F3F3,d1
-		ori.w	#$808,d1
-
-loc_13E34:
-		tst.w	$1C(a0)
+		ori.w	#(button_right_mask)<<8|button_right_mask,d1
++
+		tst.w	ground_vel(a0)
 		beq.s	loc_13E64
-		btst	#0,$2A(a0)
+		btst	#0,status(a0)
 		bne.s	loc_13E64
 		btst	#0,$2E(a0)
 		bne.s	loc_13E64
-		addq.w	#1,$10(a0)
+		addq.w	#1,x_pos(a0)
 		bra.s	loc_13E64
 ; ---------------------------------------------------------------------------
 
-loc_13E50:
+.null:
 		bclr	#0,$2A(a0)
 		move.b	d4,d0
 		andi.b	#1,d0
-		beq.s	loc_13E64
+		beq.s	+
 		bset	#0,$2A(a0)
-
++
 loc_13E64:
 		tst.b	(Tails_CPU_auto_jump_flag).w
-		beq.s	loc_13E7C
-		ori.w	#$7000,d1
+		beq.s	+
+		ori.w	#(button_ABC_mask)<<8,d1
 		btst	#1,$2A(a0)
 		bne.s	loc_13EB8
 		move.b	#0,(Tails_CPU_auto_jump_flag).w
-
-loc_13E7C:
++
 		move.w	(Level_frame_counter).w,d0
 		andi.w	#$FF,d0
-		beq.s	loc_13E8C
+		beq.s	+
 		cmpi.w	#$40,d2
 		bhs.s	loc_13EB8
-
-loc_13E8C:
++
 		sub.w	$14(a0),d3
 		beq.s	loc_13EB8
 		bpl.s	loc_13EB8
@@ -640,33 +634,22 @@ loc_13E9C:
 		bne.s	loc_13EB8
 		cmpi.b	#8,anim(a0)
 		beq.s	loc_13EB8
-		ori.w	#$7070,d1
+		ori.w	#(button_ABC_mask)<<8|button_ABC_mask,d1
 		move.b	#1,(Tails_CPU_auto_jump_flag).w
 
 loc_13EB8:
-		move.w	d1,(Ctrl_2_logical).w
+; HHHHHHHH PPPPPPP
+		move.b	d1,(Ctrl_2_pressed_logical).w
+		lsr.w	#8,d1
+		move.b	d1,(Ctrl_2_held_logical).w
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_13EBE:
 		tst.w	(Tails_CPU_idle_timer).w
-		beq.s	locret_13EC8
+		beq.s	+
 		subq.w	#1,(Tails_CPU_idle_timer).w
-
-locret_13EC8:
-		rts
-
-; =============== S U B R O U T I N E =======================================
-
-sub_13ECA:
-		move.w	#0,(Tails_CPU_idle_timer).w
-		move.w	#0,(Tails_CPU_flight_timer).w
-		move.w	#2,(Tails_CPU_routine).w
-		move.b	#$81,$2E(a0)
-		move.b	#2,$2A(a0)
-		move.w	#$7F00,$10(a0)
-		move.w	#0,$14(a0)
-		move.b	#0,double_jump_flag(a0)
++
 		rts
 
 ; =============== S U B R O U T I N E =======================================
@@ -688,7 +671,17 @@ loc_13F18:
 		blo.s	loc_13F2E
 
 loc_13F24:
-		bra.w	sub_13ECA
+;		bra.w	sub_13ECA
+sub_13ECA:
+		move.w	#0,(Tails_CPU_idle_timer).w
+		move.w	#0,(Tails_CPU_flight_timer).w
+		move.w	#2,(Tails_CPU_routine).w
+		move.b	#$81,$2E(a0)
+		move.b	#2,$2A(a0)
+		move.w	#$7F00,$10(a0)
+		move.w	#0,$14(a0)
+		move.b	#0,double_jump_flag(a0)
+		rts
 ; ---------------------------------------------------------------------------
 
 loc_13F28:
@@ -696,18 +689,19 @@ loc_13F28:
 
 loc_13F2E:
 		btst	#3,$2A(a0)
-		beq.s	locret_13F3E
+		beq.s	+
 		movea.w	$42(a0),a3
 		move.w	(a3),(Tails_CPU_interact).w
-
-locret_13F3E:
++
+locret_13FBE:
+locret_13FC0:
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_13F40:
 		bsr.w	sub_13EFC
 		tst.w	(Tails_CPU_idle_timer).w
-		bne.w	locret_13FBE
+		bne.s	locret_13FBE
 		tst.w	$32(a0)
 		bne.s	locret_13FBE
 		tst.b	$3D(a0)
@@ -717,48 +711,46 @@ loc_13F40:
 		bclr	#0,$2A(a0)
 		move.w	$10(a0),d0
 		sub.w	$10(a1),d0
-		bcs.s	loc_13F74
+		bcs.s	+
 		bset	#0,$2A(a0)
-
-loc_13F74:
-		move.w	#$202,(Ctrl_2_logical).w
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#$7F,d0
++
+		move.l	#(button_down_mask)<<16|button_down_mask,d0
+		move.b	(Level_frame_counter+1).w,d1
+		andi.b	#$7F,d1
 		beq.s	loc_13FA4
 		cmpi.b	#8,anim(a0)
-		bne.s	locret_13FBE
-		move.w	#$7272,(Ctrl_2_logical).w
+		bne.s	+
+		move.l	#(button_ABC_mask+button_down_mask)<<16|button_ABC_mask+button_down_mask,d0
++
+		move.l	d0,(Ctrl2_Player).w
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_13F94:
-		move.w	#$202,(Ctrl_2_logical).w
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#$7F,d0
+		move.l	#(button_down_mask)<<16|button_down_mask,d0
+		move.b	(Level_frame_counter+1).w,d1
+		andi.b	#$7F,d1
 		bne.s	loc_13FB2
 
 loc_13FA4:
-		move.w	#0,(Ctrl_2_logical).w
 		move.w	#6,(Tails_CPU_routine).w
+		moveq	#0,d0
+		move.l	d0,(Ctrl2_Player).w
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_13FB2:
-		andi.b	#$1F,d0
-		bne.s	locret_13FBE
-		ori.w	#$7070,(Ctrl_2_logical).w
-
-locret_13FBE:
-		rts
-; ---------------------------------------------------------------------------
-
-locret_13FC0:
+		andi.b	#$1F,d1
+		bne.s	+
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,d0
++
+		move.l	d0,(Ctrl2_Player).w
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_13FC2:
 		move.b	#1,double_jump_flag(a0)
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		move.b	#2,$2A(a0)
 		move.w	#$100,$18(a0)
 		move.w	#0,$1A(a0)
@@ -769,14 +761,15 @@ loc_13FC2:
 		move.w	#$E,(Tails_CPU_routine).w
 
 loc_13FFA:
-		move.w	#0,(Tails_CPU_idle_timer).w
-		move.w	#0,(Ctrl_2_logical).w
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#$1F,d0
-		bne.s	loc_14016
-		ori.w	#$808,(Ctrl_2_logical).w
-
-loc_14016:
+		moveq	#0,d0
+		move.w	d0,(Tails_CPU_idle_timer).w
+	;	move.l	d0,(Ctrl2_Player).w	;
+		move.b	(Level_frame_counter+1).w,d1
+		andi.b	#$1F,d1
+		bne.s	+
+		move.l	#(button_right_mask<<16)+button_right_mask,d0
++
+		move.l	d0,(Ctrl2_Player).w
 		lea	(Flying_carrying_Sonic_flag).w,a2
 		lea	(Player_1).w,a1
 		btst	#1,$2A(a1)
@@ -802,44 +795,44 @@ loc_14068:
 		move.w	#$10,(Tails_CPU_routine).w
 
 loc_14082:
-		move.w	(Ctrl_1).w,d0
+	;	move.w	(Ctrl_1).w,d0
 		bra.w	Tails_Carry_Sonic
 ; ---------------------------------------------------------------------------
 
 loc_1408A:
-		move.w	#0,(Tails_CPU_idle_timer).w
-		move.b	#$F0,$25(a0)
-		move.w	#0,(Ctrl_2_logical).w
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#$F,d0
-		bne.s	loc_140AC
-		ori.w	#$7878,(Ctrl_2_logical).w
-
-loc_140AC:
-		tst.b	4(a0)
-		bmi.s	locret_140C4
+		move.b	#$F0,double_jump_property(a0)
 		moveq	#0,d0
+		tst.b	4(a0)
+		bmi.s	+
 		move.l	d0,(a0)
 		move.w	d0,$10(a0)
 		move.w	d0,$14(a0)
 		move.w	#$A,(Tails_CPU_routine).w
-
-locret_140C4:
++
+		move.w	d0,(Tails_CPU_idle_timer).w
+	;	move.l	d0,(Ctrl2_Player).w
+		move.b	(Level_frame_counter+1).w,d1
+		andi.b	#$F,d1
+		bne.s	+
+		move.l	#(button_right_mask+button_ABC_mask)<<16|button_right_mask+button_ABC_mask,d0
++
+		move.l	d0,(Ctrl2_Player).w
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_140C6:
-		move.w	#0,(Ctrl_2_logical).w
+		moveq	#0,d0
+		move.l	d0,(Ctrl2_Player).w
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_140CE:
 		move.b	#1,double_jump_flag(a0)
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		move.b	#2,$2A(a0)
-		move.w	#0,$18(a0)
-		move.w	#0,$1A(a0)
-		move.w	#0,$1C(a0)
+		moveq	#0,d0
+		move.l	d0,x_vel(a0)	; clear x_vel and y_vel
+		move.w	d0,ground_vel(a0)
 		lea	(Player_1).w,a1
 		bsr.w	sub_1459E
 		move.b	#1,(Flying_carrying_Sonic_flag).w
@@ -847,14 +840,16 @@ loc_140CE:
 
 loc_14106:
 		move.w	#0,(Tails_CPU_idle_timer).w
-		move.b	#$F0,$25(a0)
-		move.w	#0,(Ctrl_2_logical).w
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#7,d0
-		bne.s	loc_14128
-		ori.w	#$7070,(Ctrl_2_logical).w
+		move.b	#$F0,double_jump_property(a0)
+		moveq	#0,d0
+	;	move.l	d0,(Ctrl2_Player).w
+		move.b	(Level_frame_counter+1).w,d1
+		andi.b	#7,d1
+		bne.s	+
+		move.l	#(button_ABC_mask)<<16|button_ABC_mask,d0
++
+		move.l	d0,(Ctrl2_Player).w
 
-loc_14128:
 		move.w	(Camera_Y_pos).w,d0
 		addi.w	#$90,d0
 		cmp.w	$14(a0),d0
@@ -864,12 +859,12 @@ loc_14128:
 loc_1413C:
 		lea	(Flying_carrying_Sonic_flag).w,a2
 		lea	(Player_1).w,a1
-		move.w	(Ctrl_1).w,d0
+	;	move.w	(Ctrl_1).w,d0
 		bra.w	Tails_Carry_Sonic
 ; ---------------------------------------------------------------------------
 
 loc_1414C:
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		tst.w	(Tails_CPU_idle_timer).w
 		beq.s	loc_14164
 		tst.b	(Flying_carrying_Sonic_flag).w
@@ -878,7 +873,7 @@ loc_1414C:
 ; ---------------------------------------------------------------------------
 
 loc_14164:
-		move.w	#0,(Ctrl_2_logical).w
+		clr.l	(Ctrl2_Player).w
 		tst.b	(Flying_carrying_Sonic_flag).w
 		beq.w	loc_142E2
 		clr.b	(_unkFAAC).w
@@ -888,7 +883,7 @@ loc_14164:
 		cmpi.b	#$C0,(Tails_CPU_auto_fly_timer).w
 		blo.s	loc_141D2
 		move.b	#0,(Tails_CPU_auto_fly_timer).w
-		ori.w	#$7070,(Ctrl_2_logical).w
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,(Ctrl2_Player).w
 		bra.s	loc_141D2
 ; ---------------------------------------------------------------------------
 
@@ -899,7 +894,7 @@ loc_14198:
 		cmpi.b	#$20,(Tails_CPU_auto_fly_timer).w
 		blo.s	loc_141D2
 		move.b	#0,(Tails_CPU_auto_fly_timer).w
-		ori.w	#$7070,(Ctrl_2_logical).w
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,(Ctrl2_Player).w
 		bra.s	loc_141D2
 ; ---------------------------------------------------------------------------
 
@@ -908,7 +903,7 @@ loc_141BA:
 		cmpi.b	#$58,(Tails_CPU_auto_fly_timer).w
 		blo.s	loc_141D2
 		move.b	#0,(Tails_CPU_auto_fly_timer).w
-		ori.w	#$7070,(Ctrl_2_logical).w
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,(Ctrl2_Player).w
 
 loc_141D2:
 		move.b	(Ctrl_1).w,d0
@@ -919,29 +914,30 @@ loc_141D2:
 loc_141E2:
 		lea	(Flying_carrying_Sonic_flag).w,a2
 		lea	(Player_1).w,a1
-		move.w	(Ctrl_1).w,d0
+	;	move.w	(Ctrl_1).w,d0
 		bra.w	Tails_Carry_Sonic
 ; ---------------------------------------------------------------------------
 
 loc_141F2:
 		move.b	#1,double_jump_flag(a0)
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		move.b	#2,$2A(a0)
-		move.w	#0,$18(a0)
-		move.w	#0,$1A(a0)
-		move.w	#0,$1C(a0)
+		moveq	#0,d0
+		move.l	d0,x_vel(a0)	; clear x_vel and y_vel
+		move.w	d0,ground_vel(a0)
 		move.w	#$1C,(Tails_CPU_routine).w
 
 loc_1421C:
 		move.w	#0,(Tails_CPU_idle_timer).w
-		move.b	#$F0,$25(a0)
-		move.w	#0,(Ctrl_2_logical).w
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#7,d0
-		bne.s	loc_1423E
-		ori.w	#$7070,(Ctrl_2_logical).w
+		move.b	#$F0,double_jump_property(a0)
+		moveq	#0,d0
+		move.b	(Level_frame_counter+1).w,d1
+		andi.b	#7,d1
+		bne.s	+
+		move.l	#(button_ABC_mask)<<16|button_ABC_mask,d0
++
+		move.l	d0,(Ctrl2_Player).w
 
-loc_1423E:
 		move.w	(Camera_Y_pos).w,d0
 		addi.w	#$90,d0
 		cmp.w	$14(a0),d0
@@ -953,13 +949,13 @@ locret_14252:
 ; ---------------------------------------------------------------------------
 
 loc_14254:
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_1425C:
 		move.b	#1,double_jump_flag(a0)
-		move.b	#$F0,$25(a0)
+		move.b	#$F0,double_jump_property(a0)
 		move.b	#2,$2A(a0)
 		move.w	#$100,$18(a0)
 		move.w	#0,$1A(a0)
@@ -968,13 +964,13 @@ loc_1425C:
 
 loc_14286:
 		move.w	#0,(Tails_CPU_idle_timer).w
-		move.w	#0,(Ctrl_2_logical).w
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#$1F,d0
-		bne.s	loc_142A2
-		ori.w	#$808,(Ctrl_2_logical).w
-
-loc_142A2:
+		moveq	#0,d0
+		move.b	(Level_frame_counter+1).w,d1
+		andi.b	#$1F,d1
+		bne.s	+
+		move.l	#(button_right_mask)<<16|button_right_mask,d0
++
+		move.l	d0,(Ctrl2_Player).w
 		btst	#1,$2A(a0)
 		bne.s	locret_142E0
 		move.w	#6,(Tails_CPU_routine).w
@@ -1002,16 +998,15 @@ loc_142E2:
 		cmpi.w	#$300,$1A(a1)
 		bge.s	loc_14330
 		move.w	#0,$18(a0)
-		move.w	#0,(Ctrl_2_logical).w
+		clr.l	(Ctrl2_Player).w
 		cmpi.w	#$200,$1A(a0)
-		bge.s	loc_14328
+		bge.s	+
 		addq.b	#1,(Tails_CPU_auto_fly_timer).w
 		cmpi.b	#$58,(Tails_CPU_auto_fly_timer).w
 		blo.s	loc_1432E
 		move.b	#0,(Tails_CPU_auto_fly_timer).w
-
-loc_14328:
-		ori.w	#$7070,(Ctrl_2_logical).w
++
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,(Ctrl2_Player).w
 
 loc_1432E:
 		bra.s	loc_143AA
@@ -1042,7 +1037,7 @@ loc_14358:
 ; ---------------------------------------------------------------------------
 
 loc_14362:
-		move.w	#0,(Ctrl_2_logical).w
+		clr.l	(Ctrl2_Player).w	; clear
 		lea	(Player_1).w,a1
 		move.w	$10(a0),d0
 		move.w	$14(a0),d1
@@ -1069,13 +1064,17 @@ loc_143A6:
 loc_143AA:
 		lea	(Flying_carrying_Sonic_flag).w,a2
 		lea	(Player_1).w,a1
-		move.w	(Ctrl_1).w,d0
+	;	move.w	(Ctrl_1).w,d0
 		bra.w	Tails_Carry_Sonic
 
 ; =============== S U B R O U T I N E =======================================
 
 
 Tails_Carry_Sonic:
+		move.b	(Ctrl_1_held).w,d0
+		lsl.w	#8,d0
+		move.b	(Ctrl_1_pressed).w,d0
+
 		tst.b	(a2)
 		beq.w	loc_14534
 		cmpi.b	#4,5(a1)
@@ -1112,9 +1111,9 @@ loc_1441C:
 loc_14428:
 		move.w	#-$380,$1A(a1)
 		bset	#1,$2A(a1)
-		move.b	#1,$40(a1)
-		move.b	#$E,$1E(a1)
-		move.b	#7,$1F(a1)
+		move.b	#1,jumping(a1)
+		move.b	#$E,y_radius(a1)
+		move.b	#7,x_radius(a1)
 		move.b	#id_Roll,anim(a1)
 		bset	#2,$2A(a1)
 		bclr	#4,$2A(a1)
@@ -1125,7 +1124,7 @@ loc_1445A:
 		move.w	#-$100,$1A(a1)
 
 loc_14460:
-		move.b	#0,$40(a1)
+		move.b	#0,jumping(a1)
 
 loc_14466:
 		clr.b	$2E(a1)
@@ -1169,9 +1168,9 @@ loc_144BA:
 		move.b	AniRaw_Tails_Carry(pc),d0
 
 loc_144E4:
-		move.b	d0,$22(a1)
+		move.b	d0,mapping_frame(a1)
 		moveq	#0,d0
-		move.b	$22(a1),d0
+		move.b	mapping_frame(a1),d0
 		move.l	a2,-(sp)
 		jsr	(Perform_Player_DPLC).l
 		movea.l	(sp)+,a2
@@ -1375,8 +1374,7 @@ Tails_Stand_Freespace:
 
 loc_147DE:
 		bsr.w	Player_JumpAngle
-		bsr.w	Tails_DoLevelCollision
-		rts
+		bra.w	Tails_DoLevelCollision
 ; ---------------------------------------------------------------------------
 
 Tails_FlyingSwimming:
@@ -1392,8 +1390,8 @@ Tails_FlyingSwimming:
 		bne.s	locret_14820
 		lea	(Flying_carrying_Sonic_flag).w,a2
 		lea	(Player_1).w,a1
-		move.w	(Ctrl_1).w,d0
-		bsr.w	Tails_Carry_Sonic
+	;	move.w	(Ctrl_1).w,d0
+		bra.w	Tails_Carry_Sonic
 
 locret_14820:
 		rts
@@ -1405,9 +1403,9 @@ Tails_Move_FlySwim:
 		move.b	(Level_frame_counter+1).w,d0
 		andi.b	#1,d0
 		beq.s	loc_14836
-		tst.b	$25(a0)
+		tst.b	double_jump_property(a0)
 		beq.s	loc_14836
-		subq.b	#1,$25(a0)
+		subq.b	#1,double_jump_property(a0)
 
 loc_14836:
 		cmpi.b	#1,double_jump_flag(a0)
@@ -1432,7 +1430,7 @@ loc_14860:
 		beq.s	loc_1488C
 		cmpi.w	#-$100,$1A(a0)
 		blt.s	loc_1488C
-		tst.b	$25(a0)
+		tst.b	double_jump_property(a0)
 		beq.s	loc_1488C
 		btst	#6,$2A(a0)
 		beq.s	loc_14886
@@ -1470,7 +1468,7 @@ loc_148C4:
 		addq.b	#2,d0
 
 loc_148CC:
-		tst.b	$25(a0)
+		tst.b	double_jump_property(a0)
 		bne.s	loc_148F4
 		moveq	#$24,d0
 		move.b	d0,anim(a0)
@@ -1512,7 +1510,7 @@ loc_1491E:
 		moveq	#$27,d0
 
 loc_14926:
-		tst.b	$25(a0)
+		tst.b	double_jump_property(a0)
 		bne.s	loc_1492E
 		moveq	#$28,d0
 
@@ -1642,10 +1640,10 @@ loc_14AA0:
 		btst	#1,(Ctrl_2_logical).w
 		beq.s	loc_14ADA
 		move.b	#8,anim(a0)
-		addq.b	#1,$39(a0)
-		cmpi.b	#$78,$39(a0)
+		addq.b	#1,scroll_delay_counter(a0)
+		cmpi.b	#$78,scroll_delay_counter(a0)
 		blo.s	loc_14B1A
-		move.b	#$78,$39(a0)
+		move.b	#$78,scroll_delay_counter(a0)
 		tst.b	(Reverse_gravity_flag).w
 		bne.s	loc_14AD0
 		cmpi.w	#8,(a5)
@@ -1665,10 +1663,10 @@ loc_14ADA:
 		btst	#0,(Ctrl_2_logical).w
 		beq.s	loc_14B14
 		move.b	#7,anim(a0)
-		addq.b	#1,$39(a0)
-		cmpi.b	#$78,$39(a0)
+		addq.b	#1,scroll_delay_counter(a0)
+		cmpi.b	#$78,scroll_delay_counter(a0)
 		blo.s	loc_14B1A
-		move.b	#$78,$39(a0)
+		move.b	#$78,scroll_delay_counter(a0)
 		tst.b	(Reverse_gravity_flag).w
 		bne.s	loc_14B0A
 		cmpi.w	#$C8,(a5)
@@ -1685,7 +1683,7 @@ loc_14B0A:
 ; ---------------------------------------------------------------------------
 
 loc_14B14:
-		move.b	#0,$39(a0)
+		move.b	#0,scroll_delay_counter(a0)
 
 loc_14B1A:
 		cmpi.w	#$60,(a5)
@@ -1836,7 +1834,7 @@ loc_14C62:
 		bne.s	locret_14CAA
 		cmpi.w	#$400,d0
 		blt.s	locret_14CAA
-		tst.b	$2D(a0)
+		tst.b	flip_type(a0)
 		bmi.s	locret_14CAA
 		sfx	sfx_Skid
 		move.b	#$D,anim(a0)
@@ -1844,7 +1842,7 @@ loc_14C62:
 		cmpi.b	#$C,$2C(a0)
 		blo.s	locret_14CAA
 		move.b	#6,5(a6)
-		move.b	#$15,$22(a6)
+		move.b	#$15,mapping_frame(a6)
 
 locret_14CAA:
 		rts
@@ -1887,7 +1885,7 @@ loc_14CE8:
 		bne.s	locret_14D30
 		cmpi.w	#-$400,d0
 		bgt.s	locret_14D30
-		tst.b	$2D(a0)
+		tst.b	flip_type(a0)
 		bmi.s	locret_14D30
 		sfx	sfx_Skid
 		move.b	#$D,anim(a0)
@@ -1895,7 +1893,7 @@ loc_14CE8:
 		cmpi.b	#$C,$2C(a0)
 		blo.s	locret_14D30
 		move.b	#6,5(a6)
-		move.b	#$15,$22(a6)
+		move.b	#$15,mapping_frame(a6)
 
 locret_14D30:
 		rts
@@ -1955,11 +1953,11 @@ loc_14DA2:
 		tst.b	$3D(a0)
 		bne.s	loc_14DDE
 		bclr	#2,$2A(a0)
-		move.b	$1E(a0),d0
-		move.b	$44(a0),$1E(a0)
-		move.b	$45(a0),$1F(a0)
+		move.b	y_radius(a0),d0
+		move.b	default_y_radius(a0),y_radius(a0)
+		move.b	default_x_radius(a0),x_radius(a0)
 		move.b	#5,anim(a0)
-		sub.b	$44(a0),d0
+		sub.b	default_y_radius(a0),d0
 		ext.w	d0
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_14DD8
@@ -2209,8 +2207,8 @@ loc_14FBA:
 
 loc_14FC4:
 		bset	#2,$2A(a0)
-		move.b	#$E,$1E(a0)
-		move.b	#7,$1F(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
 		move.b	#2,anim(a0)
 		addq.w	#1,$14(a0)
 		tst.b	(Reverse_gravity_flag).w
@@ -2266,19 +2264,19 @@ loc_1504C:
 		bset	#1,$2A(a0)
 		bclr	#5,$2A(a0)
 		addq.l	#4,sp
-		move.b	#1,$40(a0)
+		move.b	#1,jumping(a0)
 		clr.b	$3C(a0)
 		sfx	sfx_Jump
-		move.b	$44(a0),$1E(a0)
-		move.b	$45(a0),$1F(a0)
+		move.b	default_y_radius(a0),y_radius(a0)
+		move.b	default_x_radius(a0),x_radius(a0)
 		btst	#2,$2A(a0)
 		bne.s	loc_150D2
-		move.b	#$E,$1E(a0)
-		move.b	#7,$1F(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
 		move.b	#2,anim(a0)
 		bset	#2,$2A(a0)
-		move.b	$1E(a0),d0
-		sub.b	$44(a0),d0
+		move.b	y_radius(a0),d0
+		sub.b	default_y_radius(a0),d0
 		ext.w	d0
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_150CC
@@ -2298,7 +2296,7 @@ loc_150D2:
 ; =============== S U B R O U T I N E =======================================
 
 Tails_JumpHeight:
-		tst.b	$40(a0)
+		tst.b	jumping(a0)
 		beq.s	loc_15106
 		move.w	#-$400,d1
 		btst	#6,$2A(a0)
@@ -2347,10 +2345,10 @@ loc_1515C:
 		btst	#2,$2A(a0)
 		beq.s	loc_1518C
 		bclr	#2,$2A(a0)
-		move.b	$1E(a0),d1
-		move.b	$44(a0),$1E(a0)
-		move.b	$45(a0),$1F(a0)
-		sub.b	$44(a0),d1
+		move.b	y_radius(a0),d1
+		move.b	default_y_radius(a0),y_radius(a0)
+		move.b	default_x_radius(a0),x_radius(a0)
+		sub.b	default_y_radius(a0),d1
 		ext.w	d1
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_15188
@@ -2362,7 +2360,7 @@ loc_15188:
 loc_1518C:
 		bclr	#4,$2A(a0)
 		move.b	#1,double_jump_flag(a0)
-		move.b	#-$10,$25(a0)
+		move.b	#-$10,double_jump_property(a0)
 		bsr.w	Tails_Set_Flying_Animation
 
 locret_151A2:
@@ -2400,8 +2398,8 @@ loc_1527C:
 		move.b	(Ctrl_2_logical).w,d0
 		btst	#1,d0
 		bne.w	loc_15332
-		move.b	#$E,$1E(a0)
-		move.b	#7,$1F(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
 		move.b	#2,anim(a0)
 		addq.w	#1,$14(a0)
 		tst.b	(Reverse_gravity_flag).w
@@ -2750,14 +2748,14 @@ Tails_TouchFloor_Check_Spindash:
 ; =============== S U B R O U T I N E =======================================
 
 Tails_TouchFloor:
-		move.b	$1E(a0),d0
-		move.b	$44(a0),$1E(a0)
-		move.b	$45(a0),$1F(a0)
+		move.b	y_radius(a0),d0
+		move.b	default_y_radius(a0),y_radius(a0)
+		move.b	default_x_radius(a0),x_radius(a0)
 		btst	#2,$2A(a0)
 		beq.s	loc_1565E
 		bclr	#2,$2A(a0)
 		move.b	#0,anim(a0)
-		sub.b	$44(a0),d0
+		sub.b	default_y_radius(a0),d0
 		ext.w	d0
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_1564A
@@ -2778,12 +2776,12 @@ loc_1565E:
 		bclr	#1,$2A(a0)
 		bclr	#5,$2A(a0)
 		bclr	#4,$2A(a0)
-		move.b	#0,$40(a0)
+		move.b	#0,jumping(a0)
 		move.w	#0,(Chain_bonus_counter).w
 		move.b	#0,$27(a0)
-		move.b	#0,$2D(a0)
-		move.b	#0,$30(a0)
-		move.b	#0,$39(a0)
+		move.b	#0,flip_type(a0)
+		move.b	#0,flips_remaining(a0)
+		move.b	#0,scroll_delay_counter(a0)
 		move.b	#0,double_jump_flag(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -2990,7 +2988,7 @@ sub_158B0:
 		bhs.s	loc_158CA
 
 loc_158C0:
-		move.b	d0,$22(a0)
+		move.b	d0,mapping_frame(a0)
 		addq.b	#1,$23(a0)
 
 locret_158C8:
@@ -3028,7 +3026,7 @@ loc_158FA:
 		addq.b	#1,d0
 		bne.w	loc_159C8
 		moveq	#0,d0
-		tst.b	$2D(a0)
+		tst.b	flip_type(a0)
 		bmi.w	loc_127C0
 		move.b	$27(a0),d0
 		bne.w	loc_127C0
@@ -3091,8 +3089,8 @@ loc_1598A:
 		move.b	1(a1),d0
 
 loc_159A4:
-		move.b	d0,$22(a0)
-		add.b	d3,$22(a0)
+		move.b	d0,mapping_frame(a0)
+		add.b	d3,mapping_frame(a0)
 		subq.b	#1,$24(a0)
 		bpl.s	locret_159C6
 		neg.w	d2
@@ -3196,7 +3194,7 @@ loc_15A92:
 		lea	(AniTails_Tail03).l,a1
 		move.b	#3,$24(a0)
 		bsr.w	sub_158B0
-		add.b	d3,$22(a0)
+		add.b	d3,mapping_frame(a0)
 		rts
 ; ---------------------------------------------------------------------------
 

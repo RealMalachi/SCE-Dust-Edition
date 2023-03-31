@@ -107,61 +107,84 @@ id_LNull:						equ $FF
 ; Buttons bit numbers
 ; ---------------------------------------------------------------------------
 
-button_up:						equ	0
-button_down:					equ	1
-button_left:						equ	2
-button_right:						equ	3
-button_B:						equ	4
-button_C:						equ	5
-button_A:						equ	6
-button_start:						equ	7
+; Input bit numbers
+; NOTE: if using btst on something that isn't a data register, check the exact RAM location (Ctrl1_Hd_XYZ for example)
+	phase	0	;
+button_up:	ds.b 1
+button_down:	ds.b 1
+button_left:	ds.b 1
+button_right:	ds.b 1
+button_B:	ds.b 1
+button_C:	ds.b 1
+button_A:	ds.b 1
+button_start:	ds.b 1
+; 6-button controllers
+; when using these, you'll get a 'truncated' notice when btst is used on something that isn't a data register
+button_Z:	ds.b 1
+button_Y:	ds.b 1
+button_X:	ds.b 1
+button_mode:	ds.b 1
+; the extra four bits are used to figure out which controller type is plugged in
+	dephase		; Reset the program counter
+; if you REALLY don't want to deal with the truncatation notice, use these instead
+button6_Z:	= button_Z-8
+button6_Y:	= button_Y-8
+button6_X:	= button_X-8
+button6_mode:	= button_mode-8
+; Input numbers (masks??). Essentially the byte number the bits represent
+; these allow checking more then one button press at the same time (like jumping using A,B,C)
+; 1 << x == pow(2, x)
+button_up_mask:		= 1<<button_up		;   $01
+button_down_mask:	= 1<<button_down	;   $02
+button_left_mask:	= 1<<button_left	;   $04
+button_right_mask:	= 1<<button_right	;   $08
+button_B_mask:		= 1<<button_B		;   $10
+button_C_mask:		= 1<<button_C		;   $20
+button_A_mask:		= 1<<button_A		;   $40
+button_start_mask:	= 1<<button_start	;   $80
+button_Z_mask:		= 1<<button_Z		; $0100
+button_Y_mask:		= 1<<button_Y		; $0200
+button_X_mask:		= 1<<button_X		; $0400
+button_mode_mask:	= 1<<button_mode	; $0800
+; additional ones for ease of code
+button_directional_mask:	= button_up_mask+button_down_mask+button_left_mask+button_right_mask	; $F
+button_ABC_mask:		= button_B_mask+button_C_mask+button_A_mask	; $70
+button_XYZ_mask:		= button_Z_mask+button_Y_mask+button_X_mask	; $0700
 
-; ---------------------------------------------------------------------------
-; Buttons masks (1 << x == pow(2, x))
-; ---------------------------------------------------------------------------
+btnMode:	equ button_mode_mask			; Mode ($800)
+btnX:		equ button_X_mask			; X ($400)
+btnY:		equ button_Y_mask			; Y ($200)
+btnZ:		equ button_Z_mask			; Z ($100)
+btnR:		equ button_right_mask			; Right ($08)
+btnL:		equ button_left_mask			; Left ($04)
+btnUD:		equ button_up_mask|button_down_mask	; Up or Down ($03)
+btnDn:		equ button_down_mask			; Down ($02)
+btnUp:		equ button_up_mask			; Up ($01)
+btnLR:		equ button_left_mask|button_right_mask	; Left or Right ($0C)
+btnDir:		equ button_directional_mask		; Any direction ($0F)
+btnABCS:	equ button_ABC_mask|button_start_mask	; A, B, C or Start ($F0)
+btnStart:	equ button_start_mask			; Start button ($80)
+btnABC:		equ button_ABC_mask			; A, B or C ($70)
+btnAC:		equ button_A_mask|button_C_mask		; A or C ($60)
+btnAB:		equ button_A_mask|button_B_mask		; A or B ($50)
+btnA:		equ button_A_mask			; A ($40)
+btnBC:		equ button_C_mask|button_B_mask		; B or C ($30)
+btnC:		equ button_C_mask			; C ($20)
+btnB:		equ button_B_mask			; B ($10)
 
-button_up_mask:					equ	1<<button_up	; $01
-button_down_mask:				equ	1<<button_down	; $02
-button_left_mask:					equ	1<<button_left	; $04
-button_right_mask:				equ	1<<button_right	; $08
-button_B_mask:					equ	1<<button_B		; $10
-button_C_mask:					equ	1<<button_C		; $20
-button_A_mask:					equ	1<<button_A		; $40
-button_start_mask:				equ	1<<button_start	; $80
+bitMode:	equ button_mode
+bitX:		equ button_X
+bitY:		equ button_Y
+bitZ:		equ button_Z
+bitStart:	equ button_start
+bitA:		equ button_A
+bitC:		equ button_C
+bitB:		equ button_B
+bitR:		equ button_right
+bitL:		equ button_left
+bitDn:		equ button_down
+bitUp:		equ button_up
 
-; ---------------------------------------------------------------------------
-; Joypad input
-; ---------------------------------------------------------------------------
-
-btnR:		equ %00001000		; Right ($08)
-btnL:		equ %00000100		; Left ($04)
-btnUD:		equ %00000011		; Up or Down ($03)
-btnDn:		equ %00000010		; Down ($02)
-btnUp:		equ %00000001		; Up	($01)
-btnLR:		equ %00001100		; Left or Right ($0C)
-btnDir:		equ %00001111		; Any direction ($0F)
-btnABCS:	equ %11110000		; A, B, C or Start ($F0)
-btnStart:		equ %10000000		; Start button	($80)
-btnABC:		equ %01110000		; A, B or C ($70)
-btnAC:		equ %01100000		; A or C ($60)
-btnAB:		equ %01010000		; A or B ($50)
-btnA:		equ %01000000		; A ($40)
-btnBC:		equ %00110000		; B or C ($30)
-btnC:		equ %00100000		; C ($20)
-btnB:		equ %00010000		; B ($10)
-
-; ---------------------------------------------------------------------------
-; Joypad bits
-; ---------------------------------------------------------------------------
-
-bitStart:		equ 7
-bitA:		equ 6
-bitC:		equ 5
-bitB:		equ 4
-bitR:		equ 3
-bitL:		equ 2
-bitDn:		equ 1
-bitUp:		equ 0
 
 ; ---------------------------------------------------------------------------
 ; property of all objects

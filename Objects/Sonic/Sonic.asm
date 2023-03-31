@@ -115,7 +115,7 @@ loc_10BF0:
 	endif
 		tst.b	(Ctrl_1_locked).w					; are controls locked?
 		bne.s	loc_10BFC					; if yes, branch
-		move.w	(Ctrl_1).w,(Ctrl_1_logical).w	; copy new held buttons, to enable joypad control
+		move.l	(Ctrl1).w,(Ctrl1_Player).w	; copy new held buttons, to enable joypad control
 
 loc_10BFC:
 		btst	#0,object_control(a0)				; is Sonic interacting with another object that holds him in place or controls his movement somehow?
@@ -240,7 +240,9 @@ Sonic_RecordPos:
 		addq.b	#4,(Pos_table_byte).w		; increment index as the post-increments did a1
 		lea	(Stat_table).w,a1
 		lea	(a1,d0.w),a1
-		move.w	(Ctrl_1_logical).w,(a1)+
+	;	move.w	(Ctrl_1_logical).w,(a1)+
+		move.b	(Ctrl_1_held_logical).w,(a1)+
+		move.b	(Ctrl_1_pressed_logical).w,(a1)+
 		move.b	status(a0),(a1)+
 		move.b	art_tile(a0),(a1)+
 

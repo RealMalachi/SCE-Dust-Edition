@@ -109,7 +109,7 @@ locret_165A0:
 loc_165A2:
 		tst.b	(Ctrl_1_locked).w
 		bne.s	loc_165AE
-		move.w	(Ctrl_1).w,(Ctrl_1_logical).w
+		move.l	(Ctrl1).w,(Ctrl1_Player).w
 
 loc_165AE:
 		btst	#0,$2E(a0)
@@ -121,17 +121,17 @@ loc_165AE:
 loc_165BE:
 		movem.l	a4-a6,-(sp)
 		moveq	#0,d0
-		move.b	$2A(a0),d0
+		move.b	status(a0),d0
 		andi.w	#6,d0
 		move.w	Knux_Modes(pc,d0.w),d1
 		jsr	Knux_Modes(pc,d1.w)
 		movem.l	(sp)+,a4-a6
 
 loc_165D8:
-		cmpi.w	#$FF00,(Camera_min_Y_pos).w
+		cmpi.w	#-$100,(Camera_min_Y_pos).w
 		bne.s	loc_165E8
 		move.w	(Screen_Y_wrap_value).w,d0
-		and.w	d0,$14(a0)
+		and.w	d0,y_pos(a0)
 
 loc_165E8:
 		bsr.s	Knuckles_Display
@@ -197,7 +197,7 @@ loc_1665E:
 		bne.s	loc_16694
 		tst.b	(Boss_flag).w
 		bne.s	loc_16694
-		cmpi.b	#$C,$2C(a0)
+		cmpi.b	#$C,air_left(a0)
 		blo.s		loc_16694
 		move.w	(Current_music).w,d0
 		music					; stop playing invincibility theme and resume normal level music
@@ -314,9 +314,9 @@ Knux_Stand_Freespace:
 		bsr.w	Knux_ChgJumpDir
 		bsr.w	Player_LevelBound
 		jsr	(MoveSprite_TestGravity).w
-		btst	#6,$2A(a0)
+		btst	#6,status(a0)
 		beq.s	loc_16872
-		subi.w	#$28,$1A(a0)
+		subi.w	#$28,y_vel(a0)
 
 loc_16872:
 		bsr.w	Player_JumpAngle
@@ -443,7 +443,6 @@ Knuckles_Gliding_HitWall:
 		bne.w	.checkFloorRight
 ; loc_169A6:
 .success:
-		sfx	sfx_Grab
 		move.w	#0,ground_vel(a0)
 		move.w	#0,x_vel(a0)
 		move.w	#0,y_vel(a0)
@@ -455,7 +454,7 @@ Knuckles_Gliding_HitWall:
 		; 'x_pos+2' holds the X coordinate that Knuckles was at when he first
 		; latched onto the wall.
 		move.w	x_pos(a0),x_pos+2(a0)
-		rts
+		sfx	sfx_Grab,1
 ; ---------------------------------------------------------------------------
 ; loc_16A00:
 .checkFloorLeft:
@@ -641,7 +640,7 @@ Knuckles_Sliding:
 		move.b	(Level_frame_counter+1).w,d0
 		andi.b	#7,d0
 		bne.s	.skip3
-		sfx	sfx_GroundSlide
+		sfx	sfx_GroundSlide,2
 
 .skip3:
 		rts
@@ -931,6 +930,7 @@ Knuckles_Wall_Climb:
 		move.w	d0,y_pos(a0)
 ; loc_16E10:
 .finishMoving:
+	; TODO: Port fix from S3UE
 		; This block of code was not here in KiS2.
 		; This code detaches Knuckles from the wall if there is
 		; ground directly below him. Note that this code specifically
@@ -994,7 +994,7 @@ Knuckles_Wall_Climb:
 		move.b	#$20,anim_frame_timer(a0)
 		move.b	#0,anim_frame(a0)
 
-		move.w	(Ctrl_1_logical).w,d0
+		move.b	(Ctrl_1_pressed_logical).w,d0
 		andi.w	#button_A_mask|button_B_mask|button_C_mask,d0
 		beq.s	.hasNotJumped
 
@@ -1306,9 +1306,9 @@ Knux_Spin_Freespace:
 		bsr.w	Knux_ChgJumpDir
 		bsr.w	Player_LevelBound
 		jsr	(MoveSprite_TestGravity).w
-		btst	#6,$2A(a0)
+		btst	#6,status(a0)
 		beq.s	loc_17138
-		subi.w	#$28,$1A(a0)
+		subi.w	#$28,y_vel(a0)
 
 loc_17138:
 		bsr.w	Player_JumpAngle
@@ -1334,26 +1334,26 @@ loc_17168:
 		bsr.w	sub_174B4
 
 loc_17174:
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$20,d0
 		andi.b	#$C0,d0
 		bne.w	loc_1731C
-		tst.w	$1C(a0)
+		tst.w	ground_vel(a0)
 		bne.w	loc_1731C
-		bclr	#5,$2A(a0)
+		bclr	#5,status(a0)
 		move.b	#5,anim(a0)
-		btst	#3,$2A(a0)
+		btst	#3,status(a0)
 		beq.w	loc_1722C
-		movea.w	$42(a0),a1
-		tst.b	$2A(a1)
+		movea.w	interact(a0),a1
+		tst.b	status(a1)
 		bmi.w	loc_172A8
 		moveq	#0,d1
 		move.b	7(a1),d1
 		move.w	d1,d2
 		add.w	d2,d2
 		subq.w	#2,d2
-		add.w	$10(a0),d1
-		sub.w	$10(a1),d1
+		add.w	x_pos(a0),d1
+		sub.w	x_pos(a1),d1
 		cmpi.w	#2,d1
 		blt.s	loc_171FE
 		cmp.w	d2,d1
@@ -1362,14 +1362,14 @@ loc_17174:
 ; ---------------------------------------------------------------------------
 
 loc_171D0:
-		btst	#0,$2A(a0)
+		btst	#0,status(a0)
 		bne.s	loc_171E2
 		move.b	#6,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_171E2:
-		bclr	#0,$2A(a0)
+		bclr	#0,status(a0)
 		move.b	#0,$24(a0)
 		move.b	#4,$23(a0)
 		move.w	#$606,anim(a0)
@@ -1377,14 +1377,14 @@ loc_171E2:
 ; ---------------------------------------------------------------------------
 
 loc_171FE:
-		btst	#0,$2A(a0)
+		btst	#0,status(a0)
 		beq.s	loc_17210
 		move.b	#6,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_17210:
-		bset	#0,$2A(a0)
+		bset	#0,status(a0)
 		move.b	#0,$24(a0)
 		move.b	#4,$23(a0)
 		move.w	#$606,anim(a0)
@@ -1392,20 +1392,20 @@ loc_17210:
 ; ---------------------------------------------------------------------------
 
 loc_1722C:
-		move.w	$10(a0),d3
+		move.w	x_pos(a0),d3
 		bsr.w	ChooseChkFloorEdge
 		cmpi.w	#$C,d1
 		blt.w	loc_172A8
 		cmpi.b	#3,$3A(a0)
 		bne.s	loc_17272
-		btst	#0,$2A(a0)
+		btst	#0,status(a0)
 		bne.s	loc_17256
 		move.b	#6,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_17256:
-		bclr	#0,$2A(a0)
+		bclr	#0,status(a0)
 		move.b	#0,$24(a0)
 		move.b	#4,$23(a0)
 		move.w	#$606,anim(a0)
@@ -1415,14 +1415,14 @@ loc_17256:
 loc_17272:
 		cmpi.b	#3,$3B(a0)
 		bne.s	loc_172A8
-		btst	#0,$2A(a0)
+		btst	#0,status(a0)
 		beq.s	loc_1728C
 		move.b	#6,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_1728C:
-		bset	#0,$2A(a0)
+		bset	#0,status(a0)
 		move.b	#0,$24(a0)
 		move.b	#4,$23(a0)
 		move.w	#$606,anim(a0)
@@ -1433,10 +1433,10 @@ loc_172A8:
 		btst	#1,(Ctrl_1_logical).w
 		beq.s	loc_172E2
 		move.b	#8,anim(a0)
-		addq.b	#1,$39(a0)
-		cmpi.b	#$78,$39(a0)
+		addq.b	#1,scroll_delay_counter(a0)
+		cmpi.b	#$78,scroll_delay_counter(a0)
 		blo.s	loc_17322
-		move.b	#$78,$39(a0)
+		move.b	#$78,scroll_delay_counter(a0)
 		tst.b	(Reverse_gravity_flag).w
 		bne.s	loc_172D8
 		cmpi.w	#8,(a5)
@@ -1456,10 +1456,10 @@ loc_172E2:
 		btst	#0,(Ctrl_1_logical).w
 		beq.s	loc_1731C
 		move.b	#7,anim(a0)
-		addq.b	#1,$39(a0)
-		cmpi.b	#$78,$39(a0)
+		addq.b	#1,scroll_delay_counter(a0)
+		cmpi.b	#$78,scroll_delay_counter(a0)
 		blo.s	loc_17322
-		move.b	#$78,$39(a0)
+		move.b	#$78,scroll_delay_counter(a0)
 		tst.b	(Reverse_gravity_flag).w
 		bne.s	loc_17312
 		cmpi.w	#$C8,(a5)
@@ -1476,7 +1476,7 @@ loc_17312:
 ; ---------------------------------------------------------------------------
 
 loc_1731C:
-		move.b	#0,$39(a0)
+		move.b	#0,scroll_delay_counter(a0)
 
 loc_17322:
 		cmpi.w	#$60,(a5)
@@ -1491,7 +1491,7 @@ loc_1732E:
 		move.b	(Ctrl_1_logical).w,d0
 		andi.b	#$C,d0
 		bne.s	loc_17364
-		move.w	$1C(a0),d0
+		move.w	ground_vel(a0),d0
 		beq.s	loc_17364
 		bmi.s	loc_17358
 		sub.w	d5,d0
@@ -1499,7 +1499,7 @@ loc_1732E:
 		move.w	#0,d0
 
 loc_17352:
-		move.w	d0,$1C(a0)
+		move.w	d0,ground_vel(a0)
 		bra.s	loc_17364
 ; ---------------------------------------------------------------------------
 
@@ -1509,37 +1509,37 @@ loc_17358:
 		move.w	#0,d0
 
 loc_17360:
-		move.w	d0,$1C(a0)
+		move.w	d0,ground_vel(a0)
 
 loc_17364:
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(GetSineCosine).w
-		muls.w	$1C(a0),d1
+		muls.w	ground_vel(a0),d1
 		asr.l	#8,d1
-		move.w	d1,$18(a0)
-		muls.w	$1C(a0),d0
+		move.w	d1,x_vel(a0)
+		muls.w	ground_vel(a0),d0
 		asr.l	#8,d0
-		move.w	d0,$1A(a0)
+		move.w	d0,y_vel(a0)
 
 loc_17382:
 		btst	#6,$2E(a0)
 		bne.w	locret_17426
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		andi.b	#$3F,d0
 		beq.s	loc_173A2
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$40,d0
 		bmi.w	locret_17426
 
 loc_173A2:
 		move.b	#$40,d1
-		tst.w	$1C(a0)
+		tst.w	ground_vel(a0)
 		beq.s	locret_17426
 		bmi.s	loc_173B0
 		neg.w	d1
 
 loc_173B0:
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		add.b	d1,d0
 		move.w	d0,-(sp)
 		bsr.w	sub_F61C
@@ -1561,32 +1561,32 @@ loc_173D2:
 		beq.s	loc_17408
 		cmpi.b	#$80,d0
 		beq.s	loc_17402
-		add.w	d1,$18(a0)
-		move.w	#0,$1C(a0)
-		btst	#0,$2A(a0)
+		add.w	d1,x_vel(a0)
+		move.w	#0,ground_vel(a0)
+		btst	#0,status(a0)
 		bne.s	locret_17400
-		bset	#5,$2A(a0)
+		bset	#5,status(a0)
 
 locret_17400:
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_17402:
-		sub.w	d1,$1A(a0)
+		sub.w	d1,y_vel(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_17408:
-		sub.w	d1,$18(a0)
-		move.w	#0,$1C(a0)
-		btst	#0,$2A(a0)
+		sub.w	d1,x_vel(a0)
+		move.w	#0,ground_vel(a0)
+		btst	#0,status(a0)
 		beq.s	locret_17400
-		bset	#5,$2A(a0)
+		bset	#5,status(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_17422:
-		add.w	d1,$1A(a0)
+		add.w	d1,y_vel(a0)
 
 locret_17426:
 		rts
@@ -1594,14 +1594,14 @@ locret_17426:
 ; =============== S U B R O U T I N E =======================================
 
 sub_17428:
-		move.w	$1C(a0),d0
+		move.w	ground_vel(a0),d0
 		beq.s	loc_17430
 		bpl.s	loc_17462
 
 loc_17430:
-		bset	#0,$2A(a0)
+		bset	#0,status(a0)
 		bne.s	loc_17444
-		bclr	#5,$2A(a0)
+		bclr	#5,status(a0)
 		move.b	#1,$21(a0)
 
 loc_17444:
@@ -1616,7 +1616,7 @@ loc_17444:
 		move.w	d1,d0
 
 loc_17456:
-		move.w	d0,$1C(a0)
+		move.w	d0,ground_vel(a0)
 		move.b	#0,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -1627,22 +1627,22 @@ loc_17462:
 		move.w	#-$80,d0
 
 loc_1746A:
-		move.w	d0,$1C(a0)
-		move.b	$26(a0),d0
+		move.w	d0,ground_vel(a0)
+		move.b	angle(a0),d0
 		addi.b	#$20,d0
 		andi.b	#$C0,d0
 		bne.s	locret_174B2
 		cmpi.w	#$400,d0
 		blt.s	locret_174B2
-		tst.b	$2D(a0)
+		tst.b	flip_type(a0)
 		bmi.s	locret_174B2
 		sfx	sfx_Skid
 		move.b	#$D,anim(a0)
-		bclr	#0,$2A(a0)
-		cmpi.b	#$C,$2C(a0)
+		bclr	#0,status(a0)
+		cmpi.b	#$C,air_left(a0)
 		blo.s	locret_174B2
 		move.b	#6,5(a6)
-		move.b	#$15,$22(a6)
+		move.b	#$15,mapping_frame(a6)
 
 locret_174B2:
 		rts
@@ -1650,11 +1650,11 @@ locret_174B2:
 ; =============== S U B R O U T I N E =======================================
 
 sub_174B4:
-		move.w	$1C(a0),d0
+		move.w	ground_vel(a0),d0
 		bmi.s	loc_174E8
-		bclr	#0,$2A(a0)
+		bclr	#0,status(a0)
 		beq.s	loc_174CE
-		bclr	#5,$2A(a0)
+		bclr	#5,status(a0)
 		move.b	#1,$21(a0)
 
 loc_174CE:
@@ -1667,7 +1667,7 @@ loc_174CE:
 		move.w	d6,d0
 
 loc_174DC:
-		move.w	d0,$1C(a0)
+		move.w	d0,ground_vel(a0)
 		move.b	#0,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -1678,22 +1678,22 @@ loc_174E8:
 		move.w	#$80,d0
 
 loc_174F0:
-		move.w	d0,$1C(a0)
-		move.b	$26(a0),d0
+		move.w	d0,ground_vel(a0)
+		move.b	angle(a0),d0
 		addi.b	#$20,d0
 		andi.b	#$C0,d0
 		bne.s	locret_17538
 		cmpi.w	#$FC00,d0
 		bgt.s	locret_17538
-		tst.b	$2D(a0)
+		tst.b	flip_type(a0)
 		bmi.s	locret_17538
 		sfx	sfx_Skid
 		move.b	#$D,anim(a0)
-		bset	#0,$2A(a0)
-		cmpi.b	#$C,$2C(a0)
+		bset	#0,status(a0)
+		cmpi.b	#$C,air_left(a0)
 		blo.s	locret_17538
 		move.b	#6,5(a6)
-		move.b	#$15,$22(a6)
+		move.b	#$15,mapping_frame(a6)
 
 locret_17538:
 		rts
@@ -1722,7 +1722,7 @@ loc_17574:
 		bsr.w	sub_1765E
 
 loc_17580:
-		move.w	$1C(a0),d0
+		move.w	ground_vel(a0),d0
 		beq.s	loc_175A2
 		bmi.s	loc_17596
 		sub.w	d5,d0
@@ -1730,7 +1730,7 @@ loc_17580:
 		move.w	#0,d0
 
 loc_17590:
-		move.w	d0,$1C(a0)
+		move.w	d0,ground_vel(a0)
 		bra.s	loc_175A2
 ; ---------------------------------------------------------------------------
 
@@ -1740,10 +1740,10 @@ loc_17596:
 		move.w	#0,d0
 
 loc_1759E:
-		move.w	d0,$1C(a0)
+		move.w	d0,ground_vel(a0)
 
 loc_175A2:
-		move.w	$1C(a0),d0
+		move.w	ground_vel(a0),d0
 		bpl.s	loc_175AA
 		neg.w	d0
 
@@ -1752,27 +1752,27 @@ loc_175AA:
 		bhs.s	loc_175F8
 		tst.b	$3D(a0)
 		bne.s	loc_175E6
-		bclr	#2,$2A(a0)
-		move.b	$1E(a0),d0
-		move.b	$44(a0),$1E(a0)
-		move.b	$45(a0),$1F(a0)
+		bclr	#2,status(a0)
+		move.b	y_radius(a0),d0
+		move.b	default_y_radius(a0),y_radius(a0)
+		move.b	default_x_radius(a0),x_radius(a0)
 		move.b	#5,anim(a0)
-		sub.b	$44(a0),d0
+		sub.b	default_y_radius(a0),d0
 		ext.w	d0
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_175E0
 		neg.w	d0
 
 loc_175E0:
-		add.w	d0,$14(a0)
+		add.w	d0,y_pos(a0)
 		bra.s	loc_175F8
 ; ---------------------------------------------------------------------------
 
 loc_175E6:
-		move.w	#$400,$1C(a0)
-		btst	#0,$2A(a0)
+		move.w	#$400,ground_vel(a0)
+		btst	#0,status(a0)
 		beq.s	loc_175F8
-		neg.w	$1C(a0)
+		neg.w	ground_vel(a0)
 
 loc_175F8:
 		cmpi.w	#$60,(a5)
@@ -1784,12 +1784,12 @@ loc_17602:
 		subq.w	#2,(a5)
 
 loc_17604:
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		jsr	(GetSineCosine).w
-		muls.w	$1C(a0),d0
+		muls.w	ground_vel(a0),d0
 		asr.l	#8,d0
-		move.w	d0,$1A(a0)
-		muls.w	$1C(a0),d1
+		move.w	d0,y_vel(a0)
+		muls.w	ground_vel(a0),d1
 		asr.l	#8,d1
 		cmpi.w	#$1000,d1
 		ble.s	loc_17628
@@ -1801,18 +1801,18 @@ loc_17628:
 		move.w	#-$1000,d1
 
 loc_17632:
-		move.w	d1,$18(a0)
+		move.w	d1,x_vel(a0)
 		bra.w	loc_17382
 
 ; =============== S U B R O U T I N E =======================================
 
 sub_1763A:
-		move.w	$1C(a0),d0
+		move.w	ground_vel(a0),d0
 		beq.s	loc_17642
 		bpl.s	loc_17650
 
 loc_17642:
-		bset	#0,$2A(a0)
+		bset	#0,status(a0)
 		move.b	#2,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -1823,15 +1823,15 @@ loc_17650:
 		move.w	#-$80,d0
 
 loc_17658:
-		move.w	d0,$1C(a0)
+		move.w	d0,ground_vel(a0)
 		rts
 
 ; =============== S U B R O U T I N E =======================================
 
 sub_1765E:
-		move.w	$1C(a0),d0
+		move.w	ground_vel(a0),d0
 		bmi.s	loc_17672
-		bclr	#0,$2A(a0)
+		bclr	#0,status(a0)
 		move.b	#2,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -1842,7 +1842,7 @@ loc_17672:
 		move.w	#$80,d0
 
 loc_1767A:
-		move.w	d0,$1C(a0)
+		move.w	d0,ground_vel(a0)
 		rts
 
 ; =============== S U B R O U T I N E =======================================
@@ -1852,12 +1852,12 @@ Knux_ChgJumpDir:
 		move.w	(a4),d6
 		move.w	2(a4),d5
 		asl.w	#1,d5
-		btst	#4,$2A(a0)
+		btst	#4,status(a0)
 		bne.s	loc_176D4
-		move.w	$18(a0),d0
+		move.w	x_vel(a0),d0
 		btst	#2,(Ctrl_1_logical).w
 		beq.s	loc_176B4
-		bset	#0,$2A(a0)
+		bset	#0,status(a0)
 		sub.w	d5,d0
 		move.w	d6,d1
 		neg.w	d1
@@ -1871,7 +1871,7 @@ Knux_ChgJumpDir:
 loc_176B4:
 		btst	#3,(Ctrl_1_logical).w
 		beq.s	loc_176D0
-		bclr	#0,$2A(a0)
+		bclr	#0,status(a0)
 		add.w	d5,d0
 		cmp.w	d6,d0
 		blt.s	loc_176D0
@@ -1881,7 +1881,7 @@ loc_176B4:
 		move.w	d6,d0
 
 loc_176D0:
-		move.w	d0,$18(a0)
+		move.w	d0,x_vel(a0)
 
 loc_176D4:
 		cmpi.w	#$60,(a5)
@@ -1893,9 +1893,9 @@ loc_176DE:
 		subq.w	#2,(a5)
 
 loc_176E0:
-		cmpi.w	#-$400,$1A(a0)
+		cmpi.w	#-$400,y_vel(a0)
 		blo.s	locret_1770E
-		move.w	$18(a0),d0
+		move.w	x_vel(a0),d0
 		move.w	d0,d1
 		asr.w	#5,d1
 		beq.s	locret_1770E
@@ -1905,7 +1905,7 @@ loc_176E0:
 		move.w	#0,d0
 
 loc_176FC:
-		move.w	d0,$18(a0)
+		move.w	d0,x_vel(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -1915,7 +1915,7 @@ loc_17702:
 		move.w	#0,d0
 
 loc_1770A:
-		move.w	d0,$18(a0)
+		move.w	d0,x_vel(a0)
 
 locret_1770E:
 		rts
@@ -1927,7 +1927,7 @@ Knux_Jump:
 		andi.b	#$70,d0
 		beq.w	locret_177E0
 		moveq	#0,d0
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_17732
 		addi.b	#$40,d0
@@ -1942,70 +1942,70 @@ loc_17732:
 		cmpi.w	#6,d1
 		blt.w	locret_177E0
 		move.w	#$600,d2
-		btst	#6,$2A(a0)
+		btst	#6,status(a0)
 		beq.s	loc_1775C
 		move.w	#$300,d2
 
 loc_1775C:
 		moveq	#0,d0
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		subi.b	#$40,d0
 		jsr	(GetSineCosine).w
 		muls.w	d2,d1
 		asr.l	#8,d1
-		add.w	d1,$18(a0)
+		add.w	d1,x_vel(a0)
 		muls.w	d2,d0
 		asr.l	#8,d0
-		add.w	d0,$1A(a0)
-		bset	#1,$2A(a0)
-		bclr	#5,$2A(a0)
+		add.w	d0,y_vel(a0)
+		bset	#1,status(a0)
+		bclr	#5,status(a0)
 		addq.l	#4,sp
-		move.b	#1,$40(a0)
+		move.b	#1,jumping(a0)
 		clr.b	$3C(a0)
 		sfx	sfx_Jump
-		move.b	$44(a0),$1E(a0)
-		move.b	$45(a0),$1F(a0)
-		btst	#2,$2A(a0)
+		move.b	default_y_radius(a0),y_radius(a0)
+		move.b	default_x_radius(a0),x_radius(a0)
+		btst	#2,status(a0)
 		bne.s	loc_177E2
-		move.b	#$E,$1E(a0)
-		move.b	#7,$1F(a0)
+		move.b	#$E,y_radius(a0)
+		move.b	#7,x_radius(a0)
 		move.b	#2,anim(a0)
-		bset	#2,$2A(a0)
-		move.b	$1E(a0),d0
-		sub.b	$44(a0),d0
+		bset	#2,status(a0)
+		move.b	y_radius(a0),d0
+		sub.b	default_y_radius(a0),d0
 		ext.w	d0
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_177DC
 		neg.w	d0
 
 loc_177DC:
-		sub.w	d0,$14(a0)
+		sub.w	d0,y_pos(a0)
 
 locret_177E0:
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_177E2:
-		bset	#4,$2A(a0)
+		bset	#4,status(a0)
 		rts
 
 ; =============== S U B R O U T I N E =======================================
 
 Knux_JumpHeight:
-		tst.b	$40(a0)
+		tst.b	jumping(a0)
 		beq.s	loc_17818
 		move.w	#-$400,d1
-		btst	#6,$2A(a0)
+		btst	#6,status(a0)
 		beq.s	loc_17800
 		move.w	#-$200,d1
 
 loc_17800:
-		cmp.w	$1A(a0),d1
+		cmp.w	y_vel(a0),d1
 		ble.w	Knux_Test_For_Glide
 		move.b	(Ctrl_1_logical).w,d0
 		andi.b	#$70,d0
 		bne.s	locret_17816
-		move.w	d1,$1A(a0)
+		move.w	d1,y_vel(a0)
 
 locret_17816:
 		rts
@@ -2014,31 +2014,30 @@ locret_17816:
 loc_17818:
 		tst.b	$3D(a0)
 		bne.s	locret_1782C
-		cmpi.w	#-$FC0,$1A(a0)
+		cmpi.w	#-$FC0,y_vel(a0)
 		bge.s	locret_1782C
-		move.w	#-$FC0,$1A(a0)
-
+		move.w	#-$FC0,y_vel(a0)
 locret_1782C:
+locret_178CC:
 		rts
 ; ---------------------------------------------------------------------------
 
 Knux_Test_For_Glide:
 		tst.b	double_jump_flag(a0)
-		bne.w	locret_178CC
+		bne.s	locret_178CC
 		move.b	(Ctrl_1_pressed_logical).w,d0
 		andi.b	#$70,d0
-		beq.w	locret_178CC
+		beq.s	locret_178CC
 
-		bclr	#2,$2A(a0)
-		move.b	#$A,$1E(a0)
-		move.b	#$A,$1F(a0)
-		bclr	#4,$2A(a0)
+		bclr	#2,status(a0)
+		move.b	#$A,y_radius(a0)
+		move.b	#$A,x_radius(a0)
+		bclr	#4,status(a0)
 		move.b	#1,double_jump_flag(a0)
-		addi.w	#$200,$1A(a0)
-		bpl.s	loc_17898
-		move.w	#0,$1A(a0)
-
-loc_17898:
+		addi.w	#$200,y_vel(a0)
+		bpl.s	+
+		move.w	#0,y_vel(a0)
++
 		move.w	#$400,d1
 		move.w	#$800,d2
 		btst	#Status_Underwater,status(a0)	; are you underwater?
@@ -2067,14 +2066,11 @@ loc_17898:
 		moveq	#-$80,d1
 +
 		move.w	d0,x_vel(a0)
-		move.b	d1,$25(a0)
-		move.w	#0,$26(a0)
+		move.b	d1,double_jump_property(a0)
+		move.w	#0,angle(a0)
 		move.b	#0,(Gliding_collision_flags).w
 		bset	#Status_InAir,(Gliding_collision_flags).w
-		bsr.w	Knuckles_Set_Gliding_Animation
-
-locret_178CC:
-		rts
+		bra.w	Knuckles_Set_Gliding_Animation
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -2086,8 +2082,8 @@ Knux_DoLevelCollision_CheckRet:
 
 loc_17952:
 		move.b	$47(a0),d5
-		move.w	$18(a0),d1
-		move.w	$1A(a0),d2
+		move.w	x_vel(a0),d1
+		move.w	y_vel(a0),d2
 		jsr	(GetArcTan).w
 		subi.b	#$20,d0
 		andi.b	#$C0,d0
@@ -2100,16 +2096,16 @@ loc_17952:
 		bsr.w	CheckLeftWallDist
 		tst.w	d1
 		bpl.s	loc_1799C
-		sub.w	d1,$10(a0)
-		move.w	#0,$18(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 		bset	#Status_Push,(Gliding_collision_flags).w
 
 loc_1799C:
 		bsr.w	CheckRightWallDist
 		tst.w	d1
 		bpl.s	loc_179B4
-		add.w	d1,$10(a0)
-		move.w	#0,$18(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 		bset	#Status_Push,(Gliding_collision_flags).w
 
 loc_179B4:
@@ -2121,9 +2117,9 @@ loc_179B4:
 		neg.w	d1
 
 loc_179C4:
-		add.w	d1,$14(a0)
-		move.b	d3,$26(a0)
-		move.w	#0,$1A(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
+		move.w	#0,y_vel(a0)
 		bclr	#Status_InAir,(Gliding_collision_flags).w
 
 locret_179D8:
@@ -2134,8 +2130,8 @@ loc_179DA:
 		bsr.w	CheckLeftWallDist
 		tst.w	d1
 		bpl.s	loc_179F2
-		sub.w	d1,$10(a0)
-		move.w	#0,$18(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 		bset	#Status_Push,(Gliding_collision_flags).w
 
 loc_179F2:
@@ -2150,10 +2146,10 @@ loc_179F2:
 		neg.w	d1
 
 loc_17A0A:
-		add.w	d1,$14(a0)
-		tst.w	$1A(a0)
+		add.w	d1,y_pos(a0)
+		tst.w	y_vel(a0)
 		bpl.s	locret_17A1A
-		move.w	#0,$1A(a0)
+		move.w	#0,y_vel(a0)
 
 locret_17A1A:
 		rts
@@ -2163,8 +2159,8 @@ loc_17A1C:
 		bsr.w	CheckRightWallDist
 		tst.w	d1
 		bpl.s	locret_17A34
-		add.w	d1,$10(a0)
-		move.w	#0,$18(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 		bset	#Status_Push,(Gliding_collision_flags).w
 
 locret_17A34:
@@ -2172,7 +2168,7 @@ locret_17A34:
 ; ---------------------------------------------------------------------------
 
 loc_17A36:
-		tst.w	$1A(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_17A60
 		bsr.w	sub_11FD6
 		tst.w	d1
@@ -2182,9 +2178,9 @@ loc_17A36:
 		neg.w	d1
 
 loc_17A4C:
-		add.w	d1,$14(a0)
-		move.b	d3,$26(a0)
-		move.w	#0,$1A(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
+		move.w	#0,y_vel(a0)
 		bclr	#Status_InAir,(Gliding_collision_flags).w
 
 locret_17A60:
@@ -2195,16 +2191,16 @@ loc_17A62:
 		bsr.w	CheckLeftWallDist
 		tst.w	d1
 		bpl.s	loc_17A7A
-		sub.w	d1,$10(a0)
-		move.w	#0,$18(a0)
+		sub.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 		bset	#Status_Push,(Gliding_collision_flags).w
 
 loc_17A7A:
 		jsr	(CheckRightWallDist).l
 		tst.w	d1
 		bpl.s	loc_17A94
-		add.w	d1,$10(a0)
-		move.w	#0,$18(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 		bset	#Status_Push,(Gliding_collision_flags).w
 
 loc_17A94:
@@ -2216,8 +2212,8 @@ loc_17A94:
 		neg.w	d1
 
 loc_17AA4:
-		sub.w	d1,$14(a0)
-		move.w	#0,$1A(a0)
+		sub.w	d1,y_pos(a0)
+		move.w	#0,y_vel(a0)
 
 locret_17AAE:
 		rts
@@ -2227,8 +2223,8 @@ loc_17AB0:
 		jsr	(CheckRightWallDist).l
 		tst.w	d1
 		bpl.s	loc_17ACA
-		add.w	d1,$10(a0)
-		move.w	#0,$18(a0)
+		add.w	d1,x_pos(a0)
+		move.w	#0,x_vel(a0)
 		bset	#Status_Push,(Gliding_collision_flags).w
 
 loc_17ACA:
@@ -2240,17 +2236,17 @@ loc_17ACA:
 		neg.w	d1
 
 loc_17ADA:
-		sub.w	d1,$14(a0)
-		tst.w	$1A(a0)
+		sub.w	d1,y_pos(a0)
+		tst.w	y_vel(a0)
 		bpl.s	locret_17AEA
-		move.w	#0,$1A(a0)
+		move.w	#0,y_vel(a0)
 
 locret_17AEA:
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_17AEC:
-		tst.w	$1A(a0)
+		tst.w	y_vel(a0)
 		bmi.s	locret_17B16
 		bsr.w	sub_11FD6
 		tst.w	d1
@@ -2260,9 +2256,9 @@ loc_17AEC:
 		neg.w	d1
 
 loc_17B02:
-		add.w	d1,$14(a0)
-		move.b	d3,$26(a0)
-		move.w	#0,$1A(a0)
+		add.w	d1,y_pos(a0)
+		move.b	d3,angle(a0)
+		move.w	#0,y_vel(a0)
 		bclr	#Status_InAir,(Gliding_collision_flags).w
 
 locret_17B16:
@@ -2271,14 +2267,14 @@ locret_17B16:
 ; =============== S U B R O U T I N E =======================================
 
 Knux_TouchFloor:
-		move.b	$1E(a0),d0
-		move.b	$44(a0),$1E(a0)
-		move.b	$45(a0),$1F(a0)
-		btst	#2,$2A(a0)
+		move.b	y_radius(a0),d0
+		move.b	default_y_radius(a0),y_radius(a0)
+		move.b	default_x_radius(a0),x_radius(a0)
+		btst	#2,status(a0)
 		beq.s	loc_17B6A
-		bclr	#2,$2A(a0)
+		bclr	#2,status(a0)
 		move.b	#0,anim(a0)
-		sub.b	$44(a0),d0
+		sub.b	default_y_radius(a0),d0
 		ext.w	d0
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_17B56
@@ -2286,29 +2282,30 @@ Knux_TouchFloor:
 
 loc_17B56:
 		move.w	d0,-(sp)
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		addi.b	#$40,d0
 		bpl.s	loc_17B64
 		neg.w	(sp)
 
 loc_17B64:
 		move.w	(sp)+,d0
-		add.w	d0,$14(a0)
+		add.w	d0,y_pos(a0)
 
 loc_17B6A:
-		bclr	#1,$2A(a0)
-		bclr	#5,$2A(a0)
-		bclr	#4,$2A(a0)
-		move.b	#0,$40(a0)
-		move.w	#0,(Chain_bonus_counter).w
-		move.b	#0,$27(a0)
-		move.b	#0,$2D(a0)
-		move.b	#0,$30(a0)
-		move.b	#0,$39(a0)
-		move.b	#0,double_jump_flag(a0)
+		bclr	#1,status(a0)
+		bclr	#5,status(a0)
+		bclr	#4,status(a0)
+		moveq	#0,d0
+		move.b	d0,jumping(a0)
+		move.w	d0,(Chain_bonus_counter).w
+		move.b	d0,flip_angle(a0)
+		move.b	d0,flip_type(a0)
+		move.b	d0,flips_remaining(a0)
+		move.b	d0,scroll_delay_counter(a0)
+		move.b	d0,double_jump_flag(a0)
 		cmpi.b	#$20,anim(a0)
 		blo.s	locret_17BB4
-		move.b	#0,anim(a0)
+		move.b	d0,anim(a0)
 
 locret_17BB4:
 		rts
@@ -2326,16 +2323,16 @@ loc_17BB6:
 
 loc_17BD0:
 		jsr	(MoveSprite2_TestGravity).w
-		addi.w	#$30,$1A(a0)
-		btst	#6,$2A(a0)
+		addi.w	#$30,y_vel(a0)
+		btst	#6,status(a0)
 		beq.s	loc_17BEA
-		subi.w	#$20,$1A(a0)
+		subi.w	#$20,y_vel(a0)
 
 loc_17BEA:
 		cmpi.w	#-$100,(Camera_min_Y_pos).w
 		bne.s	loc_17BFA
 		move.w	(Screen_Y_wrap_value).w,d0
-		and.w	d0,$14(a0)
+		and.w	d0,y_pos(a0)
 
 loc_17BFA:
 		bsr.w	sub_17C10
@@ -2353,14 +2350,14 @@ sub_17C10:
 		bne.s	loc_17C2E
 		move.w	(Camera_max_Y_pos).w,d0
 		addi.w	#$E0,d0
-		cmp.w	$14(a0),d0
+		cmp.w	y_pos(a0),d0
 		blt.w	loc_17C82
 		bra.s	loc_17C3C
 ; ---------------------------------------------------------------------------
 
 loc_17C2E:
 		move.w	(Camera_min_Y_pos).w,d0
-		cmp.w	$14(a0),d0
+		cmp.w	y_pos(a0),d0
 		blt.s	loc_17C3C
 		bra.w	loc_17C82
 ; ---------------------------------------------------------------------------
@@ -2369,12 +2366,12 @@ loc_17C3C:
 		movem.l	a4-a6,-(sp)
 		bsr.w	Player_DoLevelCollision
 		movem.l	(sp)+,a4-a6
-		btst	#1,$2A(a0)
+		btst	#1,status(a0)
 		bne.s	locret_17C80
 		moveq	#0,d0
-		move.w	d0,$1A(a0)
-		move.w	d0,$18(a0)
-		move.w	d0,$1C(a0)
+		move.w	d0,y_vel(a0)
+		move.w	d0,x_vel(a0)
+		move.w	d0,ground_vel(a0)
 		move.b	d0,$2E(a0)
 		move.b	#0,anim(a0)
 		move.w	#make_priority(2),priority(a0)
@@ -2443,7 +2440,7 @@ loc_17CEA:
 
 loc_17D04:
 		jsr	(MoveSprite2_TestGravity).w
-		addi.w	#$10,$1A(a0)
+		addi.w	#$10,y_vel(a0)
 		bsr.w	Sonic_RecordPos
 		bsr.w	sub_17D1E
 		jmp	(Draw_Sprite).w
@@ -2470,14 +2467,14 @@ Animate_Knuckles:
 		move.b	d0,$21(a0)
 		move.b	#0,$23(a0)
 		move.b	#0,$24(a0)
-		bclr	#5,$2A(a0)
+		bclr	#5,status(a0)
 
 loc_17D58:
 		add.w	d0,d0
 		adda.w	(a1,d0.w),a1
 		move.b	(a1),d0
 		bmi.s	loc_17DC8
-		move.b	$2A(a0),d1
+		move.b	status(a0),d1
 		andi.b	#1,d1
 		andi.b	#-4,4(a0)
 		or.b	d1,4(a0)
@@ -2493,7 +2490,7 @@ loc_17D7E:
 		bhs.s	loc_17D98
 
 loc_17D8E:
-		move.b	d0,$22(a0)
+		move.b	d0,mapping_frame(a0)
 		addq.b	#1,$23(a0)
 
 locret_17D96:
@@ -2531,18 +2528,18 @@ loc_17DC8:
 		addq.b	#1,d0
 		bne.w	loc_17E84
 		moveq	#0,d0
-		tst.b	$2D(a0)
+		tst.b	flip_type(a0)
 		bmi.w	loc_127C0
 		move.b	$27(a0),d0
 		bne.w	loc_127C0
 		moveq	#0,d1
-		move.b	$26(a0),d0
+		move.b	angle(a0),d0
 		bmi.s	loc_17DEC
 		beq.s	loc_17DEC
 		subq.b	#1,d0
 
 loc_17DEC:
-		move.b	$2A(a0),d2
+		move.b	status(a0),d2
 		andi.b	#1,d2
 		bne.s	loc_17DF8
 		not.b	d0
@@ -2556,11 +2553,11 @@ loc_17E00:
 		andi.b	#-4,4(a0)
 		eor.b	d1,d2
 		or.b	d2,4(a0)
-		btst	#5,$2A(a0)
+		btst	#5,status(a0)
 		bne.w	loc_17ECC
 		lsr.b	#4,d0
 		andi.b	#6,d0
-		move.w	$1C(a0),d2
+		move.w	ground_vel(a0),d2
 		bpl.s	loc_17E24
 		neg.w	d2
 
@@ -2588,8 +2585,8 @@ loc_17E42:
 		move.b	1(a1),d0
 
 loc_17E60:
-		move.b	d0,$22(a0)
-		add.b	d3,$22(a0)
+		move.b	d0,mapping_frame(a0)
+		add.b	d3,mapping_frame(a0)
 		subq.b	#1,$24(a0)
 		bpl.s	locret_17E82
 		neg.w	d2
@@ -2607,13 +2604,13 @@ locret_17E82:
 ; ---------------------------------------------------------------------------
 
 loc_17E84:
-		move.b	$2A(a0),d1
+		move.b	status(a0),d1
 		andi.b	#1,d1
 		andi.b	#-4,4(a0)
 		or.b	d1,4(a0)
 		subq.b	#1,$24(a0)
 		bpl.w	locret_17D96
-		move.w	$1C(a0),d2
+		move.w	ground_vel(a0),d2
 		bpl.s	loc_17EA6
 		neg.w	d2
 
@@ -2638,7 +2635,7 @@ loc_17EC2:
 loc_17ECC:
 		subq.b	#1,$24(a0)
 		bpl.w	locret_17D96
-		move.w	$1C(a0),d2
+		move.w	ground_vel(a0),d2
 		bmi.s	loc_17EDC
 		neg.w	d2
 

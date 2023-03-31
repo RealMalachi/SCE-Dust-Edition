@@ -5,11 +5,11 @@ Obj_Tails_Tail:
 		; init
 		move.l	#Map_Tails_Tail,mappings(a0)
 		move.w	#ArtTile_Player_2_Tail,art_tile(a0)
-	;	move.w	#make_priority(2),priority(a0)
+;		move.w	#make_priority(2),priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$18,height_pixels(a0)
 		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
-		move.l	#Obj_Tails_Tail_Main,(a0)
+		move.l	#Obj_Tails_Tail_Main,address(a0)
 
 Obj_Tails_Tail_Main:
 		; Here, several SSTs are inheritied from the parent, normally Tails
@@ -21,39 +21,36 @@ Obj_Tails_Tail_Main:
 		move.w	priority(a2),priority(a0)
 		andi.w	#drawing_mask,art_tile(a0)
 		tst.w	art_tile(a2)
-		bpl.s	loc_16106
+		bpl.s	+
 		ori.w	#high_priority,art_tile(a0)
-
-loc_16106:
++
 		moveq	#0,d0
 		move.b	anim(a2),d0
 		btst	#5,status(a2)
-		beq.s	loc_1612C
+		beq.s	.skipedgecases
 		tst.b	(WindTunnel_flag_P2).w
-		bne.s	loc_1612C
+		bne.s	.skipedgecases
 		; This is checking if parent (Tails) is in its pushing animation
 		cmpi.b	#$A9,mapping_frame(a2)
-		blo.s	loc_1612C
+		blo.s	+
 		cmpi.b	#$AC,mapping_frame(a2)
-		bhi.s	loc_1612C
+		bhi.s	+
 		moveq	#4,d0
-
-loc_1612C:
++
+.skipedgecases
 		cmp.b	objoff_34(a0),d0	; Has the input parent anim changed since last check?
-		beq.s	loc_1613C		; If not, branch and skip setting a matching Tails' Tails anim
+		beq.s	+			; If not, branch and skip setting a matching Tails' Tails anim
 		move.b	d0,objoff_34(a0)	; Store d0 for the above comparision
 		move.b	Obj_Tails_Tail_AniSelection(pc,d0.w),anim(a0)	; Load anim relative to parent's
-
-loc_1613C:
++
 		lea	(AniTails_Tail).l,a1
 		bsr.w	Animate_Tails_Part2
 		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_1615A
+		beq.s	+
 		cmpi.b	#3,anim(a0)		; Is this the Directional animation?
-		beq.s	loc_1615A		; If so, skip the mirroring
+		beq.s	+			; If so, skip the gravity flip
 		eori.b	#2,render_flags(a0)	; Reverse the vertical mirror render_flag bit (On if Off beforehand and vice versa)
-
-loc_1615A:
++
 		bra.w	Tails_Tail_Load_PLC
 	;	jmp	(Draw_Sprite).w		; main tails object renders it to fix layering bugs
 ; ---------------------------------------------------------------------------
