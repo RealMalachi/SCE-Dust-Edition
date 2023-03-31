@@ -2,5 +2,5 @@
 lavagaming1	- Draw_Sprite optimization, ObjectRamMarker idea
 vladikcomper	- Kosinski+
 flamewing	- Optimized MoveSprite routine
-
+MDTravis	- https://github.com/MDTravisYT/Hiroshi-Kubota-SMPS-Decomps
 

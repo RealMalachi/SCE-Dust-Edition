@@ -162,23 +162,20 @@ loc_5C4E6:
 		subq.b	#1,d0
 		bmi.s	loc_5C514
 		move.b	d0,(_unkFA84).w
-		bsr.w	sub_5CAAE
-
-locret_5C512:
-		rts
+		bra.w	sub_5CAAE
 ; ---------------------------------------------------------------------------
 
 loc_5C514:
 		move.b	#2,(_unkFAA9).w
+locret_5C512:
+locret_5C528:
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_5C51C:
 		move.l	#locret_5C528,address(a0)
 		bset	#3,$38(a0)
-
-locret_5C528:
-		rts
+		sfx	sfx_Menu,1
 ; ---------------------------------------------------------------------------
 
 Obj_Continue_SonicWTails:

@@ -68,6 +68,8 @@ sfx_GlideLand =		SMPS_id(ptr_snd61)
 sfx_GroundSlide =	SMPS_id(ptr_snd62)
 sfx_Laser =			SMPS_id(ptr_snd63)
 
+sfx_Menu =			SMPS_id(ptr_snd64)
+
 sfx__Last =			SMPS_id(ptr_sndend)-1
 
 ; Sound commands
