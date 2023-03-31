@@ -182,16 +182,19 @@ routine			ds.b 1 ; byte
 height_pixels		ds.b 1 ; byte
 width_pixels		ds.b 1 ; byte
 priority		ds.w 1 ; word ; in units of $80
-art_tile		ds.w 1 ; word ; PCCVH AAAAAAAAAAA ; P = priority, CC = palette line, V = y-flip; H = x-flip, A = starting cell index of art
+art_tile		ds.w 1 ; word ; PCCVHAAA AAAAAAAA ; P = priority, C = palette line, V = y-flip, H = x-flip, A = starting cell index of art
 mappings		ds.l 1 ; long
+x_pixel			; word ; x-coordinate for objects using screen positioning
 x_pos			ds.w 1 ; word, long when extra precision is required
 x_sub			ds.w 1 ; word
+y_pixel			; word ; y-coordinate for objects using screen positioning
 y_pos			ds.w 1 ; word, long when extra precision is required
 y_sub			ds.w 1 ; word
 
 x_vel			ds.w 1 ; word
 y_vel			ds.w 1 ; word
-	ds.w 1 	; $1C, $1D
+inertia		; TODO: not that many objects outside of the player use ground_vel. Maybe make it exclusive
+ground_vel		ds.w 1 ; word ; overall velocity along ground, not updated when in the air
 y_radius		ds.b 1 ; byte ; collision height / 2
 x_radius		ds.b 1 ; byte ; collision width / 2
 anim			ds.b 1 ; byte
@@ -200,25 +203,13 @@ prev_anim		ds.b 1 ; byte ; when this isn't equal to anim the animation restarts
 mapping_frame		ds.b 1 ; byte
 anim_frame		ds.b 1 ; byte
 anim_frame_timer	ds.b 1 ; byte
-	ds.b 1 ; $25
+
+collision_backup	ds.b 1 ; $25, byte ; commonly used for a copy of collision_flags
 angle			ds.b 1 ; byte ; angle about axis into plane of the screen (00 = vertical, 360 degrees = 256)
-	ds.b 3 ; $27, $28, $29
-status			ds.b 1 ; bitfield ; refer to SCHG for details
-	if * > object_size
-	fatal "Common Object variables are too big. What exactly were you trying to accomplish?"
-	endif
-	dephase
-; ---------------------------------------------------------------------------
-; Conventions followed by many objects but not Sonic/Tails/Knuckles:
-; ---------------------------------------------------------------------------
-
-x_pixel =			x_pos ; word ; x-coordinate for objects using screen positioning
-y_pixel =			y_pos ; word ; y-coordinate for objects using screen positioning
-
-	phase $28
+	ds.b 1 ; $27
 collision_flags		ds.b 1 ; byte ; TT SSSSSS ; TT = collision type, SSSSSS = size
 collision_property	ds.b 1 ; byte ; usage varies, bosses use it as a hit counter
-	ds.b 1	; $2A, object status bitfield
+status			ds.b 1 ; bitfield ; refer to SCHG for details
 shield_reaction		ds.b 1 ; byte ; bit 3 = bounces off shield, bit 4 = negated by fire shield, bit 5 = negated by lightning shield, bit 6 = negated by bubble shield
 subtype			ds.b 1 ; byte
 	ds.b 1	; $2D, Super Flickies use this to mark that the object's been locked on to. Overlaps with multidraw.
@@ -241,19 +232,19 @@ parent3			ds.w 1 ; word ; parent of child objects
 parent2		; ds.w 1 ; word ; several objects use this instead
 respawn_addr		ds.w 1 ; word ; the address of this object's entry in the respawn table
 	if * > object_size
-	fatal "Standard Object variables are too big"
+	fatal "Standard Object variables are too big by $\{*-object_size} bytes"
 	endif
 	dephase
 ; ---------------------------------------------------------------------------
 ; Conventions specific to Sonic/Tails/Knuckles:
 ; ---------------------------------------------------------------------------
 
-
-ground_vel =			$1C ; word ; overall velocity along ground, not updated when in the air
-inertia	=	ground_vel
-double_jump_property =		$25 ; byte ; remaining frames of flight / 2 for Tails, gliding-related for Knuckles
-flip_angle =			$27 ; byte ; angle about horizontal axis (360 degrees = 256)
-	phase $2B
+	phase collision_backup
+double_jump_property	ds.b 1 ; byte ; remaining frames of flight / 2 for Tails, gliding-related for Knuckles
+	ds.b 1	; $26 ; angle
+flip_angle		ds.b 1 ; byte ; angle about horizontal axis (360 degrees = 256)
+	ds.b 2	; $28, $29 ; unused????
+	ds.b 1	; $2A ; status
 status_secondary	ds.b 1 ; byte ; see SCHG for details
 
 air_left		ds.b 1 ; byte
@@ -276,23 +267,23 @@ spin_dash_flag		ds.b 1 ; byte ; bit 1 indicates spin dash, bit 7 indicates force
 restart_timer		; word
 spin_dash_counter	ds.w 1 ; word
 jumping			ds.b 1 ; byte
-	ds.b 1	; unknown, likely unused
+	ds.b 1	; $41 ; unknown, likely unused
 interact		ds.w 1 ; word ; RAM address of the last object the character stood on
 default_y_radius	ds.b 1 ; byte ; default value of y_radius
 default_x_radius	ds.b 1 ; byte ; default value of x_radius
 top_solid_bit		ds.b 1 ; byte ; the bit to check for top solidity (either $C or $E)
 lrb_solid_bit		ds.b 1 ; byte ; the bit to check for left/right/bottom solidity (either $D or $F)
 	if * > object_size
-	fatal "Player Object variables are too big"
+	fatal "Player Object variables are too big by $\{*-object_size} bytes"
 	endif
 	dephase
 ; ---------------------------------------------------------------------------
 ; Conventions followed by some/most bosses:
 ; ---------------------------------------------------------------------------
 
-boss_invulnerable_time =	$1C ; byte ; flash time
-collision_restore_flags =	$25 ; byte ; restore collision after hit
-boss_hitcount2 =		$29 ; byte ; usage varies, bosses use it as a hit counter
+boss_invulnerable_time =	ground_vel		; byte ; flash time
+collision_restore_flags =	collision_backup	; byte ; restore collision after hit
+boss_hitcount2 =		collision_property	; byte ; usage varies, bosses use it as a hit counter
 
 ; ---------------------------------------------------------------------------
 ; When childsprites are activated (i.e. bit #6 of render_flags set)
@@ -335,7 +326,7 @@ sub9_y_pos		ds.w 1
 		ds.b 1
 sub9_mapframe		ds.b 1
 	if * > object_size
-	fatal "Multidraw Object variables are too big"
+	fatal "Multidraw Object variables are too big by $\{*-object_size} bytes"
 	endif
 	dephase
 
