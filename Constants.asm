@@ -2,45 +2,45 @@
 ; Constants
 ; ===========================================================================
 
-Ref_Checksum_String				= 'INIT'
+Ref_Checksum_String			= 'INIT'
 
 ; ---------------------------------------------------------------------------
 ; VDP addresses
 ; ---------------------------------------------------------------------------
 
-VDP_data_port =					$C00000
-VDP_control_port =				$C00004
-VDP_counter =					$C00008
+VDP_data_port =				$C00000
+VDP_control_port =			$C00004
+VDP_counter =				$C00008
 
-PSG_input =						$C00011
+PSG_input =				$C00011
 
 ; ---------------------------------------------------------------------------
 ; Address equates
 ; ---------------------------------------------------------------------------
 
 ; Z80 addresses
-Z80_RAM =						$A00000	; start of Z80 RAM
-Z80_RAM_end =					$A02000	; end of non-reserved Z80 RAM
-Z80_bus_request =				$A11100
-Z80_reset =						$A11200
+Z80_RAM =				$A00000	; start of Z80 RAM
+Z80_RAM_end =				$A02000	; end of non-reserved Z80 RAM
+Z80_bus_request =			$A11100
+Z80_reset =				$A11200
 
 ; ---------------------------------------------------------------------------
 ; I/O Area
 ; ---------------------------------------------------------------------------
 
-HW_Version =					$A10001
-HW_Port_1_Data =				$A10003
-HW_Port_2_Data =				$A10005
+HW_Version =				$A10001
+HW_Port_1_Data =			$A10003
+HW_Port_2_Data =			$A10005
 HW_Expansion_Data =			$A10007
-HW_Port_1_Control =				$A10009
-HW_Port_2_Control =				$A1000B
+HW_Port_1_Control =			$A10009
+HW_Port_2_Control =			$A1000B
 HW_Expansion_Control =			$A1000D
-HW_Port_1_TxData =				$A1000F
-HW_Port_1_RxData =				$A10011
-HW_Port_1_SCtrl =				$A10013
-HW_Port_2_TxData =				$A10015
-HW_Port_2_RxData =				$A10017
-HW_Port_2_SCtrl =				$A10019
+HW_Port_1_TxData =			$A1000F
+HW_Port_1_RxData =			$A10011
+HW_Port_1_SCtrl =			$A10013
+HW_Port_2_TxData =			$A10015
+HW_Port_2_RxData =			$A10017
+HW_Port_2_SCtrl =			$A10019
 HW_Expansion_TxData =			$A1001B
 HW_Expansion_RxData =			$A1001D
 HW_Expansion_SCtrl =			$A1001F
@@ -49,21 +49,21 @@ HW_Expansion_SCtrl =			$A1001F
 ; SRAM addresses
 ; ---------------------------------------------------------------------------
 
-SRAM_access_flag =				$A130F1
-Security_addr =					$A14000
+SRAM_access_flag =			$A130F1
+Security_addr =				$A14000
 
 ; ---------------------------------------------------------------------------
 ; Level Misc
 ; ---------------------------------------------------------------------------
 
-RingTable_Count:					= 512	; The maximum rings on the level. Even addresses only
-ObjectTable_Count:				= 768	; The maximum objects on the level. Even addresses only
+RingTable_Count:			= 512	; The maximum rings on the level. Even addresses only
+ObjectTable_Count:			= 768	; The maximum objects on the level. Even addresses only
 
 ; ---------------------------------------------------------------------------
 ; PLC queues
 ; ---------------------------------------------------------------------------
 
-PLCKosM_Count:					= 20		; The greater the queues, the more RAM is used for the buffer
+PLCKosM_Count:				= 20		; The greater the queues, the more RAM is used for the buffer
 
 ; ---------------------------------------------------------------------------
 ; Game modes
@@ -100,8 +100,13 @@ id_SonicDrown =				id(ptr_Sonic_Drown)		; C
 ; Levels
 ; ---------------------------------------------------------------------------
 
-id_DEZ:							equ 0
-id_LNull:						equ $FF
+	phase -1	;
+id_LNull:	ds.b 1	; -1	
+id_DEZ:		ds.b 1	; 0, so on
+	if * <> ZoneCount
+	fatal "Level IDs haven't been properly set. $\{*} defined, $\{ZoneCount} intended"
+	endif
+	dephase
 
 ; ---------------------------------------------------------------------------
 ; Buttons bit numbers
@@ -190,8 +195,8 @@ bitUp:		equ button_up
 ; property of all objects
 ; ---------------------------------------------------------------------------
 
-object_size =				$4A	; the size of an object's status table entry
-next_object =				object_size
+object_size =		$4A	; the size of an object's status table entry
+next_object =		object_size
 
 ; ---------------------------------------------------------------------------
 ; Object Status Table offsets
@@ -444,7 +449,6 @@ touch_top_mask			= p1_touch_top|p2_touch_top
 ; ---------------------------------------------------------------------------
 ; Player status variables
 ; ---------------------------------------------------------------------------
-
 Status_Facing			= 0
 Status_InAir			= 1
 Status_Roll			= 2
@@ -452,11 +456,11 @@ Status_OnObj			= 3
 Status_RollJump			= 4
 Status_Push			= 5
 Status_Underwater		= 6
+; TODO: 7 is used, but purpose is unknown
 
 ; ---------------------------------------------------------------------------
-; Player status secondary variables
+; Player status secondary and object shield_reaction variables
 ; ---------------------------------------------------------------------------
-
 Status_Shield			= 0
 Status_Invincible		= 1
 Status_SpeedShoes		= 2
@@ -464,6 +468,21 @@ Status_SpeedShoes		= 2
 Status_FireShield		= 4
 Status_LtngShield		= 5
 Status_BublShield		= 6
+Status_Sliding			= 7
+
+Shield_Reflect			= 3	; TODO: Make consistent with Status_Shield instead
+Status_FireImmune		= Status_FireShield
+Status_LtngImmune		= Status_LtngShield
+Status_BublImmune		= Status_BublShield
+; S2 labels
+status_sec_hasShield:		= Status_Shield
+status_sec_isInvincible:	= Status_Invincible
+status_sec_hasSpeedShoes:	= Status_SpeedShoes
+status_sec_isSliding:		= Status_Sliding
+status_sec_hasShield_mask:	= 1<<status_sec_hasShield	; $01
+status_sec_isInvincible_mask:	= 1<<status_sec_isInvincible	; $02
+status_sec_hasSpeedShoes_mask:	= 1<<status_sec_hasSpeedShoes	; $04
+status_sec_isSliding_mask:	= 1<<status_sec_isSliding	; $80
 
 ; ---------------------------------------------------------------------------
 ; Object Status Variables
@@ -577,39 +596,37 @@ ren_yflip		= 1<<renbit_yflip
 ren_camerapos		= 1<<renbit_camerapos
 ren_screenpos		= 0<<renbit_screenpos
 objflag_continue	= 1<<objflagbit_continue
-
 ren_static		= 1<<renbit_static
 ren_multidraw		= 1<<renbit_multidraw
 ren_onscreen		= 1<<renbit_onscreen
 
-
 ; backwards compatibility
-rbCoord						= renbit_screenpos	; screen coordinates bit
-rbStatic					= renbit_static		; static mappings bit
-rbMulti						= renbit_multidraw	; multi-draw bit
-rbOnscreen					= renbit_onscreen	; on-screen bit
+rbCoord			= renbit_screenpos	; screen coordinates bit
+rbStatic		= renbit_static		; static mappings bit
+rbMulti			= renbit_multidraw	; multi-draw bit
+rbOnscreen		= renbit_onscreen	; on-screen bit
 
-rfCoord						= ren_camerapos		; screen coordinates flag ($04)
-rfStatic					= ren_static		; static mappings flag ($20)
-rfMulti						= ren_multidraw		; multi-draw flag ($40)
-rfOnscreen					= ren_onscreen		; on-screen flag ($80)
+rfCoord			= ren_camerapos		; screen coordinates flag ($04)
+rfStatic		= ren_static		; static mappings flag ($20)
+rfMulti			= ren_multidraw		; multi-draw flag ($40)
+rfOnscreen		= ren_onscreen		; on-screen flag ($80)
 
 ; ---------------------------------------------------------------------------
 ; Animation flags
 ; ---------------------------------------------------------------------------
 
-afEnd						= $FF	; return to beginning of animation
-afBack						= $FE	; go back (specified number) bytes
-afChange					= $FD	; run specified animation
-afRoutine					= $FC	; increment routine counter and continue load next anim bytes
-afReset						= $FB	; move offscreen for remove(Using the Sprite_OnScreen_Test, etc...)
+afEnd			= $FF	; return to beginning of animation
+afBack			= $FE	; go back (specified number) bytes
+afChange		= $FD	; run specified animation
+afRoutine		= $FC	; increment routine counter and continue load next anim bytes
+afReset			= $FB	; move offscreen for remove(Using the Sprite_OnScreen_Test, etc...)
 
 ; ---------------------------------------------------------------------------
 ; Animation Raw flags
 ; ---------------------------------------------------------------------------
 
-arfEnd						= $FC	; return to beginning of animation
-arfBack						= $F8	; go back (specified number) bytes
-arfJump						= $F4	; jump from $34(a0) address
+arfEnd			= $FC	; return to beginning of animation
+arfBack			= $F8	; go back (specified number) bytes
+arfJump			= $F4	; jump from $34(a0) address
 
 	!org	0		; Reset the program counter
