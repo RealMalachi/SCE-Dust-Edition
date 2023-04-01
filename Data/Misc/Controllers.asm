@@ -31,7 +31,9 @@ Poll_Controllers:
 	moveq	#$40,d3			; do first request
 	lea	(Ctrl1).w,a0		; address where joypad states are written
 	lea	(HW_Port_1_Data).l,a1	; first joypad port
+  if Joypad_StateSupport=1
 	lea	(Ctrl1State).w,a2	; first joypad state
+  endif
   if Joypad_2PSupport=1
 	bsr.s	+			; do the first joypad
 	addq.w	#HW_Port_2_Data-HW_Port_1_Data,a1	; second joypad port
@@ -49,7 +51,9 @@ Poll_Controllers:
 	and.b	(a1),d0		; AND data with pressed A and Start
 	lsl.b	#2,d0		; push data to the last two bits
 	or.b	d1,d0		; combine them together
+  if Joypad_StateSupport=1
 	move.b	d4,(a2)+	; set CtrlXState to whatever d4 has, increment to next controller
+  endif
 ; copy final input data
 	not.b	d0		; reverse bits (Only the 3pad inputs)
 	move.w	(a0),d1		; Get previous held inputs
@@ -93,16 +97,20 @@ Poll_Controllers:
 	move.b	d2,(a1)		; request no.6
 ; safety check: pressing up and down confuses the 6b check, it's best to default to 3b
 	tst.b	d5		; DT (4) ; is up and down both being pressed?
-	beq.s	+		; DT (8,4 bled) ; if so, branch (d4 should be 0)
+	beq.s	.handle6berror	; DT (8,4 bled) ; if so, branch
     endif
 ; check the controller type
 	move.b	(a1),d5		; copy no.6
 	moveq	#%00001111,d1	; Prepare for 6 button controller check
-	and.b	d1,d5		; only keep the first 4 bits
+	and.b	d1,d5		; only keep the first 4 bits (%xxxx0000)
+  if Joypad_StateSupport=1
 	seq	d4		; if d5 is 0, set d4 to -1 (6 button). Otherwise, set to 0 (3 button)
-+
+.handle6berror	; (d4 should be 0)
 	move.b	d4,(a2)+	; set CtrlXState to whatever d4 has, increment to next controller
 	beq.s	.handle3button	; if we're on a 3 button controller, branch
+  else
+	bne.s	.handle3button	; if we're not on a 6 button controller, branch
+  endif
 
 .handle6button
 	move.b	d3,(a1)		; request controller data (no.7)
@@ -120,7 +128,9 @@ Poll_Controllers:
 	and.w	d0,d1		; mask old inputs with new ones
 	move.w	d1,(a0)+	; set pressed inputs
 	rts
-
+  if Joypad_StateSupport<>1
+.handle6berror
+  endif
 .handle3button
 ; copy final input data
 	move.b	d3,(a1)		; request controller data (no.7) just in case

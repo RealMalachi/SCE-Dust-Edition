@@ -184,8 +184,12 @@ Ctrl2_Player_Pr:	; word
 Ctrl2_Player_Pr_XYZ:	ds.b 1
 Ctrl2_Player_Pr_ABC:	ds.b 1
 
+	if Joypad_StateSupport=1
 Ctrl1State:		ds.b 1		; controller type (0 = 3 button, -1 = 6 button)
 Ctrl2State:		ds.b 1		; ditto
+	else
+; uses of CtrlXState should give undefined errors
+	endif
 
 ; backwards compatibility...ish
 Joypad:			= Ctrl1_Hd_ABC

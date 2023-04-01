@@ -196,8 +196,12 @@ Level_Screen:
 		jsr	(OscillateNumDo).w
 		jsr	(ChangeRingFrame).w
 		jsr	(Render_Sprites).w
+		move.w	(Ctrl1_Hd).w,d0
+		andi.w	#button_mode_mask|button_XYZ_mask,d0	; did P1 press start or mode?
+		bne.s	+
 		cmpi.b	#id_LevelScreen,(Game_mode).w
 		beq.s	.loop
++
 		clr.b	(ObjectFreezeFlag).w
 		rts
 ; ---------------------------------------------------------------------------

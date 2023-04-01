@@ -94,8 +94,10 @@ LevelSelect_Screen:
 		move.w	#palette_line_1,d3
 		bsr.w	LevelSelect_MarkFields
 		enableInts
-		tst.b	(Ctrl_1_pressed).w
-		bpl.s	.loop
+		move.w	(Ctrl1_Pr).w,d0
+		andi.w	#button_mode_mask|button_start_mask,d0	; did P1 press start or mode?
+		beq.s	.loop				; if not, wait next frame
+;.loadlvl
 		cmpi.w	#LevelSelect_ZoneCount,(vLevelSelect_VCount).w
 		bhs.s	.loop
 		move.b	#id_LevelScreen,(Game_mode).w	; set screen mode to level
