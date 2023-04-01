@@ -18,7 +18,7 @@ Joypad_2PSupport:	= 1	; if 1, enable second controller functionality
 Joypad_StateSupport:	= 0	; if 1, set controller type into CtrlXState
 Joypad_6BSupport:	= 1	; if 1, enable 6 button pad functionality
 ; general performance
-HardwareSafety:		= 0	; if 1, have extra code for safety on unintented hardware/emulation
+HardwareSafety:		= 1	; if 1, have extra code for safety on unintented hardware/emulation
 ;OptimiseSound:	  	= 1	; change to 1 to optimise sound queuing
 OptimiseStopZ80:	= 2	; if 1, remove stopZ80 and startZ80, if 2, use only for controllers(ignores sound driver)
 ZeroOffsetOptimization:	= 1	; if 1, makes a handful of zero-offset instructions smaller
