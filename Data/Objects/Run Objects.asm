@@ -69,6 +69,12 @@ RunObjects:
 	lea	next_object(a0),a0	; 8
 	endm
 
+;	if ErrorChecks<>0
+;	cmpa.w	#Object_RAM_end-next_object,a0
+;	beq.s	+	; if not at the end of Object_RAM, force crash
+;	RaiseError "Exceeded Object RAM!!!:", Debug_ExceededObjectRAM
+;+
+;	endif
 ;	move.l	address(a0),d0		; 12
 ;	beq.s	+			; 8, 10 but skips...
 ;	movea.l	d0,a1			; 4
