@@ -518,7 +518,7 @@ ArtTile_DashDust_P2		= $7F0
 ; ---------------------------------------------------------------------------
 
 vram_fg:			= $C000 ; foreground namespace
-vram_window:			= $C000 ; window namespace
+vram_window:			= vram_fg ; window namespace
 vram_bg:			= $E000 ; background namespace
 vram_hscroll:			= $F000 ; horizontal scroll table
 vram_sprites:			= $F800 ; sprite table

@@ -72,46 +72,47 @@ Init_InputPSG:
 		dbf	d5,Init_InputPSG
 		move.w	d0,(a2)
 		movem.l	(a6),d0-a6	; clear all registers
-		disableInts			; set the sr
+		disableInts		; set the sr
 
 Init_SkipPowerOn:
 		bra.s	Game_Program	; begin game
 ; ---------------------------------------------------------------------------
 ; InitArray:
 SetupValues:
-		dc.w $8000,bytesToLcnt($10000),$100
-
-.ram	dc.l Z80_RAM
+		dc.w $8000		; start of command init
+		dc.w bytesToLcnt($10000); RAM clear
+		dc.w $100	; addition to command init during loop, Z80 stop/reset
+.ram		dc.l Z80_RAM
 .bus		dc.l Z80_bus_request
-.reset	dc.l Z80_reset
-.data	dc.l VDP_data_port
+.reset		dc.l Z80_reset
+.data		dc.l VDP_data_port
 .control	dc.l VDP_control_port
 
-VDPInitValues:		; values for VDP registers
-		dc.b 4		; Command $8004 - HInt off, Enable HV counter read
-		dc.b $14		; Command $8114 - Display off, VInt off, DMA on, PAL off
-		dc.b $30		; Command $8230 - Scroll A Address $C000
-		dc.b $3C		; Command $833C - Window Address $F000
-		dc.b 7		; Command $8407 - Scroll B Address $E000
-		dc.b $6C		; Command $856C - Sprite Table Addres $D800
-		dc.b 0		; Command $8600 - Null
-		dc.b 0		; Command $8700 - Background color Pal 0 Color 0
-		dc.b 0		; Command $8800 - Null
-		dc.b 0		; Command $8900 - Null
-		dc.b $FF		; Command $8AFF - Hint timing $FF scanlines
-		dc.b 0		; Command $8B00 - Ext Int off, VScroll full, HScroll full
-		dc.b $81		; Command $8C81 - 40 cell mode, shadow/highlight off, no interlace
-		dc.b $37		; Command $8D37 - HScroll Table Address $DC00
-		dc.b 0		; Command $8E00 - Null
-		dc.b 1		; Command $8F01 - VDP auto increment 1 byte
-		dc.b 1		; Command $9001 - 64x32 cell scroll size
-		dc.b 0		; Command $9100 - Window H left side, Base Point 0
-		dc.b 0		; Command $9200 - Window V upside, Base Point 0
-		dc.b $FF		; Command $93FF - DMA Length Counter $FFFF
-		dc.b $FF		; Command $94FF - See above
-		dc.b 0		; Command $9500 - DMA Source Address $0
-		dc.b 0		; Command $9600 - See above
-		dc.b $80		; Command $9700 - See above + VRAM fill mode
+VDPInitValues:				; values for VDP registers
+	dc.b 4				; Command $8004 - HInt off, Enable HV counter read
+	dc.b $14			; Command $8114 - Display off, VInt off, DMA on, PAL off
+	dc.b (vram_fg>>10)&$FF		; Command $8230 - Scroll A Address $C000
+	dc.b (vram_window>>10)&$FF	; Command $8330 - Window Address $C000
+	dc.b (vram_bg>>13)&$FF		; Command $8407 - Scroll B Address $E000
+	dc.b (vram_sprites>>9)&$FF	; Command $857C - Sprite Table Address $F800
+	dc.b 0				; Command $8600 - Sprite Pattern Generator Base Address: low 64KB VRAM
+	dc.b 0				; Command $8700 - Background color Pal 0 Color 0
+	dc.b 0				; Command $8800 - Null
+	dc.b 0				; Command $8900 - Null
+	dc.b $FF			; Command $8AFF - Hint timing $FF scanlines
+	dc.b 0				; Command $8B00 - Ext Int off, VScroll full, HScroll full
+	dc.b $81			; Command $8C81 - 40 cell mode, shadow/highlight off, no interlace
+	dc.b (vram_hscroll>>10)&$FF	; Command $8D3C - HScroll Table Address $F000
+	dc.b 0				; Command $8E00 - Null
+	dc.b 1				; Command $8F01 - VDP auto increment 1 byte
+	dc.b 1				; Command $9001 - 64x32 cell scroll size
+	dc.b 0				; Command $9100 - Window H left side, Base Point 0
+	dc.b 0				; Command $9200 - Window V upside, Base Point 0
+	dc.b $FF			; Command $93FF - DMA Length Counter $FFFF
+	dc.b $FF			; Command $94FF - See above
+	dc.b 0				; Command $9500 - DMA Source Address $0
+	dc.b 0				; Command $9600 - See above
+	dc.b $80			; Command $9700 - See above + VRAM fill mode
 VDPInitValues_End:
 
 		dc.l	vdpComm($0000,VRAM,DMA) ; value for VRAM write mode
