@@ -187,15 +187,19 @@ MoveCameraY:
 
 .notwrap
 		btst	#Status_Roll,status(a0)
-		beq.s	.notroll
-		moveq	#5,d1		; fix camera pos
+		beq.s	.notroll		; if not rolling, branch
+		move.b	y_radius(a0),d1
+		sub.b	default_y_radius(a0),d1
+;		subq.w	#5,d0
+	if ReverseGravity = 1
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	.notgravity
-		neg.w	d1
-
+		neg.b	d1
+;		addi.w	#5+5,d0
 .notgravity
-		sub.w	d1,d0
-
+	endif
+		ext.w	d1
+		add.w	d1,d0		; adjust position to prevent camera issues
 .notroll
 		move.w	d3,d1
 		btst	#Status_InAir,status(a0)
