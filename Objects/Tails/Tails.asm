@@ -2393,7 +2393,7 @@ loc_15242:
 locret_1527A:
 		rts
 ; ---------------------------------------------------------------------------
-
+; Tails_UpdateSpindash:
 loc_1527C:
 		move.b	(Ctrl_2_logical).w,d0
 		btst	#1,d0
@@ -2411,17 +2411,25 @@ loc_152A8:
 		moveq	#0,d0
 		move.b	$3E(a0),d0
 		add.w	d0,d0
-		move.w	word_1530E(pc,d0.w),$1C(a0)
-		move.w	$1C(a0),d0
+		move.w	word_1530E(pc,d0.w),ground_vel(a0)
+		move.w	ground_vel(a0),d0
 		subi.w	#$800,d0
-		add.w	d0,d0
-		andi.w	#$1F00,d0
+	; To fix a bug in 'MoveCameraX', we need an extra variable, so this
+	; code has been modified to make the delay value only a single byte.
+	; The lower byte has been repurposed to hold a copy of the position
+	; array index at the time that the spin dash was released.
+	; This is used by the fixed 'MoveCameraX'.
+		lsr.w	#7,d0
+;		andi.w	#$1F,d0	 ; none of these removed bits are ever set
 		neg.w	d0
-		addi.w	#$2000,d0
+		addi.w	#$20,d0
 		lea	(H_scroll_frame_offset).w,a1
 		cmpa.w	#Player_1,a0
-		beq.s	loc_152EA
+		beq.s	+
 		lea	(H_scroll_frame_offset_P2).w,a1
++
+		move.b	d0,(a1)+			; H_scroll_frame_offset
+		move.b	(Pos_table_byte).w,(a1)+	; H_scroll_frame_copy ; Back up the position array index for later.
 
 loc_152EA:
 		move.w	d0,(a1)

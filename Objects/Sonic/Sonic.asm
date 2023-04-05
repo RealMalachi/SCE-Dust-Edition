@@ -1325,23 +1325,25 @@ Sonic_InstaAndShieldMoves:
 
 Sonic_FireShield:
 		btst	#Status_Invincible,status_secondary(a0)		; first, does Sonic have invincibility?
-		bne.s	locret_118FE							; if yes, branch
+		bne.s	locret_118FE					; if yes, branch
 		btst	#Status_FireShield,status_secondary(a0)		; does Sonic have a Fire Shield?
-		beq.s	Sonic_LightningShield					; if not, branch
+		beq.s	Sonic_LightningShield				; if not, branch
 		move.b	#1,(v_Shield+anim).w
 		move.b	#1,double_jump_flag(a0)
 		move.w	#$800,d0
-		btst	#Status_Facing,status(a0)					; is Sonic facing left?
-		beq.s	loc_11958							; if not, branch
-		neg.w	d0									; reverse speed value, moving Sonic left
+		btst	#Status_Facing,status(a0)			; is Sonic facing left?
+		beq.s	loc_11958					; if not, branch
+		neg.w	d0						; reverse speed value, moving Sonic left
 
 loc_11958:
-		move.w	d0,x_vel(a0)							; apply velocity...
-		move.w	d0,ground_vel(a0)					; ...both ground and air
-		clr.w	y_vel(a0)							; kill y-velocity
-		move.w	#$2000,(H_scroll_frame_offset).w
-		bsr.w	Reset_Player_Position_Array
-		sfx	sfx_FireAttack,1							; play Fire Shield attack sound
+		move.w	d0,x_vel(a0)			; apply velocity...
+		move.w	d0,ground_vel(a0)		; ...both ground and air
+		clr.w	y_vel(a0)			; kill y-velocity
+		lea	(H_scroll_frame_offset).w,a1
+		move.b	#32,(a1)+			; H_scroll_frame_offset ; delay scrolling for 32 frames
+		move.b	(Pos_table_byte).w,(a1)+	; H_scroll_frame_copy ; Back up the position array index for later.
+;		bsr.w	Reset_Player_Position_Array	; this was a poorly implemented camera fix that isn't needed anymore
+		sfx	sfx_FireAttack,1				; play Fire Shield attack sound
 ; ---------------------------------------------------------------------------
 
 Sonic_LightningShield:
@@ -1399,7 +1401,7 @@ loc_11C24:
 		bsr.w	Player_LevelBound
 		bra.w	Call_Player_AnglePos
 ; ---------------------------------------------------------------------------
-
+; Sonic_UpdateSpindash:
 loc_11C5E:
 		btst	#button_down,(Ctrl_1_logical).w
 		bne.w	loc_11D16
@@ -1418,12 +1420,20 @@ loc_11C8C:
 		move.w	word_11CF2(pc,d0.w),ground_vel(a0)
 		move.w	ground_vel(a0),d0
 		subi.w	#$800,d0
-		add.w	d0,d0
-		andi.w	#$1F00,d0
+
+	; To fix a bug in 'MoveCameraX', we need an extra variable, so this
+	; code has been modified to make the delay value only a single byte.
+	; The lower byte has been repurposed to hold a copy of the position
+	; array index at the time that the spin dash was released.
+	; This is used by the fixed 'MoveCameraX'.
+		lsr.w	#7,d0
+;		andi.w	#$1F,d0	 ; none of these removed bits are ever set
 		neg.w	d0
-		addi.w	#$2000,d0
+		addi.w	#$20,d0
 		lea	(H_scroll_frame_offset).w,a1
-		move.w	d0,(a1)
+		move.b	d0,(a1)+			; H_scroll_frame_offset
+		move.b	(Pos_table_byte).w,(a1)+	; H_scroll_frame_copy ; Back up the position array index for later.
+
 		btst	#Status_Facing,status(a0)
 		beq.s	loc_11CDC
 		neg.w	ground_vel(a0)

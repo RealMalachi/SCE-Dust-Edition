@@ -85,12 +85,18 @@ Camera_min_X_pos_Saved:				ds.w 1
 Camera_max_X_pos_Saved:				ds.w 1
 Camera_min_Y_pos_Saved:				ds.w 1
 Camera_max_Y_pos_Saved:				ds.w 1
-H_scroll_frame_offset:				ds.w 1			; If this is non-zero with value x, horizontal scrolling will be based on the player's position x / $100 + 1 frames ago
+
+H_scroll_frame_offset:				ds.b 1	; byte, word	; If this is non-zero with value x, horizontal scrolling will be based on the player's position x / $100 + 1 frames ago
+H_scroll_frame_copy:				ds.b 1
+
+H_scroll_frame_offset_P2:			ds.b 1	; byte, word	; If this is non-zero with value x, horizontal scrolling will be based on the player's position x / $100 + 1 frames ago
+H_scroll_frame_copy_P2:				ds.b 1			; 
+
 Pos_table_index:				ds.b 1
 Pos_table_byte:					ds.b 1
-H_scroll_frame_offset_P2:			ds.w 1			; If this is non-zero with value x, horizontal scrolling will be based on the player's position x / $100 + 1 frames ago
 Pos_table_index_P2:				ds.b 1
 Pos_table_byte_P2:				ds.b 1
+
 Distance_from_top:				ds.w 1			; The vertical scroll manager scrolls the screen until the player's distance from the top of the screen is equal to this (or between this and this + $40 when in the air). $60 by default
 Distance_from_top_P2:				ds.w 1
 Camera_max_Y_pos_changing:			ds.b 1			; Set when the maximum camera Y pos is undergoing a change

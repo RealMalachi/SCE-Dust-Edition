@@ -35,34 +35,50 @@ MoveCameraX:
 	if	ExtendedCamera
 		bsr.s	Camera_Extended
 	endif
+	; To prevent scroll delay jittering bugs, this caps the position
+	; array index offset so that it does not access position data from
+	; before the spin dash was performed. Note that this required
+	; modifications to all the '[Player]_UpdateSpindash'
+
+	; The intent of this code is to make the camera briefly lag behind the
+	; player right after releasing a spin dash, however it did this by
+	; simply making the camera use position data from previous frames. This
+	; meant that if the camera had been moving recently enough, then
+	; releasing a spin dash will cause the camera to jerk around instead of
+	; remain still. This can be encountered by running into a wall, and
+	; quickly turning around and spin dashing away. Sonic 3 would have had
+	; this same issue with the Fire Shield's dash abiliity, but it shoddily
+	; works around the issue by resetting the old position values to the
+	; current position (see 'Reset_Player_Position_Array').
 		move.w	(a1),d4
-		move.w	(a5),d1
-		beq.s	loc_1C0D2
-		subi.w	#$100,d1
-		move.w	d1,(a5)
-		moveq	#0,d1
-		move.b	(a5),d1
-		lsl.b	#2,d1
-		addq.b	#4,d1
+		move.b	H_scroll_frame_offset-H_scroll_frame_offset(a5),d1	; should scrolling be delayed?
+		beq.s	.scrollNotDelayed					; if not, branch
+		lsl.b	#2,d1			; multiply by 4, the size of a position buffer entry
+		subq.b	#1,H_scroll_frame_offset-H_scroll_frame_offset(a5)	; reduce delay value
+		move.b	Pos_table_byte-H_scroll_frame_offset(a5),d0
+		sub.b	H_scroll_frame_copy-H_scroll_frame_offset(a5),d0
+		cmp.b	d0,d1
+		blo.s	.doNotCap
+		move.b	d0,d1
+.doNotCap:
 		move.w	Pos_table_index-H_scroll_frame_offset(a5),d0
 		sub.b	d1,d0
 		move.w	(a6,d0.w),d0
 		andi.w	#$7FFF,d0
 		bra.s	loc_1C0D6
-; ---------------------------------------------------------------------------
 
-loc_1C0D2:
+.scrollNotDelayed:
 		move.w	x_pos(a0),d0
 
 loc_1C0D6:
 		sub.w	(a1),d0
 	if	ExtendedCamera
 		sub.w	(Camera_X_center).w,d0
-		blt.s		loc_1C0E8
+		blt.s	loc_1C0E8
 		bge.s	loc_1C0FC
 	else
 		subi.w	#144,d0
-		blt.s		loc_1C0E8
+		blt.s	loc_1C0E8
 		subi.w	#16,d0
 		bge.s	loc_1C0FC
 	endif
@@ -87,13 +103,13 @@ loc_1C0E8:
 
 loc_1C0FC:
 		cmpi.w	#24,d0
-		blo.s		.skip2
+		blo.s	.skip2
 		move.w	#24,d0
 
 .skip2
 		add.w	(a1),d0
 		cmp.w	Camera_max_X_pos-Camera_min_X_pos(a2),d0
-		blt.s		loc_1C112
+		blt.s	loc_1C112
 		move.w	Camera_max_X_pos-Camera_min_X_pos(a2),d0
 
 loc_1C112:
