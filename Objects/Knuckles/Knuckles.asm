@@ -1628,9 +1628,9 @@ loc_17462:
 
 loc_1746A:
 		move.w	d0,ground_vel(a0)
-		move.b	angle(a0),d0
-		addi.b	#$20,d0
-		andi.b	#$C0,d0
+		move.b	angle(a0),d1
+		addi.b	#$20,d1
+		andi.b	#$C0,d1
 		bne.s	locret_174B2
 		cmpi.w	#$400,d0
 		blt.s	locret_174B2
@@ -1679,11 +1679,11 @@ loc_174E8:
 
 loc_174F0:
 		move.w	d0,ground_vel(a0)
-		move.b	angle(a0),d0
-		addi.b	#$20,d0
-		andi.b	#$C0,d0
+		move.b	angle(a0),d1
+		addi.b	#$20,d1
+		andi.b	#$C0,d1
 		bne.s	locret_17538
-		cmpi.w	#$FC00,d0
+		cmpi.w	#-$400,d0
 		bgt.s	locret_17538
 		tst.b	flip_type(a0)
 		bmi.s	locret_17538

@@ -1827,10 +1827,10 @@ loc_14C5A:
 		move.w	#-$80,d0
 
 loc_14C62:
-		move.w	d0,$1C(a0)
-		move.b	$26(a0),d0
-		addi.b	#$20,d0
-		andi.b	#$C0,d0
+		move.w	d0,ground_vel(a0)
+		move.b	angle(a0),d1
+		addi.b	#$20,d1
+		andi.b	#$C0,d1
 		bne.s	locret_14CAA
 		cmpi.w	#$400,d0
 		blt.s	locret_14CAA
@@ -1878,10 +1878,10 @@ loc_14CE0:
 		move.w	#$80,d0
 
 loc_14CE8:
-		move.w	d0,$1C(a0)
-		move.b	$26(a0),d0
-		addi.b	#$20,d0
-		andi.b	#$C0,d0
+		move.w	d0,ground_vel(a0)
+		move.b	angle(a0),d1
+		addi.b	#$20,d1
+		andi.b	#$C0,d1
 		bne.s	locret_14D30
 		cmpi.w	#-$400,d0
 		bgt.s	locret_14D30
