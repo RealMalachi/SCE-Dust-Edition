@@ -1294,7 +1294,7 @@ Sonic_JumpHeight:
 
 loc_118D2:
 		cmp.w	y_vel(a0),d1							; is y speed greater than 4? (2 if underwater)
-		ble.w	Sonic_InstaAndShieldMoves			; if not, branch
+		ble.s	Sonic_InstaAndShieldMoves			; if not, branch
 		move.b	(Ctrl_1_logical).w,d0
 		andi.b	#btnA+btnB+btnC,d0					; are buttons A, B or C being pressed?
 		bne.s	locret_118E8							; if yes, branch
@@ -1316,26 +1316,73 @@ locret_118FE:
 ; ---------------------------------------------------------------------------
 
 Sonic_InstaAndShieldMoves:
-		tst.b	double_jump_flag(a0)						; is Sonic currently performing a double jump?
-		bne.s	locret_118FE							; if yes, branch
+		tst.b	double_jump_flag(a0)		; is Sonic currently performing a double jump?
+		bmi.s	locret_118FE			; if so, end
+		btst	#Status_Invincible,status_secondary(a0)	; does Sonic have invincibility?
+		bne.s	Sonic_DropDash				; if so, just test Drop Dash
+		btst	#Status_Shield,status_secondary(a0)	; does Sonic have any shield?
+		bne.s	Sonic_ShieldTest			; if so, test shields (if that fails it tests drop dash)
+; test Insta-Shield
+		tst.b	double_jump_flag(a0)		; did we already do this press?
+		bne.s	Sonic_DropDash.check		; if so, branch
+;		btst	#button_C,(Ctrl1_Player_Pr_ABC).w
+		move.w	(Ctrl1_Player_Pr).w,d0
+		andi.w	#button_ABC_mask,d0		; are buttons A, B, or C being pressed?
+		beq.s	Sonic_DropDash
+		move.b	#1,(v_Shield+anim).w
+;		sfx	sfx_InstaAttack
+		move.b	#1,double_jump_flag(a0)		; copy Sonic_DropDash start
+;		rts
+;		bra.s	.charge
+		sfx	sfx_InstaAttack,1		; play Insta-Shield sound, end routine with delay mentioned below
+Sonic_DropDash:
+		tst.b	double_jump_flag(a0)		; did we already do this press?
+		bne.s	.check				; if so, branch
+		move.w	(Ctrl1_Player_Pr).w,d0
+		andi.w	#button_ABC_mask,d0		; are buttons A, B, or C being pressed?
+		beq.s	.end				; if not, end
+		move.b	#1,double_jump_flag(a0)		; set that we pressed it, cont with .charge...
+.end:
+		rts	; or not! Drop Dash has 20 frame delay, and the fastest method would only give us 19
+
+.charge:
+		tst.b	double_jump_property(a0)	; if already set, branch
+		bmi.s	.end				;
+		addq.b	#7,double_jump_property(a0)	; increment until drop dash is allowed
+		bpl.s	.end				; (19 frames until bmi range. Note previous delay)
+		move.b	#id_Walk,anim(a0)		; id_DropDash ; set anim
+		sfx	sfx_SpinDash,1			; play drop dash rev sound
+.check:
+		move.w	(Ctrl1_Player_Hd).w,d0
+		andi.w	#button_ABC_mask,d0		; are buttons A, B, or C being held?
+		bne.s	.charge				; if so, branch
+		st	double_jump_flag(a0)		; stop checking ; Note, disables shields when mid-drop dash charge
+		clr.b	double_jump_property(a0)	; don't drop dash
+		move.b	#id_Roll,anim(a0)		; set back to regular roll
+Sonic_ShieldTest_End:
+		rts
+
+Sonic_ShieldTest:
+;		tst.b	double_jump_flag(a0)			; is Sonic currently performing a double jump?
+;		bmi.s	Sonic_ShieldTest_End			; if yes, branch
 		move.b	(Ctrl_1_pressed_logical).w,d0
-		andi.b	#btnA+btnB+btnC,d0					; are buttons A, B, or C being pressed?
-		beq.s	locret_118FE							; if not, branch
+		andi.b	#btnA+btnB+btnC,d0			; are buttons A, B, or C being pressed?
+		beq.s	Sonic_DropDash				; if not, check drop dash
+		st	double_jump_flag(a0)			; at this point we're definitely double jumping
 		bclr	#Status_RollJump,status(a0)
+		move.b	status_secondary(a0),d0
+		andi.w	#$70,d0			; TODO: Make byte versions of status_secondary bitfield
+		beq.s	Sonic_DropDash		; if Sonic has a normal shield, do drop dash
 
 Sonic_FireShield:
-		btst	#Status_Invincible,status_secondary(a0)		; first, does Sonic have invincibility?
-		bne.s	locret_118FE					; if yes, branch
-		btst	#Status_FireShield,status_secondary(a0)		; does Sonic have a Fire Shield?
-		beq.s	Sonic_LightningShield				; if not, branch
+		btst	#Status_FireShield,d0		; does Sonic have a Fire Shield?
+		beq.s	Sonic_LightningShield		; if not, branch
 		move.b	#1,(v_Shield+anim).w
-		move.b	#1,double_jump_flag(a0)
 		move.w	#$800,d0
-		btst	#Status_Facing,status(a0)			; is Sonic facing left?
-		beq.s	loc_11958					; if not, branch
-		neg.w	d0						; reverse speed value, moving Sonic left
-
-loc_11958:
+		btst	#Status_Facing,status(a0)	; is Sonic facing left?
+		beq.s	+				; if not, branch
+		neg.w	d0				; reverse speed value, moving Sonic left
++
 		move.w	d0,x_vel(a0)			; apply velocity...
 		move.w	d0,ground_vel(a0)		; ...both ground and air
 		clr.w	y_vel(a0)			; kill y-velocity
@@ -1343,38 +1390,30 @@ loc_11958:
 		move.b	#32,(a1)+			; H_scroll_frame_offset ; delay scrolling for 32 frames
 		move.b	(Pos_table_byte).w,(a1)+	; H_scroll_frame_copy ; Back up the position array index for later.
 ;		bsr.w	Reset_Player_Position_Array	; this was a poorly implemented camera fix that isn't needed anymore
-		sfx	sfx_FireAttack,1				; play Fire Shield attack sound
+		sfx	sfx_FireAttack,1		; play Fire Shield attack sound
 ; ---------------------------------------------------------------------------
 
 Sonic_LightningShield:
-		btst	#Status_LtngShield,status_secondary(a0)		; does Sonic have a Lightning Shield?
-		beq.s	Sonic_BubbleShield					; if not, branch
+		btst	#Status_LtngShield,d0		; does Sonic have a Lightning Shield?
+		beq.s	Sonic_BubbleShield		; if not, branch
 		move.b	#1,(v_Shield+anim).w
-		move.b	#1,double_jump_flag(a0)
-		move.w	#-$580,y_vel(a0)						; bounce Sonic up, creating the double jump effect
+		move.w	#-$580,y_vel(a0)		; bounce Sonic up, creating the double jump effect
 		clr.b	jumping(a0)
-		sfx	sfx_ElectricAttack,1						; play Lightning Shield attack sound
+		sfx	sfx_ElectricAttack,1		; play Lightning Shield attack sound
 ; ---------------------------------------------------------------------------
 
 Sonic_BubbleShield:
-		btst	#Status_BublShield,status_secondary(a0)		; does Sonic have a Bubble Shield
-		beq.s	Sonic_InstaShield						; if not, branch
+		btst	#Status_BublShield,d0		; does Sonic have a Bubble Shield
+		beq.s	Sonic_NoShield			; if not, branch
 		move.b	#1,(v_Shield+anim).w
-		move.b	#1,double_jump_flag(a0)
-		clr.w	x_vel(a0)							; halt horizontal speed...
-		clr.w	ground_vel(a0)						; ...both ground and air
-		move.w	#$800,y_vel(a0)						; force Sonic down
-		sfx	sfx_BubbleAttack,1						; play Bubble Shield attack sound
+		st	double_jump_property(a0)	; set bounce flag
+		clr.w	x_vel(a0)			; halt horizontal speed...
+		clr.w	ground_vel(a0)			; ...both ground and air
+		move.w	#$800,y_vel(a0)			; force Sonic down
+		sfx	sfx_BubbleAttack,1		; play Bubble Shield attack sound
 ; ---------------------------------------------------------------------------
 
-Sonic_InstaShield:
-		btst	#Status_Shield,status_secondary(a0)		; does Sonic have an S2 shield (The Elementals were already filtered out at this point)?
-		bne.s	locret_11A14							; if yes, branch
-		move.b	#1,(v_Shield+anim).w
-		move.b	#1,double_jump_flag(a0)
-		sfx	sfx_InstaAttack,1							; play Insta-Shield sound
-; ---------------------------------------------------------------------------
-
+Sonic_NoShield:
 locret_11A14:
 		rts
 
@@ -2034,21 +2073,93 @@ loc_121D8:
 		move.b	d0,flip_type(a0)
 		move.b	d0,flips_remaining(a0)
 		move.b	d0,scroll_delay_counter(a0)
-		tst.b	double_jump_flag(a0)
-		beq.s	locret_12230
-		tst.b	character_id(a0)
-		bne.s	loc_1222A
-		btst	#Status_Invincible,status_secondary(a0)		; don't bounce when invincible
-		bne.s	loc_1222A
-		btst	#Status_BublShield,status_secondary(a0)
-		beq.s	loc_1222A
-		bsr.s	BubbleShield_Bounce
-
-loc_1222A:
-		clr.b	double_jump_flag(a0)
-
-locret_12230:
+		move.b	d0,double_jump_flag(a0)		; clear
+; checks bubble shield bouncing and Drop Dash
+		tst.b	character_id(a0)		; are we Sonic?
+		bne.s	+				; if not, branch
+		tst.b	double_jump_property(a0)	; is reset_on_floor action flag set?
+		bpl.s	+				; if not, branch
+		move.b	double_jump_property(a0),d0
+		clr.b	double_jump_property(a0)	; clear
+		addq.b	#1,d0				; add 1 to copy
+		beq.w	BubbleShield_Bounce	; if it was -1 (bubble shield bounce), branch
+		bra.s	DropDash_LandProcess
++
 		rts
+
+; =============== S U B R O U T I N E =======================================
+; https://sonicresearch.org/community/index.php?threads/how-the-drop-dash-works-in-mania.5185/
+; TODO: Optimize and make more accurate
+DropDash_LandProcess:
+		movem.l	d1-d2,-(sp)
+		move.w	#$800,d0	; Set normal speed $800
+		move.w	#$C00,d1	; Set speed cap
+;		tst.b	(Super_flag).w	; are we Super/Hyper?
+;		beq.s	+		; If not, branch
+;		move.w	#$0C00,d0	; Set super speed
+;		move.w	#$0D00,d1	; Set super cap
++
+; check x_vel. If moving opposite of your facing direction, branch
+		move.w	x_vel(a0),d2
+		btst	#Status_Facing,status(a0)	; are we facing left?
+		beq.s	+		; if not, branch
+		neg.w	d2		; reverse if facing left
++
+		tst.w	d2
+		bmi.s	.slopecheck	; if moving backwards, branch
+		mvabs.w	ground_vel(a0),d2
+		asr.w	#2,d2		; divide ground_vel by 4 (>>2)
+		bra.s	.captofinal
+.slopecheck:
+		tst.b	angle(a0)	; is there an angle on the floor?
+		beq.s	.capwithoutadd	; if not, just set speed to d0
+; half reversed ground_vel
+		move.w	ground_vel(a0),d2
+		beq.s	.capwithoutadd
+		bmi.s	+		; if so, branch
+		neg.w	d2		; reverse if facing right
++
+		asl.w	#1,d2		; half velocity
+.captofinal:
+		add.w	d2,d0		; add to speed
+.capwithoutadd:
+		cmp.w	d0,d1		; compare new d0 to d1
+		bls.s	.finalspeed	; if d0 is the same or lower, branch
+		move.w	d1,d0		; cap speed
+;		bra.s	.finalspeed
+.finalspeed:
+		btst	#Status_Underwater,status(a0)	; are we underwater?
+		beq.s	+				; if not, branch
+		asr.w	#1,d0				; half value
++
+		btst	#Status_Facing,status(a0)	; are we facing left?
+		beq.s	+				; if not, branch
+		neg.w	d0				; reverse if facing left
++
+		move.w	d0,x_vel(a0)
+		move.w	d0,ground_vel(a0)
+		movem.l	(sp)+,d1-d2
+; since landing resets rolling by default, we gotta work around that
+		move.b	#id_Roll,anim(a0)		; Rolling anim
+		bset	#Status_Roll,status(a0)		; Rolling
+		move.w	#bytes_to_word(28/2,14/2),y_radius(a0)	; set y and x radius
+		move.b	y_radius(a0),d0
+		sub.b	default_y_radius(a0),d0
+		ext.w	d0
+	if ReverseGravity=1
+		tst.b	(Reverse_gravity_flag).w
+		beq.s	+
+		neg.w	d0
++
+	endif
+		sub.w	d0,y_pos(a0)
+		btst	#Status_Underwater,status(a0)	; are we underwater?
+		bne.s	+				; if so, branch
+	;	move.b	#4,(v_Dust+anim).w		; drop dash dust
+		move.b	#16,(H_scroll_frame_offset).w	; set delay to scroll movement
+		move.b	(Pos_table_byte).w,(H_scroll_frame_copy).w
++
+		sfx	sfx_Dash,1
 
 ; =============== S U B R O U T I N E =======================================
 
