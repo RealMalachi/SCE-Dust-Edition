@@ -2068,15 +2068,15 @@ loc_121D8:
 		bclr	#Status_RollJump,status(a0)
 		moveq	#0,d0
 		move.b	d0,jumping(a0)
-		move.w	d0,(Chain_bonus_counter).w
+		move.b	d0,(Chain_bonus_counter).w
 		move.b	d0,flip_angle(a0)
 		move.b	d0,flip_type(a0)
 		move.b	d0,flips_remaining(a0)
 		move.b	d0,scroll_delay_counter(a0)
 		move.b	d0,double_jump_flag(a0)		; clear
 ; checks bubble shield bouncing and Drop Dash
-		tst.b	character_id(a0)		; are we Sonic?
-		bne.s	+				; if not, branch
+	;	tst.b	character_id(a0)		; are we Sonic?
+	;	bne.s	+				; if not, branch
 		tst.b	double_jump_property(a0)	; is reset_on_floor action flag set?
 		bpl.s	+				; if not, branch
 		move.b	double_jump_property(a0),d0
@@ -2769,11 +2769,7 @@ loc_12A2A:
 		or.b	d1,render_flags(a0)
 		subq.b	#1,anim_frame_timer(a0)
 		bpl.w	SAnim_Delay
-		move.w	ground_vel(a0),d2
-		bpl.s	loc_12A4C
-		neg.w	d2
-
-loc_12A4C:
+		mvabs.w	ground_vel(a0),d2	;
 		add.w	(HScroll_Shift).w,d2
 		lea	(SonAni_Roll2).l,a1
 		cmpi.w	#$600,d2
@@ -2795,11 +2791,10 @@ loc_12A68:
 SAnim_Push:
 		subq.b	#1,anim_frame_timer(a0)
 		bpl.w	SAnim_Delay
-		move.w	ground_vel(a0),d2
-		bmi.s	loc_12A82
+		move.w	ground_vel(a0),d2	; TODO: Create the opposite of mvabs
+		bmi.s	+
 		neg.w	d2
-
-loc_12A82:
++
 		addi.w	#$800,d2
 		bpl.s	loc_12A8A
 		moveq	#0,d2

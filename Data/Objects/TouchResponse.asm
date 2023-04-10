@@ -352,23 +352,23 @@ Touch_EnemyNormal:
 .dontremember:
 		bset	#7,status(a1)
 		moveq	#0,d0
-		move.w	(Chain_bonus_counter).w,d0
-		addq.w	#2,(Chain_bonus_counter).w			; add 2 to item bonus counter
-		cmpi.w	#6,d0
-		blo.s		.notreachedlimit
-		moveq	#6,d0								; max bonus is lvl6
+		move.b	(Chain_bonus_counter).w,d0
+		addq.b	#2,(Chain_bonus_counter).w		; add 2 to item bonus counter
+		cmpi.w	#3*2,d0
+		ble.s	.notreachedlimit
+		moveq	#3*2,d0								; max bonus is lvl6
 
 .notreachedlimit:
 		move.w	d0,objoff_3E(a1)
 		move.w	Enemy_Points(pc,d0.w),d0
-		cmpi.w	#16*2,(Chain_bonus_counter).w			; have 16 enemies been destroyed?
-		blo.s		.notreachedlimit2	; if not, branch
-		move.w	#1000,d0							; fix bonus to 10000
-		move.w	#10,objoff_3E(a1)
+		cmpi.b	#16*2,(Chain_bonus_counter).w		; have 16 enemies been destroyed?
+		blo.s	.notreachedlimit2			; if not, branch
+		move.w	#10000/10,d0							; fix bonus to 10000
+		move.w	#5*2,objoff_3E(a1)
 
 .notreachedlimit2:
 		bsr.w	HUD_AddToScore
-		move.l	#Obj_Explosion,address(a1)			; change object to explosion
+		move.l	#Obj_Explosion,address(a1)		; change object to explosion
 		clr.b	routine(a1)
 		tst.w	y_vel(a0)
 		bmi.s	.bouncedown

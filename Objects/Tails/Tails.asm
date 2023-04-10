@@ -2780,12 +2780,13 @@ loc_1565E:
 		bclr	#5,status(a0)
 		bclr	#4,status(a0)
 		move.b	#0,jumping(a0)
-		move.w	#0,(Chain_bonus_counter).w
-		move.b	#0,$27(a0)
-		move.b	#0,flip_type(a0)
-		move.b	#0,flips_remaining(a0)
-		move.b	#0,scroll_delay_counter(a0)
-		move.b	#0,double_jump_flag(a0)
+		moveq	#0,d0
+		move.b	d0,(Chain_bonus_counter).w
+		move.b	d0,flip_angle(a0)
+		move.b	d0,flip_type(a0)
+		move.b	d0,flips_remaining(a0)
+		move.b	d0,scroll_delay_counter(a0)
+		move.b	d0,double_jump_flag(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -2905,9 +2906,9 @@ loc_157C8:
 ; ---------------------------------------------------------------------------
 
 loc_157E0:
-		tst.w	spin_dash_counter(a0)
+		tst.w	restart_timer(a0)
 		beq.s	locret_157F2
-		subq.w	#1,spin_dash_counter(a0)
+		subq.w	#1,restart_timer(a0)
 		bne.s	locret_157F2
 		st	(Restart_level_flag).w
 

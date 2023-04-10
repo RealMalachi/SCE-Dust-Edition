@@ -8,6 +8,20 @@ RAM_start:					= *
 Chunk_table:					ds.b $8000		; Chunk (128x128) definitions, $80 bytes per definition
 Chunk_table_end					= *
 
+;Block_table:
+;			ds.w	$300*4
+;Block_table_end:
+
+;Level_layout:
+;Level_layout_header:
+;Level_layout_header_FG_horz:	ds.w 1		; amount of chunks to read horizontally
+;;Level_layout_header_BG_horz:	ds.w 1
+;Level_layout_header_FG_vert:	ds.w 1		; same for vertical
+;Level_layout_header_BG_vert:	ds.w 1
+;Level_layout_main:		ds.w $40	; $40 word-sized line pointers followed by actual layout data
+;				ds.b $F78	; 3,960 chunks
+;Level_layout_end:
+
 Player_1:					= *			; Main character in 1 player mode
 v_player:					= *
 Object_RAM:					ds.b object_size
@@ -30,9 +44,9 @@ Object_RAM_end					= *
 v_GameOver_Game	=	v_Breathing_bubbles
 v_GameOver_Over	=	v_Breathing_bubbles_P2
 
-	if ((Object_RAM_end-Object_RAM)/object_size)/10 <> 11	; TODO: figure out how to 
-	fatal "Object RAM isn't divisible by 10!!! Fix this immediately!"
-	endif
+;	if ((Object_RAM_end-Object_RAM)/object_size)/10 <> 11	; TODO: figure out how to 
+;	fatal "Object RAM isn't divisible by 10!!! Fix this immediately!"
+;	endif
 
 ObjectRamMarker			ds.b 1	; a fast failsafe to end dynamic object checking routines dynamically, set during game init
 ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects
@@ -75,7 +89,7 @@ Camera_target_min_Y_pos:			ds.w 1
 Camera_target_max_Y_pos:			ds.w 1
 Camera_min_X_pos:				ds.w 1
 Camera_max_X_pos:				ds.w 1
-Camera_min_Y_pos:				ds.w 1
+Camera_min_Y_pos:				ds.w 1			; -$100 allows camera to wrap vertically via Screen_Y_wrap_value
 Camera_max_Y_pos:				ds.w 1
 Camera_stored_max_X_pos:			ds.w 1
 Camera_stored_min_X_pos:			ds.w 1
@@ -126,7 +140,7 @@ Camera_Hscroll_shift:				ds.w 3
 Camera_X_center:				ds.w 1
 	endif
 Screen_X_wrap_value:				ds.w 1			; Set to $FFFF
-Screen_Y_wrap_value:				ds.w 1			; Either $7FF or $FFF
+Screen_Y_wrap_value:				ds.w 1			; Either $FFFF (No wrap), $7FF or $FFF
 Camera_Y_pos_mask:				ds.w 1			; Either $7F0 or $FF0
 Layout_row_index_mask:				ds.w 1			; Either $3C or $7C
 Screen_shaking_flag:				ds.w 1			; flag for enabling screen shake. Negative values cause screen to shake infinitely, positive values make the screen shake for a short amount of time
@@ -141,7 +155,7 @@ Camera_RAM_end					= *
 
 Ring_start_addr_ROM:				ds.l 1			; Address in the ring layout of the first ring whose X position is >= camera X position - 8
 Ring_end_addr_ROM:				ds.l 1			; Address in the ring layout of the first ring whose X position is >= camera X position + 328
-Ring_start_addr_RAM:				ds.w 1			; Address in the ring status table of the first ring whose X position is >= camera X position - 8
+Ring_start_addr_RAM:				ds.w 1			; Address in the Ring_status_table of the first ring whose X position is >= camera X position - 8
 Ring_consumption_table:				= *			; Stores the addresses of all rings currently being consumed
 Ring_consumption_count:				ds.w 1			; The number of rings being consumed currently
 Ring_consumption_list:				ds.w $3F		; The remaining part of the ring consumption table
@@ -262,13 +276,13 @@ DMA_trigger_word:				ds.w 1			; Transferred from RAM to avoid crashing the Mega 
 f_hbla_pal:					= *
 H_int_flag:					ds.b 1			; Unless this is set H-int will return immediately
 Do_Updates_in_H_int:				ds.b 1			; If this is set Do_Updates will be called from H-int instead of V-int
-WindTunnel_flag:				ds.b 1
-WindTunnel_flag_P2:				ds.b 1
-Disable_death_plane:				ds.b 1			; if set, going below the screen wont kill the player
+
 f_lockctrl:					= *
 Ctrl_1_locked:					ds.b 1
 Ctrl_2_locked:					ds.b 1
-							ds.b 1					; even
+WindTunnel_flag:				ds.b 1
+WindTunnel_flag_P2:				ds.b 1
+
 v_framecount:					= *
 Level_frame_counter:				ds.b 1			; The number of frames which have elapsed since the level started
 v_framebyte					ds.b 1
@@ -277,7 +291,8 @@ f_pause:					= *
 Game_paused:					ds.b 1
 f_restart:					= *
 Restart_level_flag:				ds.b 1
-							ds.b 1					; even
+Disable_death_plane:				ds.b 1			; if set, going below the screen wont kill the player
+
 Max_speed:					ds.w 1
 Acceleration:					ds.w 1
 Deceleration:					ds.w 1
@@ -306,7 +321,7 @@ Screen_event_routine:				ds.b 1
 Screen_event_flag:				ds.b 1
 Background_event_routine:			ds.b 1
 Background_event_flag:				ds.b 1
-							ds.b 1					; even
+					ds.b 1		; even
 Debug_placement_mode:				= *			; Both routine and type (word)
 Debug_placement_routine:			ds.b 1
 Debug_placement_type:				ds.b 1			; 0 = normal gameplay, 1 = normal object placement, 2 = frame cycling
@@ -318,21 +333,18 @@ LastAct_end_flag:				ds.b 1
 Debug_mode_flag:				ds.b 1
 Slotted_object_bits:				ds.b 8			; Index of slot array to use
 Signpost_addr:					ds.w 1
-_unkFAAC:					ds.b 1
-							ds.b 1					; even
 Palette_cycle_counters:				ds.b $10
 Pal_fade_delay:					ds.w 1
 Pal_fade_delay2:				ds.w 1
 Hyper_Sonic_flash_timer:			ds.b 1
 Negative_flash_timer:				ds.b 1
-							ds.b 1					; even
-Palette_rotation_disable:			ds.b 1
-Palette_rotation_custom:			ds.l 1
-Palette_rotation_data:				ds.w 9
-Chain_bonus_counter:				ds.w 1
 Time_bonus_countdown:				ds.w 1			; Used on the results screen
 Ring_bonus_countdown:				ds.w 1			; Used on the results screen
 Total_bonus_countup:				ds.w 1
+Chain_bonus_counter:				ds.b 1
+Palette_rotation_disable:			ds.b 1
+Palette_rotation_custom:			ds.l 1
+Palette_rotation_data:				ds.w 9
 
 Tails_CPU_interact:				ds.w 1			; RAM address of the last object Tails stood on while controlled by AI
 Tails_CPU_idle_timer:				ds.w 1			; counts down while controller 2 is idle, when it reaches 0 the AI takes over
@@ -351,7 +363,7 @@ _unkF74A:					ds.b 1
 _unkF74B:					ds.b 1
 _unkF74C:					ds.w 1
 Tails_CPU_star_post_flag:			ds.b 1			; copy of Last_star_post_hit, sets Tails' starting behavior in a Sonic and Tails game
-							ds.b 1					; even
+_unkFAAC:					ds.b 1
 Gliding_collision_flags:			ds.b 1
 Disable_wall_grab:				ds.b 1			; if set, disables Knuckles wall grab
 

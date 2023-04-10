@@ -5,21 +5,26 @@
 
 notZ80 function cpu,(cpu<>128)&&(cpu<>32988)
 
+; ---------------------------------------------------------------------------
 ; make org safer (impossible to overwrite previously assembled bytes)
+; for simplicity sake, the other org's just use this with a preset byte
+orgspec macro address,spacerbyte
+.diff := address - *
+	if .diff < 0
+		error "too much stuff before org0 $\{address} ($\{(-.diff)} bytes)"
+	else
+		while .diff > 1024	; AS can only generate 1 kb of code on a single line
+			dc.b [1024]spacerbyte
+.diff := .diff - 1024
+		endm
+		dc.b [.diff]spacerbyte
+	endif
+    endm
+
 org macro address
 	if notZ80(MOMCPU)
-.diff := address - *
-		if .diff < 0
-			error "too much stuff before org $\{address} ($\{(-.diff)} bytes)"
-		else
-			while .diff > 1024
-				; AS can only generate 1 kb of code on a single line
-				dc.b [1024]$FF
-.diff := .diff - 1024
-			endm
-			dc.b [.diff]$FF
-		endif
-	else
+	orgspec address,$FF
+	else	; Z80 version, uses 0 while 68K uses $FF?
 		if address < $
 			error "too much stuff before org 0\{address}h (0\{($-address)}h bytes)"
 		else
@@ -29,20 +34,9 @@ org macro address
 		endif
 	endif
     endm
-
 ; define an alternate org that fills the extra space with 0s instead of FFs
 org0 macro address
-.diff := address - *
-	if .diff < 0
-		error "too much stuff before org0 $\{address} ($\{(-.diff)} bytes)"
-	else
-		while .diff > 1024
-			; AS can only generate 1 kb of code on a single line
-			dc.b [1024]0
-.diff := .diff - 1024
-		endm
-		dc.b [.diff]0
-	endif
+	orgspec address,0
     endm
 
 ; define the cnop pseudo-instruction
@@ -74,6 +68,14 @@ even macro
 	align0 2
     endm
 
+; define the even pseudo-instruction again
+;evensimple macro
+;	if *&1
+;	dc.b 0
+;	endif
+;    endm
+
+; ---------------------------------------------------------------------------
 ; define a trace macro
 ; lets you easily check what address a location in this disassembly assembles to
 trace macro optionalMessageWithoutQuotes
@@ -88,10 +90,14 @@ tracenum := (tracenum+1)
    endm
 tracenum := 0
 
+; ---------------------------------------------------------------------------
+;
 bit function nBits,1<<(nBits-1)
 signmask function val,nBits,-((-(val&bit(nBits)))&bit(nBits))
 signextend function val,nBits,(val+signmask(val,nBits))!signmask(val,nBits)
 signextendB function val,signextend(val,8)
+
+; ---------------------------------------------------------------------------
 
     if ZeroOffsetOptimization=0
     ; disable a space optimization in AS so we can build a bit-perfect ROM
@@ -195,13 +201,34 @@ _tst	macro
 	endm
 
     endif
+; ---------------------------------------------------------------------------
+; time stallers
+nop2 macro
+	or.l	d0,d0
+	endm
+
+nop3	macro
+	or.l	d0,d0
+	nop
+	endm
+
+nop4	macro
+	ori.b	#0,(a0)
+	endm
+
+nop5	macro
+	ori.b	#0,1(a0)
+	endm
+
+; ---------------------------------------------------------------------------
+; compatibility with other compiler labels
 
 ; alias binclude as incbin from asm68k compiler
 incbin	macro file
-		binclude	file
+	binclude	file
 	endm
 
 ; dcb from asm68k compiler
 dcb	macro fill, byte
-		dc.ATTRIBUTE [fill]byte
-    endm
+	dc.ATTRIBUTE [fill]byte
+	endm

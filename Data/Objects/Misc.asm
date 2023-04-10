@@ -299,21 +299,21 @@ EnemyDefeated:
 EnemyDefeat_Score:
 		bset	#7,status(a0)
 		clr.b	collision_flags(a0)
-;		moveq	#0,d0
-		move.w	(Chain_bonus_counter).w,d0
-		addq.w	#2,(Chain_bonus_counter).w
+		moveq	#0,d0
+		move.b	(Chain_bonus_counter).w,d0
+		addq.b	#2,(Chain_bonus_counter).w
 		cmpi.w	#3*2,d0
-		blo.s	.notreachedlimit
+		ble.s	.notreachedlimit
 		moveq	#3*2,d0
 
 .notreachedlimit:
 		move.w	d0,objoff_3E(a0)
 		lea	Enemy_Points(pc),a2
 		move.w	(a2,d0.w),d0
-		cmpi.w	#16*2,(Chain_bonus_counter).w	; have 16 enemies been destroyed?
+		cmpi.b	#16*2,(Chain_bonus_counter).w	; have 16 enemies been destroyed?
 		blo.s	.notreachedlimit2		; if not, branch
-		move.w	#1000,d0			; fix bonus to 10000
-		move.w	#10,objoff_3E(a0)
+		move.w	#10000/10,d0			; fix bonus to 10000
+		move.w	#5*2,objoff_3E(a0)
 
 .notreachedlimit2:
 		bsr.w	HUD_AddToScore

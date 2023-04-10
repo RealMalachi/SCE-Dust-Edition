@@ -319,7 +319,7 @@ HInt:
 		clr.b	(Do_Updates_in_H_int).w
 		movem.l	d0-a6,-(sp)		; move all the registers to the stack
 		bsr.w	Do_Updates
-		SMPS_UpdateSoundDriver		; Update SMPS
+		UpdateSoundDriver		; Update SMPS
 		movem.l	(sp)+,d0-a6		; load saved registers from the stack
 
 HInt_Done:

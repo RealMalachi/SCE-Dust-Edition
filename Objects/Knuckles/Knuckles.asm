@@ -151,7 +151,7 @@ loc_16614:
 		bsr.w	Animate_Knuckles
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_1662C
-		eori.b	#2,4(a0)
+		eori.b	#2,render_flags(a0)
 
 loc_1662C:
 		bsr.w	Knuckles_Load_PLC
@@ -217,7 +217,7 @@ loc_1669A:
 		bne.s	locret_166EC
 		move.w	#$600,(a4)
 		move.w	#$C,2(a4)
-		move.w	#$80,4(a4)
+		move.w	#$80,render_flags(a4)
 		bclr	#2,$2B(a0)
 		music	mus_Slowdown						; run music at normal speed
 
@@ -905,7 +905,7 @@ Knuckles_Wall_Climb:
 		add.w	d1,y_pos(a0)
 
 		moveq	#1,d1	; Climbing animation delta: make the animation play forwards.
-		bra.w	.finishMoving
+		bra.s	.finishMoving
 ; ---------------------------------------------------------------------------
 ; loc_16DE2:
 .moveUp_ReverseGravity:
@@ -917,13 +917,13 @@ Knuckles_Wall_Climb:
 
 		; If the level wraps vertically, then don't bother with any of this.
 		cmpi.w	#-$100,(Camera_min_Y_pos).w
-		beq.w	.finishMoving
+		beq.s	.finishMoving
 
 		; Check if Knuckles is over the level's top boundary.
 		move.w	(Camera_max_Y_pos).w,d0
 		addi.w	#$D0,d0
 		cmp.w	y_pos(a0),d0
-		bge.w	.finishMoving
+		bge.s	.finishMoving
 
 		; Knuckles is climbing over the level's top boundary: push him back
 		; down.
@@ -1641,7 +1641,7 @@ loc_1746A:
 		bclr	#0,status(a0)
 		cmpi.b	#$C,air_left(a0)
 		blo.s	locret_174B2
-		move.b	#6,5(a6)
+		move.b	#6,routine(a6)
 		move.b	#$15,mapping_frame(a6)
 
 locret_174B2:
@@ -1692,7 +1692,7 @@ loc_174F0:
 		bset	#0,status(a0)
 		cmpi.b	#$C,air_left(a0)
 		blo.s	locret_17538
-		move.b	#6,5(a6)
+		move.b	#6,routine(a6)
 		move.b	#$15,mapping_frame(a6)
 
 locret_17538:
@@ -2297,7 +2297,7 @@ loc_17B6A:
 		bclr	#4,status(a0)
 		moveq	#0,d0
 		move.b	d0,jumping(a0)
-		move.w	d0,(Chain_bonus_counter).w
+		move.b	d0,(Chain_bonus_counter).w
 		move.b	d0,flip_angle(a0)
 		move.b	d0,flip_type(a0)
 		move.b	d0,flips_remaining(a0)
@@ -2375,7 +2375,7 @@ loc_17C3C:
 		move.b	d0,$2E(a0)
 		move.b	#0,anim(a0)
 		move.w	#make_priority(2),priority(a0)
-		move.b	#2,5(a0)
+		move.b	#2,routine(a0)
 		move.b	#$78,$34(a0)
 		move.b	#0,$3D(a0)
 
@@ -2406,9 +2406,9 @@ loc_17CA2:
 ; ---------------------------------------------------------------------------
 
 loc_17CBA:
-		tst.w	$3E(a0)
+		tst.w	restart_timer(a0)
 		beq.s	locret_17CCC
-		subq.w	#1,$3E(a0)
+		subq.w	#1,restart_timer(a0)
 		bne.s	locret_17CCC
 		st	(Restart_level_flag).w
 
@@ -2421,7 +2421,7 @@ loc_17CCE:
 		bne.s	loc_17CE0
 		tst.w	(V_scroll_amount).w
 		bne.s	loc_17CE0
-		move.b	#2,5(a0)
+		move.b	#2,routine(a0)
 
 loc_17CE0:
 		bsr.w	sub_17D1E
@@ -2451,7 +2451,7 @@ sub_17D1E:
 		bsr.s	Animate_Knuckles
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	loc_17D2C
-		eori.b	#2,4(a0)
+		eori.b	#2,render_flags(a0)
 
 loc_17D2C:
 		bra.w	Knuckles_Load_PLC
@@ -2476,8 +2476,8 @@ loc_17D58:
 		bmi.s	loc_17DC8
 		move.b	status(a0),d1
 		andi.b	#1,d1
-		andi.b	#-4,4(a0)
-		or.b	d1,4(a0)
+		andi.b	#-4,render_flags(a0)
+		or.b	d1,render_flags(a0)
 		subq.b	#1,$24(a0)
 		bpl.s	locret_17D96
 		move.b	d0,$24(a0)
@@ -2550,9 +2550,9 @@ loc_17DF8:
 		moveq	#3,d1
 
 loc_17E00:
-		andi.b	#-4,4(a0)
+		andi.b	#-4,render_flags(a0)
 		eor.b	d1,d2
-		or.b	d2,4(a0)
+		or.b	d2,render_flags(a0)
 		btst	#5,status(a0)
 		bne.w	loc_17ECC
 		lsr.b	#4,d0
@@ -2606,8 +2606,8 @@ locret_17E82:
 loc_17E84:
 		move.b	status(a0),d1
 		andi.b	#1,d1
-		andi.b	#-4,4(a0)
-		or.b	d1,4(a0)
+		andi.b	#-4,render_flags(a0)
+		or.b	d1,render_flags(a0)
 		subq.b	#1,$24(a0)
 		bpl.w	locret_17D96
 		move.w	ground_vel(a0),d2
