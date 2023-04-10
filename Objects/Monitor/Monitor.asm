@@ -12,11 +12,11 @@ Obj_Monitor:
 ; ---------------------------------------------------------------------------
 
 Monitor_Index: offsetTable
-		offsetTableEntry.w Obj_MonitorInit			; 0
+		offsetTableEntry.w Obj_MonitorInit		; 0
 		offsetTableEntry.w Obj_MonitorMain		; 2
 		offsetTableEntry.w Obj_MonitorBreak		; 4
 		offsetTableEntry.w Obj_MonitorAnimate		; 6
-		offsetTableEntry.w loc_1D61A				; 8
+		offsetTableEntry.w loc_1D61A			; 8
 ; ---------------------------------------------------------------------------
 
 Obj_MonitorInit:
@@ -303,14 +303,14 @@ loc_1D850:
 
 off_1D87C: offsetTable
 		offsetTableEntry.w Monitor_Give_Eggman			; 0
-		offsetTableEntry.w Monitor_Give_1up				; 2
+		offsetTableEntry.w Monitor_Give_1up			; 2
 		offsetTableEntry.w Monitor_Give_Eggman			; 4
-		offsetTableEntry.w Monitor_Give_Rings				; 6
-		offsetTableEntry.w Monitor_Give_SpeedShoes			; 8
-		offsetTableEntry.w Monitor_Give_Fire_Shield			; A
+		offsetTableEntry.w Monitor_Give_Rings			; 6
+		offsetTableEntry.w Monitor_Give_SpeedShoes		; 8
+		offsetTableEntry.w Monitor_Give_Fire_Shield		; A
 		offsetTableEntry.w Monitor_Give_Lightning_Shield	; C
 		offsetTableEntry.w Monitor_Give_Bubble_Shield		; E
-		offsetTableEntry.w Monitor_Give_Invincibility			; 10
+		offsetTableEntry.w Monitor_Give_Invincibility		; 10
 		offsetTableEntry.w Monitor_Give_Eggman			; 12
 ; ---------------------------------------------------------------------------
 
@@ -381,78 +381,64 @@ Monitor_Give_Fire_Shield:
 		andi.b	#$8E,status_secondary(a1)
 		bset	#Status_Shield,status_secondary(a1)
 		bset	#Status_FireShield,status_secondary(a1)
-		sfx	sfx_FireShield
-		tst.b	parent+1(a0)
-		bne.s	loc_1D984
-		move.l	#Obj_FireShield,(v_Shield).w
-		move.w	a1,(v_Shield+parent).w
-		rts
-; ---------------------------------------------------------------------------
-
-loc_1D984:
-		move.l	#Obj_FireShield,(v_Shield_P2).w
-		move.w	a1,(v_Shield_P2+parent).w
-		rts
+		moveq	#signextendB(sfx_FireShield),d0
+		move.l	#Obj_FireShield,d1
+		bra.s	Monitor_ShieldGiveHandler
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_Lightning_Shield:
 		andi.b	#$8E,status_secondary(a1)
 		bset	#Status_Shield,status_secondary(a1)
 		bset	#Status_LtngShield,status_secondary(a1)
-		sfx	sfx_LightningShield
-		tst.b	parent+1(a0)
-		bne.s	loc_1D9C2
-		move.l	#Obj_LightningShield,(v_Shield).w
-		move.w	a1,(v_Shield+parent).w
-		rts
-; ---------------------------------------------------------------------------
-
-loc_1D9C2:
-		move.l	#Obj_LightningShield,(v_Shield_P2).w
-		move.w	a1,(v_Shield_P2+parent).w
-		rts
+		moveq	#signextendB(sfx_LightningShield),d0
+		move.l	#Obj_LightningShield,d1
+		bra.s	Monitor_ShieldGiveHandler
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_Bubble_Shield:
 		andi.b	#$8E,status_secondary(a1)
 		bset	#Status_Shield,status_secondary(a1)
 		bset	#Status_BublShield,status_secondary(a1)
-		sfx	sfx_BubbleShield
-		tst.b	parent+1(a0)
-		bne.s	loc_1DA00
-		move.l	#Obj_BubbleShield,(v_Shield).w
-		move.w	a1,(v_Shield+parent).w
-		rts
+		moveq	#signextendB(sfx_BubbleShield),d0
+		move.l	#Obj_BubbleShield,d1
+;		bra.s	Monitor_ShieldGiveHandler
 ; ---------------------------------------------------------------------------
 
-loc_1DA00:
-		move.l	#Obj_BubbleShield,(v_Shield_P2).w
-		move.w	a1,(v_Shield_P2+parent).w
-		rts
+Monitor_ShieldGiveHandler:
+		lea	(v_Shield).w,a2
+		tst.b	parent+1(a0)
+		beq.s	+
+		lea	(v_Shield_P2).w,a2
++
+		btst	#Status_Invincible,status_secondary(a1)
+		bne.s	+
+		move.l	d1,address(a2)
++
+		move.l	d1,LastLoadedShield(a2)
+		move.w	a1,Shield_PlayerAddr(a2)
+		sfx	,1
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_Invincibility:
-		bset	#Status_Invincible,status_secondary(a1)
 		move.b	#150,invincibility_timer(a1)
+		bset	#Status_Invincible,status_secondary(a1)
+		bne.s	.skipstarload
+		lea	(v_Invincibility_stars).w,a2
+		tst.b	parent+1(a0)
+		beq.s	+
+		lea	(v_Invincibility_stars_P2).w,a2
++
+		move.l	#Obj_Invincibility,address(a2)
+		move.w	a1,Shield_PlayerAddr(a2)
+.skipstarload
 		tst.b	(Level_end_flag).w
 		bne.s	.skipmusic
 		tst.b	(Boss_flag).w
 		bne.s	.skipmusic
 		cmpi.b	#12,air_left(a1)
-		bls.s		.skipmusic
-		music	mus_Invincible					; if invincible, play invincibility music
-
+		bls.s	.skipmusic
+		music	mus_Invincible
 .skipmusic
-		tst.b	parent+1(a0)
-		bne.s	loc_1DA52
-		move.l	#Obj_Invincibility,(v_Invincibility_stars).w
-		move.w	a1,(v_Invincibility_stars+parent).w
-		rts
-; ---------------------------------------------------------------------------
-
-loc_1DA52:
-		move.l	#Obj_Invincibility,(v_Invincibility_stars_P2).w
-		move.w	a1,(v_Invincibility_stars_P2+parent).w
 		rts
 ; ---------------------------------------------------------------------------
 

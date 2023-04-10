@@ -13,22 +13,22 @@ v_player:					= *
 Object_RAM:					ds.b object_size
 Player_2:					ds.b object_size
 Reserved_object_3:				ds.b object_size	; During a level, an object whose sole purpose is to clear the collision response list is stored here
-Dynamic_object_RAM:				ds.b object_size*90	; 90 objects
+Dynamic_object_RAM:				ds.b object_size*98	; 90 objects
 Dynamic_object_RAM_end				= *
 v_Breathing_bubbles:				ds.b object_size
 v_Breathing_bubbles_P2:				ds.b object_size
 v_Dust:						ds.b object_size
 v_Dust_P2:					ds.b object_size
+v_Invincibility_stars:
 v_Shield:					ds.b object_size
+v_Invincibility_stars_P2:
 v_Shield_P2:					ds.b object_size
-v_Invincibility_stars:				ds.b object_size*4
-v_Invincibility_stars_P2:			ds.b object_size*4
 v_Tails_tails:					ds.b object_size
 v_Tails_tails_2P:				ds.b object_size
 v_WaterWave:					ds.b object_size
 Object_RAM_end					= *
-v_GameOver_Game	=	v_Invincibility_stars
-v_GameOver_Over	=	v_Invincibility_stars+next_object
+v_GameOver_Game	=	v_Breathing_bubbles
+v_GameOver_Over	=	v_Breathing_bubbles_P2
 
 	if ((Object_RAM_end-Object_RAM)/object_size)/10 <> 11	; TODO: figure out how to 
 	fatal "Object RAM isn't divisible by 10!!! Fix this immediately!"

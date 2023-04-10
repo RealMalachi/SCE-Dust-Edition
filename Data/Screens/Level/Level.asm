@@ -216,15 +216,16 @@ PLC_PlayerIndex:
 
 SpawnLevelMainSprites:
 		move.l	#Obj_ResetCollisionResponseList,(Reserved_object_3).w
-
+		move.l	#Obj_InstaShield,(v_Shield+address).w
+		move.w	#Player_1,(v_Shield+Shield_PlayerAddr).w
 		move.w	(Player_mode).w,d0
 		bne.s	.sonicalone
 
 		; Sonic and Tails
 		move.l	#Obj_Sonic,(Player_1).w
 		move.l	#Obj_DashDust,(v_Dust).w
-		move.l	#Obj_InstaShield,(v_Shield).w
-		move.w	#Player_1,(v_Shield+parent).w
+		move.l	#Obj_InstaShield,(v_Shield_P2+address).w
+		move.w	#Player_2,(v_Shield_P2+Shield_PlayerAddr).w
 		move.l	#Obj_Tails,(Player_2).w
 		move.w	(Player_1+x_pos).w,(Player_2+x_pos).w
 		move.w	(Player_1+y_pos).w,(Player_2+y_pos).w
@@ -242,8 +243,6 @@ SpawnLevelMainSprites:
 		; Sonic alone
 		move.l	#Obj_Sonic,(Player_1).w
 		move.l	#Obj_DashDust,(v_Dust).w
-		move.l	#Obj_InstaShield,(v_Shield).w
-		move.w	#Player_1,(v_Shield+parent).w
 		rts
 ; ---------------------------------------------------------------------------
 
