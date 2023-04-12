@@ -34,8 +34,7 @@ Obj_Invincibility_Delete:
 	jmp	(a1)	; reload shield
 
 Obj_Invincibility:
-;	QueueStaticDMA ArtUnc_Invincibility,tiles_to_bytes(29),tiles_to_bytes(ArtTile_Shield)	; load art
-	QueueStaticDMA ArtUnc_Invincibility,tiles_to_bytes(34),tiles_to_bytes(ArtTile_Shield)
+	QueueStaticDMA ArtUnc_Invincibility,tiles_to_bytes(29),tiles_to_bytes(ArtTile_Shield)	; load art
 	move.b	#ren_camerapos|objflag_continue|ren_multidraw,render_flags(a0)
 	move.w	#bytes_to_word(32/2,32/2),height_pixels(a0)			; set height and width
 	move.w	#make_priority(1),priority(a0)

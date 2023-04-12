@@ -432,6 +432,7 @@ PLCLoad_Shields:
 		include "Objects/Shields/Invincibility.asm"
 ; ---------------------------------------------------------------------------
 
+Map_Invincibility:
 		include "Objects/Shields/Object Data/Map - Invincibility.asm"
 		include "Objects/Shields/Object Data/Anim - Fire Shield.asm"
 		include "Objects/Shields/Object Data/Map - Fire Shield.asm"
