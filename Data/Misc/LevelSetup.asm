@@ -11,8 +11,16 @@ LevelSetup:
 		move.w	(Camera_X_pos).w,(Camera_X_pos_copy).w
 		move.w	(Camera_Y_pos).w,(Camera_Y_pos_copy).w
 		lea	(Plane_buffer).w,a0
+	if CompBlocks=0
 		movea.l	(Block_table_addr_ROM).w,a2
+	else
+		lea	(Block_table).w,a2
+	endif
+	if CompLevel=0
 		movea.l	(Level_layout2_addr_ROM).w,a3
+	else
+		lea	(Level_layout_main).w,a3
+	endif
 		move.w	#vram_fg,d7
 		movea.l	(Level_data_addr_RAM.ScreenInit).w,a1
 		jsr	(a1)
@@ -29,8 +37,16 @@ ScreenEvents:
 		move.w	(Camera_X_pos).w,(Camera_X_pos_copy).w
 		move.w	(Camera_Y_pos).w,(Camera_Y_pos_copy).w
 		lea	(Plane_buffer).w,a0
+	if CompBlocks=0
 		movea.l	(Block_table_addr_ROM).w,a2
+	else
+		lea	(Block_table).w,a2
+	endif
+	if CompLevel=0
 		movea.l	(Level_layout2_addr_ROM).w,a3
+	else
+		lea	(Level_layout_main).w,a3
+	endif
 		move.w	#vram_fg,d7
 		movea.l	(Level_data_addr_RAM.ScreenEvent).w,a1
 		jsr	(a1)

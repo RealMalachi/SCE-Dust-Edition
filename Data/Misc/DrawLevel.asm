@@ -216,7 +216,11 @@ Setup_TileColumnDraw:
 ; =============== S U B R O U T I N E =======================================
 
 Get_LevelChunkColumn:
+	if CompLevel=0
 		movea.l	(Level_layout_addr_ROM).w,a4
+	else
+		lea	(Level_layout_header).w,a4
+	endif
 		move.w	(a3,d1.w),d3
 		andi.w	#$7FFF,d3
 		adda.w	d3,a4
@@ -385,7 +389,11 @@ Setup_TileRowDraw:
 ; =============== S U B R O U T I N E =======================================
 
 Get_LevelAddrChunkRow:
+	if CompLevel=0
 		movea.l	(Level_layout_addr_ROM).w,a4
+	else
+		lea	(Level_layout_header).w,a4
+	endif
 		move.w	d0,d3
 		asr.w	#5,d3
 		and.w	(Layout_row_index_mask).w,d3
@@ -1017,13 +1025,21 @@ LoadLevelLoadBlock2:
 		lea	(a2,d0.w),a2
 		pea	(a2)
 		addq.w	#4,a2
+	if CompBlocks=0
 		move.l	(a2)+,(Block_table_addr_ROM).w
+	else
 		movea.l	(a2)+,a0
-		lea	(RAM_start).l,a1
+		lea	(Block_table).l,a1
+		movem.l	d0/d2/d4-d7/a2/a5,-(sp)
+		jsr	(KosPlusDec).w	; load chunks
+		movem.l	(sp)+,d0/d2/d4-d7/a2/a5
+	endif
+		movea.l	(a2)+,a0
+		lea	(Chunk_table).l,a1
 		movem.l	d0/d2/d4-d7/a5,-(sp)
 		jsr	(KosPlusDec).w	; load chunks
-		movem.l	(sp)+,d0/d2/d4-d7/a5
 		bsr.s	Load_Level
+		movem.l	(sp)+,d0/d2/d4-d7/a5
 		jsr	(LoadPLC_KosM).w
 		movea.l	(sp)+,a2
 		moveq	#0,d0
@@ -1039,12 +1055,16 @@ Load_Level:
 		lsr.w	#4,d0
 		lea	(LevelPtrs).l,a0
 		movea.l	(a0,d0.w),a0
-
 Load_Level2:
+	if CompLevel=0
 		move.l	a0,(Level_layout_addr_ROM).w
 		addq.l	#8,a0
 		move.l	a0,(Level_layout2_addr_ROM).w
 		rts
+	else
+		lea	(Level_layout).l,a1
+		jmp	(KosPlusDec).w	; load level
+	endif
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -1081,8 +1101,14 @@ Load_Solids:
 		movea.l	(a0,d0.w),a0
 
 Load_Solids2:
+	if CompCollision=0
 		move.l	a0,(Primary_collision_addr).w
 		move.l	a0,(Collision_addr).w
 		addq.l	#1,a0
 		move.l	a0,(Secondary_collision_addr).w
 		rts
+	else
+		lea	(Collision_table).l,a1
+		move.l	a1,(Collision_addr).w
+		jmp	(KosPlusDec).w	; load level
+	endif

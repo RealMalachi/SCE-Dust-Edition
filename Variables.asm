@@ -8,26 +8,37 @@ RAM_start:					= *
 Chunk_table:					ds.b $8000		; Chunk (128x128) definitions, $80 bytes per definition
 Chunk_table_end					= *
 
-;Block_table:
-;			ds.w	$300*4
-;Block_table_end:
+	if CompBlocks=1
+Block_table:				ds.w	$300*4
+Block_table_end:
+	endif
 
-;Level_layout:
-;Level_layout_header:
-;Level_layout_header_FG_horz:	ds.w 1		; amount of chunks to read horizontally
-;;Level_layout_header_BG_horz:	ds.w 1
-;Level_layout_header_FG_vert:	ds.w 1		; same for vertical
-;Level_layout_header_BG_vert:	ds.w 1
-;Level_layout_main:		ds.w $40	; $40 word-sized line pointers followed by actual layout data
-;				ds.b $F78	; 3,960 chunks
-;Level_layout_end:
+	if CompLevel=1
+Level_layout:
+Level_layout_header:
+Level_layout_header_FG_horz:		ds.w 1		; amount of chunks to read horizontally
+Level_layout_header_BG_horz:		ds.w 1
+Level_layout_header_FG_vert:		ds.w 1		; same for vertical
+Level_layout_header_BG_vert:		ds.w 1
+Level_layout_main:			ds.w $40	; $40 word-sized line pointers followed by actual layout data
+					ds.b $F78	; 3,960 chunks
+Level_layout_end:
+	endif
+
+	if CompCollision=1
+Collision_table:		ds.b $600
+Collision_table_end:
+Primary_collision:		= Collision_table
+Secondary_collision:		= Primary_collision+1
+	endif
+; ---------------------------------------------------------------------------
 
 Player_1:					= *			; Main character in 1 player mode
 v_player:					= *
 Object_RAM:					ds.b object_size
 Player_2:					ds.b object_size
 Reserved_object_3:				ds.b object_size	; During a level, an object whose sole purpose is to clear the collision response list is stored here
-Dynamic_object_RAM:				ds.b object_size*98	; 90 objects
+Dynamic_object_RAM:				ds.b object_size*88	; 90 objects
 Dynamic_object_RAM_end				= *
 v_Breathing_bubbles:				ds.b object_size
 v_Breathing_bubbles_P2:				ds.b object_size
@@ -43,14 +54,13 @@ v_WaterWave:					ds.b object_size
 Object_RAM_end					= *
 v_GameOver_Game	=	v_Breathing_bubbles
 v_GameOver_Over	=	v_Breathing_bubbles_P2
-
 ;	if ((Object_RAM_end-Object_RAM)/object_size)/10 <> 11	; TODO: figure out how to 
 ;	fatal "Object RAM isn't divisible by 10!!! Fix this immediately!"
 ;	endif
 
 ObjectRamMarker			ds.b 1	; a fast failsafe to end dynamic object checking routines dynamically, set during game init
 ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects
-
+; ---------------------------------------------------------------------------
 
 Kos_decomp_buffer:				ds.w $800		; Each module in a KosM archive is decompressed here and then DMAed to VRAM
 
@@ -70,13 +80,15 @@ Object_respawn_table:				ds.b ObjectTable_Count	; Object respawn table(1 byte)
 Object_respawn_table_end			= *
 Sprite_table_buffer:				ds.b 80*8
 Sprite_table_buffer_end				= *
-Sprite_table_input:				ds.b $80*8		; Sprite table input buffer
+Sprite_table_input:				ds.b (next_priority)*8		; Sprite table input buffer
 Sprite_table_input_end				= *
 
 DMA_queue:					= *
 VDP_Command_Buffer:				ds.b 18*14	; 18 queues, 14 bytes each ; Stores all the VDP commands necessary to initiate a DMA transfer
 DMA_queue_slot:					= *
-VDP_Command_Buffer_Slot:			ds.w 1			; Points to the next free slot on the queue
+VDP_Command_Buffer_Slot:			ds.w 1		; Points to the next free slot on the queue
+
+; ---------------------------------------------------------------------------
 
 Camera_RAM:					= *			; Various camera and scroll-related variables are stored here
 H_scroll_amount:				ds.w 1			; Number of pixels camera scrolled horizontally in the last frame * $100
@@ -100,10 +112,10 @@ Camera_max_X_pos_Saved:				ds.w 1
 Camera_min_Y_pos_Saved:				ds.w 1
 Camera_max_Y_pos_Saved:				ds.w 1
 
-H_scroll_frame_offset:				ds.b 1	; byte, word	; If this is non-zero with value x, horizontal scrolling will be based on the player's position x / $100 + 1 frames ago
-H_scroll_frame_copy:				ds.b 1
+H_scroll_frame_offset:				ds.b 1	; byte, word	; If this is non-zero, scrolling is based on the player's x position + 1 frames ago
+H_scroll_frame_copy:				ds.b 1			;
 
-H_scroll_frame_offset_P2:			ds.b 1	; byte, word	; If this is non-zero with value x, horizontal scrolling will be based on the player's position x / $100 + 1 frames ago
+H_scroll_frame_offset_P2:			ds.b 1	; byte, word	;
 H_scroll_frame_copy_P2:				ds.b 1			; 
 
 Pos_table_index:				ds.b 1
@@ -114,7 +126,7 @@ Pos_table_byte_P2:				ds.b 1
 Distance_from_top:				ds.w 1			; The vertical scroll manager scrolls the screen until the player's distance from the top of the screen is equal to this (or between this and this + $40 when in the air). $60 by default
 Distance_from_top_P2:				ds.w 1
 Camera_max_Y_pos_changing:			ds.b 1			; Set when the maximum camera Y pos is undergoing a change
-						ds.b 1			; even
+					ds.b 1			; even
 Fast_V_scroll_flag:				ds.b 1			; If this is set vertical scroll when the player is on the ground and has a speed of less than $800 is capped at 24 pixels per frame instead of 6
 Scroll_lock:					ds.b 1			; If this is set scrolling routines aren't called
 v_screenposx:					= *
@@ -162,6 +174,7 @@ Ring_consumption_list:				ds.w $3F		; The remaining part of the ring consumption
 Ring_consumption_table_end			= *
 
 Plane_buffer:					ds.b $480		; Used by level drawing routines
+; ---------------------------------------------------------------------------
 
 v_snddriver_ram:				ds.b $39A		; Start of RAM for the sound driver data
 v_snddriver_ram_end:
@@ -171,7 +184,6 @@ Game_mode:					ds.b 1
 V_int_flag:					ds.b 1	; If 0, game hasn't reached Vsync, lag. If 1, waiting for Vsync. If -1, Vsync has occurred
 V_int_routine:					= *
 v_vbla_routine:					ds.l 1	; address to routine that V-int will run if not lagging
-
 ; ---------------------------------------------------------------------------
 ; joypad control
 Ctrl1:			; longword
@@ -242,7 +254,6 @@ Ctrl_2_held_logical:		= Ctrl2_Player_Hd_ABC
 Ctrl_2_pressed_logical:		= Ctrl2_Player_Pr_ABC
 ; ---------------------------------------------------------------------------
 
-
 v_vdp_buffer1:					= *
 VDP_reg_1_command:				ds.w 1			; AND the lower byte by $BF and write to VDP control port to disable display, OR by $40 to enable
 Demo_timer:					= *
@@ -266,6 +277,7 @@ Palette_fade_info:				= *			; Both index and count (word)
 Palette_fade_index:				ds.b 1			; Colour to start fading from
 v_pfade_size:					= *
 Palette_fade_count:				ds.b 1			; The number of colours to fade
+; ---------------------------------------------------------------------------
 
 Lag_frame_count:				ds.w 1			; More specifically, the number of times V-int routine 0 has run. Reset at the end of a normal frame
 v_spritecount:					= *
@@ -304,8 +316,10 @@ Object_load_addr_back:				ds.l 1			; The address inside the object placement dat
 Object_respawn_index_front:			ds.w 1			; The object respawn table index for the object at Obj_load_addr_front
 Object_respawn_index_back:			ds.w 1			; The object respawn table index for the object at Obj_load_addr_back
 Collision_addr:					ds.l 1			; Points to the primary or secondary collision data as appropriate
+	if CompCollision=0
 Primary_collision_addr:				ds.l 1
 Secondary_collision_addr:			ds.l 1
+	endif
 Player_prev_frame:				ds.b 1
 Player_prev_frame_P2:				ds.b 1			; used by DPLC routines to detect whether a DMA transfer is required
 Player_prev_frame_P2_tail:			ds.b 1			; used by DPLC routines to detect whether a DMA transfer is required
@@ -359,8 +373,6 @@ Flying_carrying_Sonic_flag:			ds.b 1			; set when Tails carries Sonic in a Sonic
 Flying_picking_Sonic_timer:			ds.b 1			; until this is 0 Tails can't pick Sonic up
 
 _unkF744:					ds.w 1
-_unkF74A:					ds.b 1
-_unkF74B:					ds.b 1
 _unkF74C:					ds.w 1
 Tails_CPU_star_post_flag:			ds.b 1			; copy of Last_star_post_hit, sets Tails' starting behavior in a Sonic and Tails game
 _unkFAAC:					ds.b 1
@@ -368,6 +380,7 @@ Gliding_collision_flags:			ds.b 1
 Disable_wall_grab:				ds.b 1			; if set, disables Knuckles wall grab
 
 Lag_frame_count_end				= *
+; ---------------------------------------------------------------------------
 
 Water_level:					= *			; Keeps fluctuating
 Water_Level_1:					ds.w 1
@@ -392,9 +405,15 @@ Palette_fade_timer:				ds.w 1			; The palette gets faded in until this timer exp
 SegaCD_Mode:					ds.b 1
 Respawn_table_keep:				ds.b 1			; If set, respawn table is not reset during level load
 
+	if CompBlocks=0
 Block_table_addr_ROM:				ds.l 1			; Block table pointer(Block (16x16) definitions, 8 bytes per definition)
+	endif
+
+	if CompLevel=0
 Level_layout_addr_ROM:				ds.l 1			; Level layout pointer
 Level_layout2_addr_ROM:				ds.l 1			; Level layout 2 pointer (+8)
+	endif
+
 Rings_manager_addr_RAM:				ds.l 1			; Jump for the ring loading manager
 Object_index_addr:				ds.l 1			; Points to either the object index for levels
 Object_load_addr_RAM:				ds.l 1			; Jump for the object loading manager
@@ -500,7 +519,7 @@ HUD_RAM:					= *
 .Xpos:						ds.w 1
 .Ypos:						ds.w 1
 .status:					ds.b 1
-							ds.b 1					; even
+					ds.b 1			; even
 
 DecimalScoreRAM:				ds.l 1
 DecimalScoreRAM2:				ds.l 1
@@ -522,7 +541,7 @@ Saved_dynamic_resize:				ds.l 1
 Saved_water_full_screen_flag:			ds.b 1
 Saved_status_secondary:				ds.b 1
 Saved_last_star_post_hit:			ds.b 1
-							ds.b 1					; even
+					ds.b 1			; even
 
 Oscillating_variables:				= *
 Oscillating_Numbers:				= *

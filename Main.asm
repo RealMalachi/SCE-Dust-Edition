@@ -27,6 +27,10 @@ AllOptimizations:	= 1	; if 1, enables all optimizations
 EnableSRAM:		= 0	; change to 1 to enable SRAM
 BackupSRAM:		= 0
 AddressSRAM:		= 0	; 0 = odd+even; 2 = even only; 3 = odd only
+
+CompBlocks:		= 1	;
+CompLevel:		= 1	;
+CompCollision:		= 0	;
 ; ---------------------------------------------------------------------------
 
 ; Assembler code

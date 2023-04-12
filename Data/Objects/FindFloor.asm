@@ -1,12 +1,56 @@
 
+SetCollAddrPlane_macro macro reg
+	if CompCollision=0
+	move.l	(Primary_collision_addr).w,(Collision_addr).w
+    if ("reg"="")
+	cmpi.b	#$C,top_solid_bit(a0)
+    else
+	cmp.b	#$C,reg
+    endif
+	beq.s	.notprime
+	addq.l	#Secondary_collision_addr-Primary_collision_addr,(Collision_addr).w
+.notprime
+	else
+	move.l	#Primary_collision,(Collision_addr).w
+    if ("reg"="")
+	cmpi.b	#$C,top_solid_bit(a0)
+    else
+	cmpi.b	#$C,top_solid_bit(reg)
+    endif
+	beq.s	.notprime
+	addq.l	#Secondary_collision-Primary_collision,(Collision_addr).w
+.notprime
+	endif
+	endm
+
+SetCollAddrPlane_lrb_macro macro reg
+	if CompCollision=0
+	move.l	(Primary_collision_addr).w,(Collision_addr).w
+    if ("reg"="")
+	cmpi.b	#$D,lrb_solid_bit(a0)
+    else
+	cmp.b	#$D,reg
+    endif
+	beq.s	.notprime
+	addq.l	#Secondary_collision_addr-Primary_collision_addr,(Collision_addr).w
+.notprime
+	else
+	move.l	#Primary_collision,(Collision_addr).w
+    if ("reg"="")
+	cmpi.b	#$D,lrb_solid_bit(a0)
+    else
+	cmp.b	#$D,reg
+    endif
+	beq.s	.notprime
+	addq.l	#Secondary_collision-Primary_collision,(Collision_addr).w
+.notprime
+	endif
+	endm
 ; =============== S U B R O U T I N E =======================================
 
 Player_AnglePos:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		move.b	top_solid_bit(a0),d5
+		SetCollAddrPlane_macro
+		move.b	top_solid_bit(a0),d5
 		btst	#Status_OnObj,status(a0)
 		beq.s	loc_EC5A
 		moveq	#0,d0
@@ -366,7 +410,11 @@ loc_EFA2:
 ; ---------------------------------------------------------------------------
 
 GetFloorPosition:
+	if CompLevel=0
 		movea.l	(Level_layout_addr_ROM).w,a1
+	else
+		lea	(Level_layout_header).w,a1
+	endif
 		move.w	d2,d0
 		lsr.w	#5,d0
 		and.w	(Layout_row_index_mask).w,d0
@@ -784,11 +832,8 @@ loc_F60C:
 
 sub_F61C:
 CalcRoomInFront:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		move.b	lrb_solid_bit(a0),d5
+		SetCollAddrPlane_macro
+		move.b	lrb_solid_bit(a0),d5
 		move.l	x_pos(a0),d3
 		move.l	y_pos(a0),d2
 		move.w	x_vel(a0),d1
@@ -838,11 +883,8 @@ CalcRoomInFront:
 ; =============== S U B R O U T I N E =======================================
 
 CalcRoomOverHead:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		move.b	lrb_solid_bit(a0),d5
+		SetCollAddrPlane_macro
+		move.b	lrb_solid_bit(a0),d5
 		move.b	d0,(Primary_Angle).w
 		move.b	d0,(Secondary_Angle).w
 		addi.b	#$20,d0
@@ -861,11 +903,8 @@ CalcRoomOverHead:
 ; =============== S U B R O U T I N E =======================================
 
 Sonic_CheckFloor:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		move.b	top_solid_bit(a0),d5
+		SetCollAddrPlane_macro
+		move.b	top_solid_bit(a0),d5
 
 Sonic_CheckFloor2:
 		move.w	y_pos(a0),d2
@@ -962,11 +1001,8 @@ sub_F846:
 		move.w	x_pos(a0),d3
 		move.w	y_pos(a0),d2
 		subq.w	#4,d2
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$D,lrb_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		lea	(Primary_Angle).w,a4
+		SetCollAddrPlane_lrb_macro
+		lea	(Primary_Angle).w,a4
 		clr.b	(a4)
 		movea.w	#$10,a3
 		moveq	#0,d6
@@ -993,11 +1029,8 @@ ChkFloorEdge_Part2:
 		add.w	d0,d2
 
 ChkFloorEdge_Part3:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		lea	(Primary_Angle).w,a4
+		SetCollAddrPlane_macro
+		lea	(Primary_Angle).w,a4
 		clr.b	(a4)
 		movea.w	#$10,a3
 		moveq	#0,d6
@@ -1022,11 +1055,8 @@ SonicOnObjHitFloor2:
 		move.b	y_radius(a1),d0
 		ext.w	d0
 		add.w	d0,d2
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a1)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		lea	(Primary_Angle).w,a4
+		SetCollAddrPlane_macro
+		lea	(Primary_Angle).w,a4
 		clr.b	(a4)
 		movea.w	#$10,a3
 		moveq	#0,d6
@@ -1340,11 +1370,8 @@ ChkFloorEdge_ReverseGravity:
 		eori.w	#$F,d2
 
 ChkFloorEdge_ReverseGravity_Part2:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		lea	(Primary_Angle).w,a4
+		SetCollAddrPlane_macro
+		lea	(Primary_Angle).w,a4
 		clr.b	(a4)
 		movea.w	#-$10,a3
 		move.w	#$800,d6
@@ -1478,11 +1505,8 @@ loc_FDC8:
 ; =============== S U B R O U T I N E =======================================
 
 sub_FDEC:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+		move.w	x_pos(a0),d3
+		SetCollAddrPlane_macro
+		move.w	x_pos(a0),d3
 		move.w	y_pos(a0),d2
 		move.b	y_radius(a0),d0
 		ext.w	d0

@@ -678,11 +678,8 @@ Knuckles_Wall_Climb:
 		move.w	#0,x_vel(a0)
 		move.w	#0,y_vel(a0)
 
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$D,lrb_solid_bit(a0)
-		beq.s	+
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-+
+		SetCollAddrPlane_lrb_macro
+
 		move.b	lrb_solid_bit(a0),d5
 
 		moveq	#0,d1	; Climbing animation delta: make the animation pause.
@@ -2075,12 +2072,7 @@ Knux_Test_For_Glide:
 ; =============== S U B R O U T I N E =======================================
 
 Knux_DoLevelCollision_CheckRet:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,$46(a0)
-		beq.s	loc_17952
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-
-loc_17952:
+		SetCollAddrPlane_macro
 		move.b	$47(a0),d5
 		move.w	x_vel(a0),d1
 		move.w	y_vel(a0),d2

@@ -2495,12 +2495,7 @@ loc_15388:
 ; =============== S U B R O U T I N E =======================================
 
 Tails_DoLevelCollision:
-		move.l	(Primary_collision_addr).w,(Collision_addr).w
-		cmpi.b	#$C,top_solid_bit(a0)
-		beq.s	loc_153D6
-		move.l	(Secondary_collision_addr).w,(Collision_addr).w
-
-loc_153D6:
+		SetCollAddrPlane_macro
 		move.b	lrb_solid_bit(a0),d5
 		move.w	x_vel(a0),d1
 		move.w	y_vel(a0),d2
