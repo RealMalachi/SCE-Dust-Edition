@@ -86,6 +86,8 @@ ArtKosM_ContinueDigits:			binclude "Data/Screens/Continue/KosinskiM Art/Digits.b
 	even
 ArtKosM_CreditsText:				binclude "Data/Screens/Continue/KosinskiM Art/Large Text.bin"
 	even
+ArtKosM_SuperStars:			binclude "Objects/Shield/KosinskiM Art/Super Sonic Stars.bin"
+	even
 
 ; ===========================================================================
 ; Kosinski Module compressed title card graphics

@@ -430,6 +430,7 @@ PLCLoad_Shields:
 ; ---------------------------------------------------------------------------
 
 		include "Objects/Shields/Invincibility.asm"
+;		include "Objects/Shields/Super Stars.asm"
 ; ---------------------------------------------------------------------------
 
 Map_Invincibility:
