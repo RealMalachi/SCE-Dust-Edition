@@ -378,33 +378,30 @@ loc_1D94C:
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_Fire_Shield:
-		andi.b	#$8E,status_secondary(a1)
-		bset	#Status_Shield,status_secondary(a1)
-		bset	#Status_FireShield,status_secondary(a1)
+		moveq	#Status_FireShield,d2
 		moveq	#signextendB(sfx_FireShield),d0
 		move.l	#Obj_FireShield,d1
 		bra.s	Monitor_ShieldGiveHandler
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_Lightning_Shield:
-		andi.b	#$8E,status_secondary(a1)
-		bset	#Status_Shield,status_secondary(a1)
-		bset	#Status_LtngShield,status_secondary(a1)
+		moveq	#Status_LtngShield,d2
 		moveq	#signextendB(sfx_LightningShield),d0
 		move.l	#Obj_LightningShield,d1
 		bra.s	Monitor_ShieldGiveHandler
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_Bubble_Shield:
-		andi.b	#$8E,status_secondary(a1)
-		bset	#Status_Shield,status_secondary(a1)
-		bset	#Status_BublShield,status_secondary(a1)
+		moveq	#Status_BublShield,d2
 		moveq	#signextendB(sfx_BubbleShield),d0
 		move.l	#Obj_BubbleShield,d1
 ;		bra.s	Monitor_ShieldGiveHandler
 ; ---------------------------------------------------------------------------
 
 Monitor_ShieldGiveHandler:
+		andi.b	#$8E,status_secondary(a1)
+		bset	#Status_Shield,status_secondary(a1)
+		bset	d2,status_secondary(a1)
 		lea	(v_Shield).w,a2
 		tst.b	parent+1(a0)
 		beq.s	+

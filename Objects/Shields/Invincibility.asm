@@ -8,9 +8,9 @@
 ; d2 = offsettled x
 ; d3 = offsettled y
 Invinc_RotateAnim_OffRead macro unsafe
-    if ("unsafe"=="")
+;    if ("unsafe"=="")
 	andi.w	#$7F,d6
-    endif
+;    endif
 	move.w	(a6,d6.w),d2	; put offset into d2...
 	move.w	2(a6,d6.w),d3	; ...and d3
 	add.w	d0,d2		; then add the x_pos of player to it...
@@ -88,7 +88,7 @@ Obj_Invincibility:
 ; rotation
 ;	moveq	#7,d4	; debug
 ;	moveq	#7,d5
-	moveq	#0,d6
+;	moveq	#0,d6
 	move.b	Invinc_RotateOffset(a0),d6	; prepare rotation offset
 	Invinc_RotateAnim_OffRead 0
 	move.w	d2,x_pos(a0)			; set x_pos
@@ -114,7 +114,7 @@ Obj_Invincibility:
 	beq.s	+				; if not, branch
 	moveq	#-(1*4),d5			; reverse
 +
-	moveq	#0,d6
+;	moveq	#0,d6
 	move.b	Invinc_Subs_RotateOffset(a0),d6	; prepare rotation offset
 	add.b	d5,Invinc_Subs_RotateOffset(a0) ; add rotation for next frame
 	lea	(Pos_table).w,a2		; load position table from player object
