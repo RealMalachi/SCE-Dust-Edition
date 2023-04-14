@@ -3,43 +3,48 @@
 ; ---------------------------------------------------------------------------
 
 ; =============== S U B R O U T I N E =======================================
-DrawSpriteUnsafe_macro macro prid
+
+DrawSpriteUnsafe_cus_macro macro prid,obj,reg
 	if ("prid"=="")
-	movea.w	priority(a0),a1
+	movea.w	priority(obj),reg
+	elseif ("prid"=="set") || ("prid"=="s")
+;  if ErrorChecks<>0	; make sure it's set.
+;	cmpa.w	#Sprite_table_input,reg	; is it in the table input?
+;	blo.s	+			; if not, branch
+;	cmpa.w	#Sprite_table_input+(next_priority*priority_queue),reg	; is it in the table input?
+;	blo.s	++			; if not, branch
+;+
+;	RaiseError "Object render priority not set:", Debug_Priority
+;	rts
+;+
+;  endif
+	elseif prid <= priority_queue	; prid >=0 &&
+	movea.w	#make_priority(prid),reg
 	else
-	movea.w	#make_priority(prid),a1
+	fatal "Priority exceeds the intended amount of queue (prid)"
 	endif
-;	lea	(Sprite_table_input).w,a1
-;	adda.w	priority(a0),a1
-	move.w	(a1),d0		; get the amount of objects in the queue
+	move.w	(reg),d0		; get the amount of objects in the queue
 	addq.w	#2,d0		; add to the queue amount
-	move.w	d0,(a1)		; copy the addition to the queue amount
-	move.w	a0,(a1,d0.w)	; copy the objects address to the queue
+	move.w	d0,(reg)		; copy the addition to the queue amount
+	move.w	obj,(reg,d0.w)	; copy the objects address to the queue
 	endm
 
+DrawSpriteUnsafe_macro macro prid
+	DrawSpriteUnsafe_cus_macro prid,a0,a1
+	endm
 DrawOtherSpriteUnsafe_macro macro prid
-	if ("prid"=="")
-	movea.w	priority(a1),a2
-	else
-	movea.w	#make_priority(prid),a2
-	endif
-;	lea	(Sprite_table_input).w,a2
-;	adda.w	priority(a1),a2
-	move.w	(a2),d0		; get the amount of objects in the queue
-	addq.w	#2,d0		; add to the queue amount
-	move.w	d0,(a2)		; copy the addition to the queue amount
-	move.w	a1,(a2,d0.w)	; copy the objects address to the queue
+	DrawSpriteUnsafe_cus_macro prid,a1,a2
 	endm
 ; originally made by lavagaming1
 Draw_Sprite:
 DisplaySprite:
 	movea.w	priority(a0),a1
-;	lea	(Sprite_table_input).w,a1
-;	adda.w	priority(a0),a1
+Draw_Sprite.set:
+DisplaySprite.set:
   if ErrorChecks<>0
 	cmpa.w	#Sprite_table_input,a1	; is it in the table input?
 	blo.s	.error			; if not, branch
-	cmpa.w	#Sprite_table_input+(next_priority*7),a1	; is it in the table input?
+	cmpa.w	#Sprite_table_input+(next_priority*priority_queue),a1	; is it in the table input?
 	bhi.s	.error			; if not, branch
   endif
 	move.w	(a1),d0			; get the amount of objects in the queue
@@ -51,7 +56,7 @@ DisplaySprite:
 	move.w	a0,(a1,d0.w)		; copy the objects address to the queue
 	rts
 .loop:
-	cmpa.w	#Sprite_table_input+(next_priority*7),a1	; have we exceeded the rendering queue RAM?
+	cmpa.w	#Sprite_table_input+(next_priority*priority_queue),a1	; have we exceeded the rendering queue RAM?
 	bhs.s	.rts			; if so, branch
 	lea	next_object(a1),a1	; check next priority queue
 	move.w	(a1),d0

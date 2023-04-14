@@ -631,7 +631,7 @@ jmi:		macro loc
 ; Function to determine an objects sprite rendering priority
 ; prid is boxed because priority constants would otherwise screw the assemblers math
 ;make_priority function prid,(prid*next_priority)
-make_priority function prid,(Sprite_table_input+(prid*next_priority))	; priority merged with SpriteTableInput, saves one instruction in Draw_Sprite
+make_priority function prid,(Sprite_table_input+(prid*next_priority))	; priority merged with SpriteTableInput (saves some cycles in Draw_Sprite)
 
 ; macros to convert from tile index to art tiles, block mapping or VRAM address.
 make_art_tile function addr,pal,pri,((pri&1)<<15)|((pal&3)<<13)|(addr&tile_mask)

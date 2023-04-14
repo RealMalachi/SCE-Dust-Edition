@@ -94,7 +94,7 @@ Render_Sprites_NextObj:
 		bne.w	Render_Sprites_ObjLoop			; if there are objects left, repeat
 
 Render_Sprites_NextLevel:
-		lea	$80(a5),a5							; load next priority level
+		lea	next_priority(a5),a5							; load next priority level
 		cmpa.w	#Sprite_table_input_end,a5
 		blo.w	Render_Sprites_LevelLoop
 		move.w	d7,d6

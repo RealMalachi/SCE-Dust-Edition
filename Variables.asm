@@ -80,7 +80,7 @@ Object_respawn_table:				ds.b ObjectTable_Count	; Object respawn table(1 byte)
 Object_respawn_table_end			= *
 Sprite_table_buffer:				ds.b 80*8
 Sprite_table_buffer_end				= *
-Sprite_table_input:				ds.b (next_priority)*8		; Sprite table input buffer
+Sprite_table_input:				ds.b (next_priority)*priority_amount		; Sprite table input buffer
 Sprite_table_input_end				= *
 
 DMA_queue:					= *

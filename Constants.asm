@@ -574,8 +574,9 @@ VRAM_Plane_Table_Size	= $1000	; 64 cells x 32 cells x 2 bytes per cell
 ; ---------------------------------------------------------------------------
 ; misc object labels
 ; ---------------------------------------------------------------------------
-next_priority	= 64*2
-
+next_priority		= ((1+63)*2)	; first word for overall number of queues to handle
+priority_amount		= 8
+priority_queue		= priority_amount-1	; queue starts at 0
 
 ; ---------------------------------------------------------------------------
 ; Sprite render screen flags
