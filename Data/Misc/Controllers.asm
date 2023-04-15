@@ -150,12 +150,11 @@ Poll_Controllers:
 
   if HardwareSafety=1
 .handle6berror
-    if Joypad_StateSupport<>1	; this replicates Classic Heroes' pseudo-6pad mode
+    if Joypad_StateSupport<>1	; this creates a pseudo-6pad mode
 ;	move.b	#-1,(a2)+		; set CtrlXState to 6pad, increment to next controller
 	addq.w	#1,a2			; don't set CtrlXState, increment to next controller
     endif
   endif
-
 .handle3button
 ; copy final input data
 	move.b	d3,(a1)			; request no.7 (just in case)
