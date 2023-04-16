@@ -23,9 +23,10 @@ Init_SpriteTable:
 
 Render_Sprites:
 		moveq	#80-1,d7
+	;	moveq	#64-1,d7
 		moveq	#0,d6
-		lea	(Sprite_table_input).w,a5
 		lea	(Camera_X_pos_copy).w,a3
+		lea	(Sprite_table_input).w,a5
 		lea	(Sprite_table_buffer).w,a6
 		tst.b	(Level_started_flag).w
 		beq.s	Render_Sprites_LevelLoop
@@ -33,75 +34,98 @@ Render_Sprites:
 		bsr.w	Render_Rings
 
 Render_Sprites_LevelLoop:
-		tst.w	(a5)								; does this level have any objects?
-		beq.w	Render_Sprites_NextLevel			; if not, check the next one
+		tst.w	(a5)					; does this level have any objects?
+		beq.w	Render_Sprites_NextLevel		; if not, check the next one
+.fromnextlevel
 		lea	2(a5),a4
 
 Render_Sprites_ObjLoop:
-		movea.w	(a4)+,a0 							; a0=object
-		tst.l	address(a0)							; is this object slot occupied?
+		movea.w	(a4)+,a0 				; a0=object
+		tst.l	address(a0)				; is this object slot occupied?
 		beq.w	Render_Sprites_NextObj			; if not, check next one
-		andi.b	#$7F,render_flags(a0)				; clear on-screen flag
+		andi.b	#$7F,render_flags(a0)			; clear on-screen flag
 		move.b	render_flags(a0),d6
 		move.w	x_pos(a0),d0
 		move.w	y_pos(a0),d1
-		btst	#6,d6								; is the multi-draw flag set?
-		bne.w	Render_Sprites_MultiDraw			; if it is, branch
-		btst	#2,d6								; is this to be positioned by screen coordinates?
-		beq.s	Render_Sprites_ScreenSpaceObj	; if not, branch
+		btst	#6,d6					; is the multi-draw flag set?
+		bne.w	Render_Sprites_MultiDraw		; if it is, branch
+		btst	#2,d6					; is this to be positioned by screen coordinates?
+		beq.s	Render_Sprites_ScreenSpaceObj		; if not, branch
 		moveq	#0,d2
 		move.b	width_pixels(a0),d2
 		sub.w	(a3),d0
 		move.w	d0,d3
-		add.w	d2,d3							; is the object right edge to the left of the screen?
+		add.w	d2,d3					; is the object right edge to the left of the screen?
 		bmi.s	Render_Sprites_NextObj			; if it is, branch
 		move.w	d0,d3
 		sub.w	d2,d3
-		cmpi.w	#320,d3							; is the object left edge to the right of the screen?
+		cmpi.w	#320,d3					; is the object left edge to the right of the screen?
 		bge.s	Render_Sprites_NextObj			; if it is, branch
-		addi.w	#128,d0
 		sub.w	4(a3),d1
 		move.b	height_pixels(a0),d2
 		add.w	d2,d1
+	;	bmi.s	Render_Sprites_NextObj			; if it is, branch
 		and.w	(Screen_Y_wrap_value).w,d1
 		move.w	d2,d3
 		add.w	d2,d2
 		addi.w	#224,d2
 		cmp.w	d2,d1
 		bhs.s	Render_Sprites_NextObj			; if the object is below the screen
-		addi.w	#128,d1
 		sub.w	d3,d1
+		move.w	#128,d4
+		add.w	d4,d0		; adjust positions for VDP
+		add.w	d4,d1
 
 Render_Sprites_ScreenSpaceObj:
-		ori.b	#$80,render_flags(a0)				; set on-screen flag
-		tst.w	d7
-		bmi.s	Render_Sprites_NextObj
+		ori.b	#$80,render_flags(a0)			; set on-screen flag
+		tst.w	d7					; have we exceeded the amount of sprites it can handle?
+		bmi.s	Render_Sprites_CantAnymore		; if so, branch
 		movea.l	mappings(a0),a1
 		moveq	#0,d4
-		btst	#5,d6								; is the static mappings flag set?
-		bne.s	+								; if it is, branch
+		btst	#5,d6					; is the static mappings flag set?
+		bne.s	+					; if it is, branch
 		move.b	mapping_frame(a0),d4
 		add.w	d4,d4
 		adda.w	(a1,d4.w),a1
 		move.w	(a1)+,d4
-		subq.w	#1,d4							; get number of pieces
-		bmi.s	Render_Sprites_NextObj			; if there are 0 pieces, branch
+		subq.w	#1,d4					; get number of pieces
+		bmi.s	Render_Sprites_NextObj	; if there are 0 pieces, branch
 +		move.w	art_tile(a0),d5
-		bsr.w	sub_1AF6C
+		bsr.w	SpriteRenderProcess
 
+Render_Sprites_MultiDraw_TestIfDone:
+	;	tst.w	d7					; have we exceeded the amount of sprites it can handle?
+	;	bmi.s	Render_Sprites_CantAnymore		; if so, branch
+Render_Sprites_CantAnymore:
 Render_Sprites_NextObj:
-		subq.w	#2,(a5)							; decrement object count
+		subq.w	#2,(a5)					; decrement object count
 		bne.w	Render_Sprites_ObjLoop			; if there are objects left, repeat
 
 Render_Sprites_NextLevel:
-		lea	next_priority(a5),a5							; load next priority level
-		cmpa.w	#Sprite_table_input_end,a5
-		blo.w	Render_Sprites_LevelLoop
-		move.w	d7,d6
-		bmi.s	+
+		lea	next_priority(a5),a5			; load next priority level
+		cmpa.w	#Sprite_table_input_end,a5		; have you reached the end of rendering?
+		blo.w	Render_Sprites_LevelLoop		; if not, branch
+	;	bra.s	Render_Sprites_CantAnymore.skipendchk
+	;	bhs.s	Render_Sprites_CantAnymore.skipendchk	; if so, branch
+	;	tst.w	(a5)					; does this level have any objects?
+	;	beq.s	Render_Sprites_NextLevel		; if not, check the next one
+	;	bra.w	Render_Sprites_LevelLoop.fromnextlevel
+; end routine when you've rendered all the available sprites
+; the original game continued chugging along until all the objects counts were cleared
+; however, it makes more sense to just clear them, considering they can't even render...
+; at least, that would be the case if it wasn't for render_flags
+;Render_Sprites_CantAnymore:
+	;	moveq	#0,d0
+	;	move.w	#Sprite_table_input_end,d1	; may or may not be faster
+-	;	move.w	d0,(a5)					; clear remaining object count
+	;	lea	next_priority(a5),a5			; load next priority level
+	;	cmpa.w	d1,a5					; have you reached the end of rendering?
+	;	blo.s	-					; if not, branch
+.skipendchk
+		move.w	d7,d6					; copy d7 to d6 for Sprites_drawn
+		bmi.s	+					; if it's full, branch
 		moveq	#0,d0
-
--		move.w	d0,(a6)
+-		move.w	d0,(a6)					; to remaining sprites, set y_pos offscreen
 		addq.w	#8,a6
 		dbf	d7,-
 +		subi.w	#80-1,d6
@@ -111,13 +135,13 @@ Render_Sprites_NextLevel:
 ; ---------------------------------------------------------------------------
 
 Render_Sprites_MultiDraw:
-		btst	#2,d6								; is this to be positioned by screen coordinates?
-		bne.s	loc_1AEA2						; if it is, branch
 		moveq	#0,d2
-
-		; check if object is within X bounds
+		move.w	#128,d4		; also clears high byte for later
+		btst	#2,d6						; is this to be positioned by screen coordinates?
+		bne.s	Render_Sprites_MultiDraw_CameraSpaceObj		; if not, branch
+	; check if object is within X bounds
 		move.b	width_pixels(a0),d2
-		subi.w	#128,d0
+		sub.w	d4,d0
 		move.w	d0,d3
 		add.w	d2,d3
 		bmi.s	Render_Sprites_NextObj
@@ -125,11 +149,9 @@ Render_Sprites_MultiDraw:
 		sub.w	d2,d3
 		cmpi.w	#320,d3
 		bge.s	Render_Sprites_NextObj
-		addi.w	#128,d0
-
-		; check if object is within Y bounds
+	; check if object is within Y bounds
 		move.b	height_pixels(a0),d2
-		subi.w	#128,d1
+		sub.w	d4,d1
 		move.w	d1,d3
 		add.w	d2,d3
 		bmi.s	Render_Sprites_NextObj
@@ -137,100 +159,121 @@ Render_Sprites_MultiDraw:
 		sub.w	d2,d3
 		cmpi.w	#224,d3
 		bge.s	Render_Sprites_NextObj
-		addi.w	#128,d1
-		bra.s	loc_1AEE4
+		bra.s	Render_Sprites_MultiDraw_CameraSpaceObj.screencont
 ; ---------------------------------------------------------------------------
 
-loc_1AEA2:
-		moveq	#0,d2
+Render_Sprites_MultiDraw_CameraSpaceObj:
+	;	moveq	#0,d2
+	; check if object is within X bounds
 		move.b	width_pixels(a0),d2
 		sub.w	(a3),d0
 		move.w	d0,d3
 		add.w	d2,d3
-		bmi.s	Render_Sprites_NextObj
+		bmi.w	Render_Sprites_NextObj
 		move.w	d0,d3
 		sub.w	d2,d3
 		cmpi.w	#320,d3
 		bge.w	Render_Sprites_NextObj
-		addi.w	#128,d0
-		sub.w	4(a3),d1
+	; check if object is within Y bounds
 		move.b	height_pixels(a0),d2
+		sub.w	4(a3),d1
 		add.w	d2,d1
+	;	bmi.s	Render_Sprites_NextObj
 		and.w	(Screen_Y_wrap_value).w,d1
 		move.w	d2,d3
 		add.w	d2,d2
 		addi.w	#224,d2
 		cmp.w	d2,d1
 		bhs.w	Render_Sprites_NextObj
-		addi.w	#128,d1
 		sub.w	d3,d1
-
-loc_1AEE4:
-		ori.b	#$80,render_flags(a0)				; set on-screen flag
-		tst.w	d7
-		bmi.w	Render_Sprites_NextObj
+.screencont
+		add.w	d4,d0		; adjust positions for VDP
+		add.w	d4,d1
+		ori.b	#$80,render_flags(a0)			; set on-screen flag
+		tst.w	d7					; have we exceeded the amount of sprites it can handle?
+		bmi.w	Render_Sprites_CantAnymore		; if so, branch
 		move.w	art_tile(a0),d5
 		movea.l	mappings(a0),a2
-		moveq	#0,d4
+	;	btst	#5,d6					; is the static mappings flag set?
+	;	beq.s	+					; if not, branch
+	;	moveq	#0,d4
+	;	move.w	d6,d3
+	;	bsr.w	SpriteRenderProcess
+	;	bra.s	.staticont
++
 		move.b	mapping_frame(a0),d4
-		beq.s	loc_1AF1C
+		beq.s	+
 		add.w	d4,d4
 		lea	(a2),a1
 		adda.w	(a1,d4.w),a1
 		move.w	(a1)+,d4
 		subq.w	#1,d4
-		bmi.s	loc_1AF1C
+		bmi.s	+
 		move.w	d6,d3
-		bsr.w	sub_1B070
-		move.w	d3,d6
+		bsr.w	SpriteRenderProcess_Excessive
+.staticont
 		tst.w	d7
-		bmi.w	Render_Sprites_NextObj
-
-loc_1AF1C:
+		bmi.w	Render_Sprites_CantAnymore
+		move.w	d3,d6
++
 		move.w	mainspr_childsprites(a0),d3
 		subq.w	#1,d3
 		bcs.w	Render_Sprites_NextObj
 		lea	sub2_x_pos(a0),a0
-
-loc_1AF2A:
+.multiloop
 		move.w	(a0)+,d0
 		move.w	(a0)+,d1
-		btst	#2,d6								; is this to be positioned by screen coordinates?
-		beq.s	loc_1AF46						; if not, branch
+		moveq	#128-8,d4	; also clears high byte for later
+		btst	#2,d6				; is this to be positioned by screen coordinates?
+		beq.s	+				; if not, branch
 		sub.w	(a3),d0
-		addi.w	#128,d0
 		sub.w	4(a3),d1
-		addi.w	#128,d1
+		addq.w	#8,d4		;
+		add.w	d4,d0		; adjust positions for VDP
+		add.w	d4,d1		; the camera coord versions are pre-adjusted, then?
 		and.w	(Screen_Y_wrap_value).w,d1
-
-loc_1AF46:
++
 		addq.w	#1,a0
-		moveq	#0,d4
+	;	btst	#5,d6					; is the static mappings flag set?
+	;	beq.s	+					; if not, branch
+	;	moveq	#0,d4
+	;	move.w	d6,-(sp)
+	;	bsr.w	SpriteRenderProcess
+	;	bra.s	.staticont2
++
 		move.b	(a0)+,d4
 		add.w	d4,d4
 		lea	(a2),a1
 		adda.w	(a1,d4.w),a1
 		move.w	(a1)+,d4
 		subq.w	#1,d4
-		bmi.s	loc_1AF62
+		bmi.s	+
 		move.w	d6,-(sp)
-		bsr.w	sub_1B070
+		bsr.w	SpriteRenderProcess_Excessive
+.staticont2
 		move.w	(sp)+,d6
-
-loc_1AF62:
++
 		tst.w	d7
-		dbmi	d3,loc_1AF2A
-		bra.w	Render_Sprites_NextObj
+		dbmi	d3,.multiloop	; if so, continue
+		bra.w	Render_Sprites_MultiDraw_TestIfDone
 
 ; =============== S U B R O U T I N E =======================================
+; fix odd tearing bug in x_pos
+; only keep the 9 bits the VDP actually reads, branch if not 0. Make 1 if it's 0
+; excessive rendering checks well beyond this point
+sprprocess_xbugfix macro
+	andi.w	#$1FF,d2
+	bne.s	+
+	addq.w	#1,d2
++
+	endm
 
-sub_1AF6C:
+SpriteRenderProcess:
 		lsr.b	#1,d6
-		bcs.s	loc_1AF9E
+		bcs.s	.oxny_checky
 		lsr.b	#1,d6
-		bcs.w	loc_1B038
-
-loc_1AF76:
+		bcs.w	.nxoy_loop
+.nxny_loop
 		move.b	(a1)+,d2
 		ext.w	d2
 		add.w	d1,d2
@@ -242,22 +285,17 @@ loc_1AF76:
 		move.w	d2,(a6)+
 		move.w	(a1)+,d2
 		add.w	d0,d2
-		andi.w	#$1FF,d2
-		bne.s	loc_1AF94
-		addq.w	#1,d2
-
-loc_1AF94:
+		sprprocess_xbugfix
 		move.w	d2,(a6)+
 		subq.w	#1,d7
-		dbmi	d4,loc_1AF76
+		dbmi	d4,.nxny_loop
 		rts
 ; ---------------------------------------------------------------------------
 
-loc_1AF9E:
+.oxny_checky
 		lsr.b	#1,d6
-		bcs.s	loc_1AFE8
-
-loc_1AFA2:
+		bcs.s	.oxoy_loop
+.oxny_loop
 		move.b	(a1)+,d2
 		ext.w	d2
 		add.w	d1,d2
@@ -271,33 +309,28 @@ loc_1AFA2:
 		move.w	d2,(a6)+
 		move.w	(a1)+,d2
 		neg.w	d2
-		move.b	byte_1AFD8(pc,d6.w),d6
+		move.b	.xdata(pc,d6.w),d6
 		sub.w	d6,d2
 		add.w	d0,d2
-		andi.w	#$1FF,d2
-		bne.s	loc_1AFCE
-		addq.w	#1,d2
-
-loc_1AFCE:
+		sprprocess_xbugfix
 		move.w	d2,(a6)+
 		subq.w	#1,d7
-		dbmi	d4,loc_1AFA2
+		dbmi	d4,.oxny_loop
 		rts
 ; ---------------------------------------------------------------------------
-
-byte_1AFD8:
-		dc.b 8, 8, 8, 8
+.xdata
+		dc.b  8,  8,  8,  8
 		dc.b 16, 16, 16, 16
 		dc.b 24, 24, 24, 24
 		dc.b 32, 32, 32, 32
 ; ---------------------------------------------------------------------------
 
-loc_1AFE8:
+.oxoy_loop
 		move.b	(a1)+,d2
 		ext.w	d2
 		neg.w	d2
 		move.b	(a1),d6
-		move.b	byte_1B028(pc,d6.w),d6
+		move.b	.ydata(pc,d6.w),d6
 		sub.w	d6,d2
 		add.w	d1,d2
 		move.w	d2,(a6)+
@@ -310,34 +343,29 @@ loc_1AFE8:
 		move.w	d2,(a6)+
 		move.w	(a1)+,d2
 		neg.w	d2
-		move.b	byte_1AFD8(pc,d6.w),d6
+		move.b	.xdata(pc,d6.w),d6
 		sub.w	d6,d2
 		add.w	d0,d2
-		andi.w	#$1FF,d2
-		bne.s	loc_1B01E
-		addq.w	#1,d2
-
-loc_1B01E:
+		sprprocess_xbugfix
 		move.w	d2,(a6)+
 		subq.w	#1,d7
-		dbmi	d4,loc_1AFE8
+		dbmi	d4,.oxoy_loop
 		rts
 ; ---------------------------------------------------------------------------
-
-byte_1B028:
+.ydata
 		dc.b 8, 16, 24, 32
 		dc.b 8, 16, 24, 32
 		dc.b 8, 16, 24, 32
 		dc.b 8, 16, 24, 32
 ; ---------------------------------------------------------------------------
 
-loc_1B038:
+.nxoy_loop
 		move.b	(a1)+,d2
 		ext.w	d2
 		neg.w	d2
 		move.b	(a1)+,d6
 		move.b	d6,2(a6)
-		move.b	byte_1B028(pc,d6.w),d6
+		move.b	.ydata(pc,d6.w),d6
 		sub.w	d6,d2
 		add.w	d1,d2
 		move.w	d2,(a6)+
@@ -348,32 +376,27 @@ loc_1B038:
 		move.w	d2,(a6)+
 		move.w	(a1)+,d2
 		add.w	d0,d2
-		andi.w	#$1FF,d2
-		bne.s	loc_1B066
-		addq.w	#1,d2
-
-loc_1B066:
+		sprprocess_xbugfix
 		move.w	d2,(a6)+
 		subq.w	#1,d7
-		dbmi	d4,loc_1B038
+		dbmi	d4,.nxoy_loop
 		rts
 
 ; =============== S U B R O U T I N E =======================================
 
-sub_1B070:
+SpriteRenderProcess_Excessive:
 		lsr.b	#1,d6
-		bcs.s	loc_1B0C2
+		bcs.s	.oxny_checky
 		lsr.b	#1,d6
-		bcs.w	loc_1B19C
-
-loc_1B07A:
+		bcs.w	.nxoy_loop
+.nxny_loop
 		move.b	(a1)+,d2
 		ext.w	d2
 		add.w	d1,d2
-		cmpi.w	#$60,d2
-		bls.s		loc_1B0BA
-		cmpi.w	#$160,d2
-		bhs.s	loc_1B0BA
+		cmpi.w	#128-32,d2
+		bls.s	.nxny_yfail
+		cmpi.w	#224+128,d2
+		bhs.s	.nxny_yfail
 		move.w	d2,(a6)+
 		move.b	(a1)+,(a6)+
 		addq.w	#1,a6
@@ -382,40 +405,35 @@ loc_1B07A:
 		move.w	d2,(a6)+
 		move.w	(a1)+,d2
 		add.w	d0,d2
-		cmpi.w	#$60,d2
-		bls.s		loc_1B0B2
-		cmpi.w	#$1C0,d2
-		bhs.s	loc_1B0B2
+		cmpi.w	#128-32,d2
+		bls.s	.nxny_xfail
+		cmpi.w	#320+128,d2
+		bhs.s	.nxny_xfail
 		move.w	d2,(a6)+
 		subq.w	#1,d7
-		dbmi	d4,loc_1B07A
+		dbmi	d4,.nxny_loop
 		rts
-; ---------------------------------------------------------------------------
-
-loc_1B0B2:
+.nxny_xfail
 		subq.w	#6,a6
-		dbf	d4,loc_1B07A
+		dbf	d4,.nxny_loop
 		rts
-; ---------------------------------------------------------------------------
-
-loc_1B0BA:
+.nxny_yfail
 		addq.w	#5,a1
-		dbf	d4,loc_1B07A
+		dbf	d4,.nxny_loop
 		rts
 ; ---------------------------------------------------------------------------
 
-loc_1B0C2:
+.oxny_checky
 		lsr.b	#1,d6
-		bcs.s	loc_1B12C
-
-loc_1B0C6:
+		bcs.s	.oxoy_loop
+.oxny_loop
 		move.b	(a1)+,d2
 		ext.w	d2
 		add.w	d1,d2
 		cmpi.w	#$60,d2
-		bls.s	loc_1B114
+		bls.s	.oxny_yfail
 		cmpi.w	#$160,d2
-		bhs.s	loc_1B114
+		bhs.s	.oxny_yfail
 		move.w	d2,(a6)+
 		move.b	(a1)+,d6
 		move.b	d6,(a6)+
@@ -426,50 +444,45 @@ loc_1B0C6:
 		move.w	d2,(a6)+
 		move.w	(a1)+,d2
 		neg.w	d2
-		move.b	byte_1B11C(pc,d6.w),d6
+		move.b	.xdata(pc,d6.w),d6
 		sub.w	d6,d2
 		add.w	d0,d2
 		cmpi.w	#$60,d2
-		bls.s	loc_1B10C
+		bls.s	.oxny_xfail
 		cmpi.w	#$1C0,d2
-		bhs.s	loc_1B10C
+		bhs.s	.oxny_xfail
 		move.w	d2,(a6)+
 		subq.w	#1,d7
-		dbmi	d4,loc_1B0C6
+		dbmi	d4,.oxny_loop
 		rts
-; ---------------------------------------------------------------------------
-
-loc_1B10C:
+.oxny_xfail
 		subq.w	#6,a6
-		dbf	d4,loc_1B0C6
+		dbf	d4,.oxny_loop
 		rts
-; ---------------------------------------------------------------------------
-
-loc_1B114:
+.oxny_yfail
 		addq.w	#5,a1
-		dbf	d4,loc_1B0C6
+		dbf	d4,.oxny_loop
 		rts
 ; ---------------------------------------------------------------------------
-
-byte_1B11C:
-		dc.b 8, 8, 8, 8
+.xdata
+		dc.b  8,  8,  8,  8
 		dc.b 16, 16, 16, 16
 		dc.b 24, 24, 24, 24
 		dc.b 32, 32, 32, 32
 ; ---------------------------------------------------------------------------
 
-loc_1B12C:
+.oxoy_loop
 		move.b	(a1)+,d2
 		ext.w	d2
 		neg.w	d2
 		move.b	(a1),d6
-		move.b	byte_1B18C(pc,d6.w),d6
+		move.b	.ydata(pc,d6.w),d6
 		sub.w	d6,d2
 		add.w	d1,d2
 		cmpi.w	#$60,d2
-		bls.s		loc_1B184
+		bls.s	.oxoy_yfail
 		cmpi.w	#$160,d2
-		bhs.s	loc_1B184
+		bhs.s	.oxoy_yfail
 		move.w	d2,(a6)+
 		move.b	(a1)+,d6
 		move.b	d6,(a6)+
@@ -480,51 +493,46 @@ loc_1B12C:
 		move.w	d2,(a6)+
 		move.w	(a1)+,d2
 		neg.w	d2
-		move.b	byte_1B11C(pc,d6.w),d6
+		move.b	.xdata(pc,d6.w),d6
 		sub.w	d6,d2
 		add.w	d0,d2
 		cmpi.w	#$60,d2
-		bls.s		loc_1B17C
+		bls.s	.oxoy_xfail
 		cmpi.w	#$1C0,d2
-		bhs.s	loc_1B17C
+		bhs.s	.oxoy_xfail
 		move.w	d2,(a6)+
 		subq.w	#1,d7
-		dbmi	d4,loc_1B12C
+		dbmi	d4,.oxoy_loop
 		rts
-; ---------------------------------------------------------------------------
-
-loc_1B17C:
+.oxoy_xfail
 		subq.w	#6,a6
-		dbf	d4,loc_1B12C
+		dbf	d4,.oxoy_loop
 		rts
-; ---------------------------------------------------------------------------
-
-loc_1B184:
+.oxoy_yfail
 		addq.w	#5,a1
-		dbf	d4,loc_1B12C
+		dbf	d4,.oxoy_loop
 		rts
 ; ---------------------------------------------------------------------------
-
-byte_1B18C:
-		dc.b 8, 16, 24, 32
-		dc.b 8, 16, 24, 32
-		dc.b 8, 16, 24, 32
-		dc.b 8, 16, 24, 32
+.ydata
+		dc.b  8, 16, 24, 32
+		dc.b  8, 16, 24, 32
+		dc.b  8, 16, 24, 32
+		dc.b  8, 16, 24, 32
 ; ---------------------------------------------------------------------------
 
-loc_1B19C:
+.nxoy_loop
 		move.b	(a1)+,d2
 		ext.w	d2
 		neg.w	d2
 		move.b	(a1)+,d6
 		move.b	d6,2(a6)
-		move.b	byte_1B18C(pc,d6.w),d6
+		move.b	.ydata(pc,d6.w),d6
 		sub.w	d6,d2
 		add.w	d1,d2
 		cmpi.w	#$60,d2
-		bls.s		loc_1B1EC
+		bls.s	.nxoy_yfail
 		cmpi.w	#$160,d2
-		bhs.s	loc_1B1EC
+		bhs.s	.nxoy_yfail
 		move.w	d2,(a6)+
 		addq.w	#2,a6
 		move.w	(a1)+,d2
@@ -534,22 +542,18 @@ loc_1B19C:
 		move.w	(a1)+,d2
 		add.w	d0,d2
 		cmpi.w	#$60,d2
-		bls.s		loc_1B1E4
+		bls.s	.nxoy_xfail
 		cmpi.w	#$1C0,d2
-		bhs.s	loc_1B1E4
+		bhs.s	.nxoy_xfail
 		move.w	d2,(a6)+
 		subq.w	#1,d7
-		dbmi	d4,loc_1B19C
+		dbmi	d4,.nxoy_loop
 		rts
-; ---------------------------------------------------------------------------
-
-loc_1B1E4:
+.nxoy_xfail
 		subq.w	#6,a6
-		dbf	d4,loc_1B19C
+		dbf	d4,.nxoy_loop
 		rts
-; ---------------------------------------------------------------------------
-
-loc_1B1EC:
+.nxoy_yfail
 		addq.w	#4,a1
-		dbf	d4,loc_1B19C
+		dbf	d4,.nxoy_loop
 		rts
