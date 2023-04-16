@@ -474,7 +474,7 @@ EndOfHeader:
 ; MegaCD Driver
 ; ---------------------------------------------------------------------------
 
-	include "Sound/MSU/MSU.asm"
+	include "Sound/MSU/MSU_Main.asm"
 
 ; ---------------------------------------------------------------
 ; Error handling module

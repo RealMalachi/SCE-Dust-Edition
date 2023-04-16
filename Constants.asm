@@ -53,6 +53,34 @@ SRAM_access_flag =			$A130F1
 Security_addr =				$A14000
 
 ; ---------------------------------------------------------------------------
+; MCD addresses
+; ---------------------------------------------------------------------------
+CdBootRom =				$400000   ; Main-CPU boot ROM
+CdBootRom_SEGA =			$400100
+CdPrgRam =				$420000   ; PRG-RAM window
+CdWordRam =				$600000   ; WORD-RAM window
+
+CdSubCtrl =				$A12000   ; Sub-CPU reset/busreq, etc.
+CdMemCtrl =				$A12002   ; Mega CD memory mode, bank, etc.
+; Main-CPU to Sub-CPU ports
+CdCommMain1 =				$A12010
+CdCommMain2 =				$A12012
+CdCommMain3 =				$A12014
+CdCommMain4 =				$A12016
+CdCommMain5 =				$A12018
+CdCommMain6 =				$A1201A
+CdCommMain7 =				$A1201C
+CdCommMain8 =				$A1201E
+; Sub-CPU to Main-CPU ports
+CdCommSub1 =				$A12020
+CdCommSub2 =				$A12022
+CdCommSub3 =				$A12024
+CdCommSub4 =				$A12026
+CdCommSub5 =				$A12028
+CdCommSub6 =				$A1202A
+CdCommSub7 =				$A1202C
+CdCommSub8 =				$A1202E
+; ---------------------------------------------------------------------------
 ; Level Misc
 ; ---------------------------------------------------------------------------
 
