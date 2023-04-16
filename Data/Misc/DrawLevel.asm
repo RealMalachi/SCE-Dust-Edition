@@ -1001,6 +1001,7 @@ LoadLevelLoadBlock:
 		andi.l	#$FFFFFF,d0
 		movea.l	d0,a1
 		moveq	#0,d2
+	;	bra.w	Queue_Kos_Module
 		bsr.w	Queue_Kos_Module
 		move.l	#VInt_Fade,(V_int_routine).w
 .waitplc
@@ -1038,13 +1039,13 @@ LoadLevelLoadBlock2:
 		lea	(Chunk_table).l,a1
 		movem.l	d0/d2/d4-d7/a5,-(sp)
 		jsr	(KosPlusDec).w	; load chunks
-		bsr.s	Load_Level
 		movem.l	(sp)+,d0/d2/d4-d7/a5
 		jsr	(LoadPLC_KosM).w
 		movea.l	(sp)+,a2
 		moveq	#0,d0
 		move.b	(a2),d0
-		jmp	(LoadPalette).w
+		jsr	(LoadPalette).w
+	;	bra.s	Load_Level
 
 ; =============== S U B R O U T I N E =======================================
 

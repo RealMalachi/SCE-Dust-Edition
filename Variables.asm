@@ -173,7 +173,7 @@ Ring_consumption_count:				ds.w 1			; The number of rings being consumed current
 Ring_consumption_list:				ds.w $3F		; The remaining part of the ring consumption table
 Ring_consumption_table_end			= *
 
-Plane_buffer:					ds.b $480		; Used by level drawing routines
+Plane_buffer:					ds.w $240		; Used by level drawing routines
 ; ---------------------------------------------------------------------------
 
 v_snddriver_ram:				ds.b $39A		; Start of RAM for the sound driver data

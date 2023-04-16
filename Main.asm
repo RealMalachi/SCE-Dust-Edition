@@ -70,7 +70,11 @@ Domestic_Name:	dc.b "SONIC THE               HEDGEHOG                "
 Overseas_Name:	dc.b "SONIC THE               HEDGEHOG                "
 Serial_Number:	dc.b "GM MK-0000 -00"
 Checksum:	dc.w 0
-Input:		dc.b "J               "
+Input:		dc.b "J"	; https://plutiedev.com/rom-header#devices
+	if Joypad_6BSupport=1
+		dc.b "6"
+	endif
+	dcb.b $1A0-*, ' '
 RomStartLoc:	dc.l StartOfROM
 RomEndLoc:	dc.l EndOfROM-1
 RamStartLoc:	dc.l (RAM_start&$FFFFFF)

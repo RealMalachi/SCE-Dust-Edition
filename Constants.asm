@@ -48,6 +48,7 @@ HW_Expansion_SCtrl =			$A1001F
 ; ---------------------------------------------------------------------------
 ; SRAM addresses
 ; ---------------------------------------------------------------------------
+SRAM_Size =				$200000
 
 SRAM_access_flag =			$A130F1
 Security_addr =				$A14000
@@ -323,7 +324,7 @@ spin_dash_flag		ds.b 1 ; byte ; bit 1 indicates spin dash, bit 7 indicates force
 restart_timer		; word
 spin_dash_counter	ds.w 1 ; word
 jumping			ds.b 1 ; byte
-	ds.b 1	; $41 ; unknown, likely unused
+mapping_frame_copy	ds.b 1 ; byte, $41 ; used for DPLC routines
 interact		ds.w 1 ; word ; RAM address of the last object the character stood on
 default_y_radius	ds.b 1 ; byte ; default value of y_radius
 default_x_radius	ds.b 1 ; byte ; default value of x_radius

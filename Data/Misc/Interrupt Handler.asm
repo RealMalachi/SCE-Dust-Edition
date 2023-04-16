@@ -259,7 +259,7 @@ VInt_Level_NoNegativeFlash:
 
 VInt_Level_Cont:
 		dma68kToVDP H_scroll_buffer,vram_hscroll,(224<<2),VRAM
-		dma68kToVDP Sprite_table_buffer,vram_sprites,$280,VRAM
+		dma68kToVDP Sprite_table_buffer,vram_sprites,80*8,VRAM
 		jsr	(Process_DMA_Queue).w
 		jsr	(VInt_DrawLevel).w
 		startZ80
@@ -285,14 +285,12 @@ VInt_Level_Cont:
 ; =============== S U B R O U T I N E =======================================
 
 Do_Updates:
-		jsr	(UpdateHUD).w
-		clr.w	(Lag_frame_count).w
-		tst.w	(Demo_timer).w ; is there time left on the demo?
+		tst.w	(Demo_timer).w		; is there time left on the demo?
 		beq.s	.return
-		subq.w	#1,(Demo_timer).w ; subtract 1 from time left
-
+		subq.w	#1,(Demo_timer).w	; subtract 1 from time left
 .return
-		rts
+		clr.w	(Lag_frame_count).w
+		jmp	(UpdateHUD).w
 
 ; ---------------------------------------------------------------------------
 ; Horizontal interrupt
