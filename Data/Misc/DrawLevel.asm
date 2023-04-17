@@ -1001,16 +1001,16 @@ LoadLevelLoadBlock:
 		andi.l	#$FFFFFF,d0
 		movea.l	d0,a1
 		moveq	#0,d2
-	;	bra.w	Queue_Kos_Module
-		bsr.w	Queue_Kos_Module
-		move.l	#VInt_Fade,(V_int_routine).w
-.waitplc
-		jsr	(Process_Kos_Queue).w
-		jsr	(Wait_VSync).w
-		jsr	(Process_Kos_Module_Queue).w
-		tst.w	(Kos_modules_left).w
-		bne.s	.waitplc
-		rts
+		bra.w	Queue_Kos_Module
+	;	bsr.w	Queue_Kos_Module
+	;	move.l	#VInt_Fade,(V_int_routine).w
+;.waitplc
+	;	jsr	(Process_Kos_Queue).w
+	;	jsr	(Wait_VSync).w
+	;	jsr	(Process_Kos_Module_Queue).w
+	;	tst.w	(Kos_modules_left).w
+	;	bne.s	.waitplc
+	;	rts
 
 ; =============== S U B R O U T I N E =======================================
 

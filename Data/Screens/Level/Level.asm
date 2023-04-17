@@ -70,13 +70,6 @@ Level_Screen:
 		move.w	d1,d0
 		jsr	(LoadPalette_Immediate).w
 
-		; load HUD art
-		move.w	(Player_mode).w,d0
-		add.w	d0,d0
-		add.w	d0,d0
-		lea	PLC_PlayerIndex(pc),a5
-		movea.l	(a5,d0.w),a5
-		jsr	(LoadPLC_Raw_KosM).w									; load hud and ring art
 		jsr	(CheckLevelForWater).l
 		clearRAM Water_palette_line_2, Normal_palette
 		tst.b	(Water_flag).w
@@ -99,40 +92,57 @@ Level_Screen:
 		move.w	(Current_zone_and_act).w,d0
 		ror.b	#2,d0
 		lsr.w	#6,d0
-		lea	(LevelMusic_Playlist).l,a1									; load music playlist
+		lea	(LevelMusic_Playlist).l,a1				; load music playlist
 		move.b	(a1,d0.w),d0
 		move.w	d0,(Current_music).w
 		music								; play music
 		move.l	#Obj_TitleCard,(Dynamic_object_RAM+(object_size*5)).w	; load title card object
 		move.l	#VInt_Fade,(V_int_routine).w
-.wait
-		jsr	(Process_Kos_Queue).w
+
+-		jsr	(Process_Kos_Queue).w
 		jsr	(Wait_VSync).w
 		jsr	(Process_Sprites).w
 		jsr	(Render_Sprites).w
 		jsr	(Process_Kos_Module_Queue).w
-		tst.w	(Dynamic_object_RAM+(object_size*5)+objoff_48).w		; has title card sequence finished?
-		bne.s	.wait												; if not, branch
-		tst.w	(Kos_modules_left).w									; are there any items in the pattern load cue?
-		bne.s	.wait												; if yes, branch
-		disableInts
-		jsr	(HUD_DrawInitial).w
-		enableInts
+		tst.w	(Kos_modules_left).w					; are there any items in the pattern load cue?
+		bne.s	-							; if yes, branch
+		move.w	#cAqua,(Normal_palette).w	; mark palette
+; for better use of loading time
+		move.w	(Player_mode).w,d0
+		add.w	d0,d0
+		add.w	d0,d0
+		lea	PLC_PlayerIndex(pc),a5
+		movea.l	(a5,d0.w),a5
+		jsr	(LoadPLC_Raw_KosM).w		; load hud and ring art
+		jsr	(LoadLevelLoadBlock).w
+
+-		jsr	(Process_Kos_Queue).w
+		jsr	(Wait_VSync).w
+		jsr	(Process_Sprites).w
+		jsr	(Render_Sprites).w
+		jsr	(Process_Kos_Module_Queue).w
+		tst.w	(Kos_modules_left).w					; are there any items in the pattern load cue?
+		bne.s	-							; if yes, branch
+		move.w	#cGreen,(Normal_palette).w	; mark palette
+		tst.w	(Dynamic_object_RAM+(object_size*5)+objoff_48).w	; has title card sequence finished?
+		bne.s	-							; if not, branch
+
+	;	move.w	#cRed,(Normal_palette).w	; mark palette
 		jsr	(LoadLevelPointer).w
 		jsr	(Get_LevelSizeStart).l
 		jsr	(DeformBgLayer).w
-		jsr	(LoadLevelLoadBlock).w
 		jsr	(LoadLevelLoadBlock2).w
-		disableInts
-		jsr	(LevelSetup).l
-		enableInts
 		jsr	(Load_Solids).w
+	;	disableInts
+		jsr	(LevelSetup).l
+		jsr	(HUD_DrawInitial).w
+	;	enableInts
 		jsr	(Handle_Onscreen_Water_Height).l
 		moveq	#0,d0
-		move.w	d0,(Ctrl1).w
-		move.w	d0,(Ctrl2).w
+		move.l	d0,(Ctrl1).w
+		move.l	d0,(Ctrl2).w
 		move.l	d0,(Ctrl1_Player).w
-		move.w	d0,(Ctrl2_Player).w
+		move.l	d0,(Ctrl2_Player).w
 		move.b	d0,(HUD_RAM.status).w
 		tst.b	(Last_star_post_hit).w							; are you starting from a starpost?
 		bne.s	.starpost									; if yes, branch
@@ -177,6 +187,8 @@ Level_Screen:
 		andi.b	#$7F,(Last_star_post_hit).w
 		bclr	#GameModeFlag_TitleCard,(Game_mode).w		; subtract $80 from mode to end pre-level stuff
 		move.l	#VInt_Level,(V_int_routine).w
+
+		move.w	(Target_palette).w,(Normal_palette).w	;
 .loop
 		jsr	(Pause_Game).w
 		jsr	(Process_Kos_Queue).w
