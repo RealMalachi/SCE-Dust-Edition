@@ -2097,12 +2097,14 @@ DropDash_LandProcess:
 +
 ; check x_vel. If moving opposite of your facing direction, branch
 		move.w	x_vel(a0),d2
+		beq.s	++
 		btst	#Status_Facing,status(a0)	; are we facing left?
 		beq.s	+		; if not, branch
 		neg.w	d2		; reverse if facing left
 +
 		tst.w	d2
 		bmi.s	.slopecheck	; if moving backwards, branch
++
 		mvabs.w	ground_vel(a0),d2
 		asr.w	#2,d2		; divide ground_vel by 4 (>>2)
 		bra.s	.captofinal
