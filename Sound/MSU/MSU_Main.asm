@@ -23,23 +23,26 @@ _MCD_PlayTrack_Loop	= $1A			; #1 = decimal number of track (1-99). #2 = offset i
 
 Init_MSU_Driver:	
 	moveq	#1,d0
-	cmpi.l	#"SEGA",(CdBootRom_SEGA)	; check for 'SEGA' in CD bios
-	bne.s	.end				; if not there, end routine (not bit 5 test, eh?)
-;	lea     (CdSubCtrl),a2
-	move.b	#2,(CdSubCtrl+1)
-	btst	#1,(CdSubCtrl+1)
-	move.b	#0,(CdMemCtrl+1)
-	lea	MSU_MD(pc),a0
+	btst	#5,(HW_Version)			; check if the MegaCD is attached
+	beq.s	+				; if it is, continue
+	cmpi.l	#"SEGA",(CdBootRom_SEGA)	; check for 'SEGA' in CD bios (for flashcarts like the Everdrive, which can't set bit 5)
+	bne.s	.end				; if not, end routine
++
+	lea     (CdSubCtrl+1),a2
+	move.b	#2,(CdSubCtrl+1)-(CdSubCtrl+1)(a2)	;
+	btst	#1,(CdSubCtrl+1)-(CdSubCtrl+1)(a2)	;
+	move.b	#0,(CdMemCtrl+1)-(CdSubCtrl+1)(a2)	;
+	lea	MSU_MD(pc),a0		; load compressed program into PRG-RAM
 	movea.l	#CdPrgRam,a1
-;	movea.l	a2,-(sp)
+	move.l	a2,-(sp)
 	jsr	(KosPlusDec).w
-;	movea.l	(sp)+,a2
-	move.b	#0,($A1200F)		; TODO
-	move.b	#1,(CdSubCtrl+1)
--	move.b	(CdSubCtrl+1),d0
-	andi.b	#1,d0
+	move.l	(sp)+,a2
+	move.b	#0,($A1200F)-(CdSubCtrl+1)(a2)		; TODO
+	move.b	#1,(CdSubCtrl+1)-(CdSubCtrl+1)(a2)
+-	move.b	(CdSubCtrl+1)-(CdSubCtrl+1)(a2),d0
+	andi.b	#1,d0			; wait until the MCD responds (this can take a while)
 	beq.s	-
-	move.b	#0,(CdMemCtrl)
+	move.b	#0,(CdMemCtrl)-(CdSubCtrl+1)(a2)
 	moveq	#0,d0
 .end
 	rts
