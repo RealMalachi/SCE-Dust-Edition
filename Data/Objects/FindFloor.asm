@@ -8,7 +8,7 @@ SetCollAddrPlane_macro macro reg
 	cmp.b	#$C,reg
     endif
 	beq.s	.notprime
-	addq.l	#Secondary_collision_addr-Primary_collision_addr,(Collision_addr).w
+	move.l	(Secondary_collision_addr).w,(Collision_addr).w
 .notprime
 	else
 	move.l	#Primary_collision,(Collision_addr).w
@@ -32,7 +32,7 @@ SetCollAddrPlane_lrb_macro macro reg
 	cmp.b	#$D,reg
     endif
 	beq.s	.notprime
-	addq.l	#Secondary_collision_addr-Primary_collision_addr,(Collision_addr).w
+	move.l	(Secondary_collision_addr).w,(Collision_addr).w
 .notprime
 	else
 	move.l	#Primary_collision,(Collision_addr).w
@@ -125,7 +125,7 @@ loc_EC88:
 		beq.s	locret_ED12
 		bpl.s	loc_ED14
 		cmpi.w	#-$E,d1
-		blt.s		locret_ED12
+		blt.s	locret_ED12
 		add.w	d1,y_pos(a0)
 
 locret_ED12:
@@ -142,7 +142,7 @@ loc_ED14:
 loc_ED22:
 		addq.b	#4,d0
 		cmpi.b	#$E,d0
-		blo.s		loc_ED2E
+		blo.s	loc_ED2E
 		move.b	#$E,d0
 
 loc_ED2E:
@@ -229,7 +229,7 @@ Player_WalkVertR:
 		beq.s	locret_EE00
 		bpl.s	loc_EE22
 		cmpi.w	#-$E,d1
-		blt.s		locret_EE00
+		blt.s	locret_EE00
 		add.w	d1,x_pos(a0)
 
 locret_EE00:
@@ -301,7 +301,7 @@ Player_WalkCeiling:
 		beq.s	locret_EECE
 		bpl.s	loc_EED0
 		cmpi.w	#-$E,d1
-		blt.s		locret_EECE
+		blt.s	locret_EECE
 		sub.w	d1,y_pos(a0)
 
 locret_EECE:
@@ -373,7 +373,7 @@ Player_WalkVertL:
 		beq.s	locret_EF7C
 		bpl.s	loc_EF7E
 		cmpi.w	#-$E,d1
-		blt.s		locret_EF7C
+		blt.s	locret_EF7C
 		sub.w	d1,x_pos(a0)
 
 locret_EF7C:
@@ -420,18 +420,19 @@ GetFloorPosition:
 		and.w	(Layout_row_index_mask).w,d0
 		move.w	8(a1,d0.w),d0
 		andi.w	#$7FFF,d0
-		adda.w	d0,a1
+	;	adda.w	d0,a1
 		move.w	d3,d1
 		lsr.w	#3,d1
 		move.w	d1,d4
 		lsr.w	#4,d1
+		add.w	d0,d1
 		adda.w	d1,a1
 		moveq	#-1,d1
 		clr.w	d1
 		move.b	(a1),d1
 	;	add.w	d1,d1
 	;	move.w	ChunkAddrArray(pc,d1.w),d1
-		lsl.w	#7,d1	; (chunk number)*$80 ; $80 is how much data a chunk takes up
+		lsl.w	#7,d1	; (chunk number)*$80 ; $80 bytes per chunk
 	if Chunk_table&$FFFF<>0
 		add.w	#Chunk_table&$FFFF,d1	; add address to chunk RAM
 	endif
@@ -453,57 +454,75 @@ GetFloorPosition:
 
 ; =============== S U B R O U T I N E =======================================
 
-FindFloor:
-		bsr.w	GetFloorPosition
-		move.w	(a1),d0
-		move.w	d0,d4
-		andi.w	#$3FF,d0
-		beq.s	loc_F274
-		btst	d5,d4
-		bne.s	loc_F282
-
-loc_F274:
-		add.w	a3,d2
-		bsr.w	FindFloor2
-		sub.w	a3,d2
-		addi.w	#$10,d1
-		rts
-; ---------------------------------------------------------------------------
-
-loc_F282:
+FindCollision_macro macro failbra,wallflag
 		movea.l	(Collision_addr).w,a2
 		add.w	d0,d0
 		move.b	(a2,d0.w),d0
+		beq.ATTRIBUTE	failbra
 		andi.w	#$FF,d0
-		beq.s	loc_F274
 		lea	(AngleArray).l,a2
-		move.b	(a2,d0.w),(a4)
-		lsl.w	#4,d0
+		move.b	(a2,d0.w),d6	; copy collision angle into d6
+	if ("wallflag"="")
 		move.w	d3,d1
 		btst	#$A,d4
-		beq.s	loc_F2AA
+		beq.s	+
 		not.w	d1
-		neg.b	(a4)
-
-loc_F2AA:
-		btst	#$B,d4
-		beq.s	loc_F2BA
-		addi.b	#$40,(a4)
-		neg.b	(a4)
-		subi.b	#$40,(a4)
-
-loc_F2BA:
+		neg.b	d6
++
 		andi.w	#$F,d1
+		lsl.w	#4,d0
 		add.w	d0,d1
+
+		btst	#$B,d4
+		beq.s	+
+		moveq	#$40,d0
+		add.b	d0,d6
+		neg.b	d6
+		sub.b	d0,d6
++
 		lea	(HeightMaps).l,a2
-		move.b	(a2,d1.w),d0
+	else
+		move.w	d2,d1
+		btst	#$B,d4
+		beq.s	+
+		not.w	d1
+		add.b	#$40,d6		; TODO: Try to copy the $40 to a register
+		neg.b	d6
+		sub.b	#$40,d6
++
+		andi.w	#$F,d1
+		lsl.w	#4,d0
+		add.w	d0,d1
+
+		btst	#$A,d4
+		beq.s	+
+		neg.b	d6
++
+		lea	(HeightMapsRot).l,a2
+	endif
+		move.b	d6,(a4)		; copy final angle into (a4)
+		move.b	(a2,d1.w),d0	; use HeightMaps to get final collision data
 		ext.w	d0
 		eor.w	d6,d4
+	if ("wallflag"="")
 		btst	#$B,d4
-		beq.s	loc_F2D6
+	else
+		btst	#$A,d4
+	endif
+		beq.s	+
 		neg.w	d0
-
-loc_F2D6:
++
+	endm
+FindFloor:
+		bsr.w	GetFloorPosition
+		move.w	(a1),d4
+		move.w	d4,d0
+		andi.w	#$3FF,d0
+		beq.s	loc_F274	; edgecase for block 0, hardcoded to have no collision
+		btst	d5,d4
+		beq.s	loc_F274
+; loc_F282:
+	FindCollision_macro loc_F274
 		tst.w	d0
 		beq.s	loc_F274
 		bmi.s	loc_F2F2
@@ -517,12 +536,17 @@ loc_F2D6:
 		rts
 ; ---------------------------------------------------------------------------
 
+loc_F274:
+		add.w	a3,d2
+		bsr.w	FindFloor2
+		sub.w	a3,d2
+		addi.w	#$10,d1
+		rts
 loc_F2F2:
 		move.w	d2,d1
 		andi.w	#$F,d1
 		add.w	d1,d0
-		bpl.w	loc_F274
-
+		bpl.s	loc_F274
 loc_F2FE:
 		sub.w	a3,d2
 		bsr.w	FindFloor2
@@ -534,55 +558,14 @@ loc_F2FE:
 
 FindFloor2:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d0
-		move.w	d0,d4
+		move.w	(a1),d4
+		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F31C
 		btst	d5,d4
-		bne.s	loc_F32A
-
-loc_F31C:
-		move.w	#$F,d1
-		move.w	d2,d0
-		andi.w	#$F,d0
-		sub.w	d0,d1
-		rts
-; ---------------------------------------------------------------------------
-
-loc_F32A:
-		movea.l	(Collision_addr).w,a2
-		add.w	d0,d0
-		move.b	(a2,d0.w),d0
-		andi.w	#$FF,d0
 		beq.s	loc_F31C
-		lea	(AngleArray).l,a2
-		move.b	(a2,d0.w),(a4)
-		lsl.w	#4,d0
-		move.w	d3,d1
-		btst	#$A,d4
-		beq.s	loc_F352
-		not.w	d1
-		neg.b	(a4)
-
-loc_F352:
-		btst	#$B,d4
-		beq.s	loc_F362
-		addi.b	#$40,(a4)
-		neg.b	(a4)
-		subi.b	#$40,(a4)
-
-loc_F362:
-		andi.w	#$F,d1
-		add.w	d0,d1
-		lea	(HeightMaps).l,a2
-		move.b	(a2,d1.w),d0
-		ext.w	d0
-		eor.w	d6,d4
-		btst	#$B,d4
-		beq.s	loc_F37E
-		neg.w	d0
-
-loc_F37E:
+; loc_F32A:
+	FindCollision_macro loc_F31C
 		tst.w	d0
 		beq.s	loc_F31C
 		bmi.s	loc_F394
@@ -594,63 +577,31 @@ loc_F37E:
 		rts
 ; ---------------------------------------------------------------------------
 
+loc_F31C:
+		move.w	#$F,d1
+		move.w	d2,d0
+		andi.w	#$F,d0
+		sub.w	d0,d1
+		rts
 loc_F394:
 		move.w	d2,d1
 		andi.w	#$F,d1
 		add.w	d1,d0
-		bpl.w	loc_F31C
+		bpl.s	loc_F31C
 		not.w	d1
 		rts
 ; ---------------------------------------------------------------------------
-
-loc_F3A4:
+; loc_F3A4:
+FindFloor_Ring:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d0
-		move.w	d0,d4
+		move.w	(a1),d4
+		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F3EE
 		btst	d5,d4
-		bne.s	loc_F3F4
-
-loc_F3EE:
-		move.w	#$10,d1
-		rts
-; ---------------------------------------------------------------------------
-
-loc_F3F4:
-		movea.l	(Collision_addr).w,a2
-		add.w	d0,d0
-		move.b	(a2,d0.w),d0
-		andi.w	#$FF,d0
 		beq.s	loc_F3EE
-		lea	(AngleArray).l,a2
-		move.b	(a2,d0.w),(a4)
-		lsl.w	#4,d0
-		move.w	d3,d1
-		btst	#$A,d4
-		beq.s	loc_F41C
-		not.w	d1
-		neg.b	(a4)
-
-loc_F41C:
-		btst	#$B,d4
-		beq.s	loc_F42C
-		addi.b	#$40,(a4)
-		neg.b	(a4)
-		subi.b	#$40,(a4)
-
-loc_F42C:
-		andi.w	#$F,d1
-		add.w	d0,d1
-		lea	(HeightMaps).l,a2
-		move.b	(a2,d1.w),d0
-		ext.w	d0
-		eor.w	d6,d4
-		btst	#$B,d4
-		beq.s	loc_F448
-		neg.w	d0
-
-loc_F448:
+; loc_F3F4:
+	FindCollision_macro loc_F3EE
 		tst.w	d0
 		beq.s	loc_F3EE
 		bmi.s	loc_F464
@@ -664,11 +615,15 @@ loc_F448:
 		rts
 ; ---------------------------------------------------------------------------
 
+loc_F3EE:
+		move.w	#$10,d1
+		rts
+
 loc_F464:
 		move.w	d2,d1
 		andi.w	#$F,d1
 		add.w	d1,d0
-		bpl.w	loc_F3EE
+		bpl.s	loc_F3EE
 
 loc_F470:
 		sub.w	a3,d2
@@ -681,55 +636,14 @@ loc_F470:
 
 FindWall:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d0
-		move.w	d0,d4
+		move.w	(a1),d4
+		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F4EC
 		btst	d5,d4
-		bne.s	loc_F4FA
-
-loc_F4EC:
-		add.w	a3,d3
-		bsr.w	FindWall2
-		sub.w	a3,d3
-		addi.w	#$10,d1
-		rts
-; ---------------------------------------------------------------------------
-
-loc_F4FA:
-		movea.l	(Collision_addr).w,a2
-		add.w	d0,d0
-		move.b	(a2,d0.w),d0
-		andi.w	#$FF,d0
 		beq.s	loc_F4EC
-		lea	(AngleArray).l,a2
-		move.b	(a2,d0.w),(a4)
-		lsl.w	#4,d0
-		move.w	d2,d1
-		btst	#$B,d4
-		beq.s	loc_F52A
-		not.w	d1
-		addi.b	#$40,(a4)
-		neg.b	(a4)
-		subi.b	#$40,(a4)
-
-loc_F52A:
-		btst	#$A,d4
-		beq.s	loc_F532
-		neg.b	(a4)
-
-loc_F532:
-		andi.w	#$F,d1
-		add.w	d0,d1
-		lea	(HeightMapsRot).l,a2
-		move.b	(a2,d1.w),d0
-		ext.w	d0
-		eor.w	d6,d4
-		btst	#$A,d4
-		beq.s	loc_F54E
-		neg.w	d0
-
-loc_F54E:
+; loc_F4FA:
+	FindCollision_macro loc_F4EC,0
 		tst.w	d0
 		beq.s	loc_F4EC
 		bmi.s	loc_F56A
@@ -743,11 +657,18 @@ loc_F54E:
 		rts
 ; ---------------------------------------------------------------------------
 
+loc_F4EC:
+		add.w	a3,d3
+		bsr.w	FindWall2
+		sub.w	a3,d3
+		addi.w	#$10,d1
+		rts
+
 loc_F56A:
 		move.w	d3,d1
 		andi.w	#$F,d1
 		add.w	d1,d0
-		bpl.w	loc_F4EC
+		bpl.s	loc_F4EC
 
 loc_F576:
 		sub.w	a3,d3
@@ -760,55 +681,14 @@ loc_F576:
 
 FindWall2:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d0
-		move.w	d0,d4
+		move.w	(a1),d4
+		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F594
 		btst	d5,d4
-		bne.s	loc_F5A2
-
-loc_F594:
-		move.w	#$F,d1
-		move.w	d3,d0
-		andi.w	#$F,d0
-		sub.w	d0,d1
-		rts
-; ---------------------------------------------------------------------------
-
-loc_F5A2:
-		movea.l	(Collision_addr).w,a2
-		add.w	d0,d0
-		move.b	(a2,d0.w),d0
-		andi.w	#$FF,d0
 		beq.s	loc_F594
-		lea	(AngleArray).l,a2
-		move.b	(a2,d0.w),(a4)
-		lsl.w	#4,d0
-		move.w	d2,d1
-		btst	#$B,d4
-		beq.s	loc_F5D2
-		not.w	d1
-		addi.b	#$40,(a4)
-		neg.b	(a4)
-		subi.b	#$40,(a4)
-
-loc_F5D2:
-		btst	#$A,d4
-		beq.s	loc_F5DA
-		neg.b	(a4)
-
-loc_F5DA:
-		andi.w	#$F,d1
-		add.w	d0,d1
-		lea	(HeightMapsRot).l,a2
-		move.b	(a2,d1.w),d0
-		ext.w	d0
-		eor.w	d6,d4
-		btst	#$A,d4
-		beq.s	loc_F5F6
-		neg.w	d0
-
-loc_F5F6:
+; loc_F5A2:
+	FindCollision_macro loc_F594,0
 		tst.w	d0
 		beq.s	loc_F594
 		bmi.s	loc_F60C
@@ -820,11 +700,17 @@ loc_F5F6:
 		rts
 ; ---------------------------------------------------------------------------
 
+loc_F594:
+		move.w	#$F,d1
+		move.w	d3,d0
+		andi.w	#$F,d0
+		sub.w	d0,d1
+		rts
 loc_F60C:
 		move.w	d3,d1
 		andi.w	#$F,d1
 		add.w	d1,d0
-		bpl.w	loc_F594
+		bpl.s	loc_F594
 		not.w	d1
 		rts
 
@@ -1112,7 +998,7 @@ RingCheckFloorDist:
 		movea.w	#$10,a3
 		moveq	#0,d6
 		moveq	#$C,d5
-		bra.w	loc_F3A4
+		bra.w	FindFloor_Ring
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -1399,7 +1285,7 @@ sub_FCA0:
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		moveq	#$C,d5
-		bra.w	loc_F3A4
+		bra.w	FindFloor_Ring
 
 ; =============== S U B R O U T I N E =======================================
 
