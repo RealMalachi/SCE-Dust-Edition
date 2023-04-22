@@ -418,14 +418,15 @@ Load_LevelResults:
 		bne.s	+
 		btst	#Status_InAir,status(a1)
 		bne.s	+
-		cmpi.b	#id_SonicDeath,routine(a1)
-		bcc.s	+
-		bsr.s	Set_PlayerEndingPose
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	+
+	;	cmpi.b	#id_SonicDeath,routine(a1)
+	;	bcc.s	+
 		clr.b	(TitleCard_end_flag).w
 		bsr.w	Create_New_Sprite
 		bne.s	+
 		move.l	#Obj_LevelResults,address(a1)
-+		rts
+	;	bra.s	Set_PlayerEndingPose
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -436,10 +437,10 @@ Set_PlayerEndingPose:
 		bclr	#Status_Push,status(a0)
 		bclr	#Status_Underwater,status(a0)
 		bclr	#Status_Push,status(a1)
-
 Stop_Object:
 		clr.l	x_vel(a1)
 		clr.w	ground_vel(a1)
++
 		rts
 
 ; =============== S U B R O U T I N E =======================================

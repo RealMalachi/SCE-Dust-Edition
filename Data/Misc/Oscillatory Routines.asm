@@ -5,9 +5,10 @@
 ; =============== S U B R O U T I N E =======================================
 
 ChangeRingFrame:
-		cmpi.b	#id_SonicDeath,(Player_1+routine).w		; has Sonic just died?
-		bhs.s	.syncend									; if yes, branch
-
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	.syncend
+	;	cmpi.b	#id_SonicDeath,(Player_1+routine).w		; has Sonic just died?
+	;	bhs.s	.syncend									; if yes, branch
 ; Used for rings and giant rings
 .syncrings
 		subq.b	#1,(Rings_frame_timer).w
@@ -15,7 +16,6 @@ ChangeRingFrame:
 		move.b	#4,(Rings_frame_timer).w
 		addq.b	#1,(Rings_frame).w
 		andi.b	#7,(Rings_frame).w
-
 ; Dynamic graphics
 		moveq	#0,d0
 		move.l	#ArtUnc_Ring>>1,d1						; Load art source
@@ -25,7 +25,6 @@ ChangeRingFrame:
 		move.w	#tiles_to_bytes(ArtTile_Ring),d2			; Load art destination
 		move.w	#$80/2,d3								; Size of art (in words)	; We only need one frame
 		bsr.w	Add_To_DMA_Queue
-
 ; Used for bouncing rings
 .syncrings2
 		tst.b	(Ring_spill_anim_counter).w
@@ -38,7 +37,7 @@ ChangeRingFrame:
 		andi.w	#3,d0
 		move.b	d0,(Ring_spill_anim_frame).w
 		subq.b	#1,(Ring_spill_anim_counter).w
-
+; TODO: dynamic graphics
 .syncend
 		rts
 
@@ -84,8 +83,10 @@ Osc_Data_End
 ; Oscillate values
 
 OscillateNumDo:
-		cmpi.b	#id_SonicDeath,(Player_1+routine).w	; has Sonic just died?
-		bhs.s	OscillateNumDo_Return				; if yes, branch
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	OscillateNumDo_Return
+	;	cmpi.b	#id_SonicDeath,(Player_1+routine).w	; has Sonic just died?
+	;	bhs.s	OscillateNumDo_Return				; if yes, branch
 		lea	Osc_Data2(pc),a2
 		lea	(Oscillating_Numbers).w,a1
 		move.w	(a1)+,d3								; get oscillation direction bitfield

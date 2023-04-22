@@ -25,7 +25,7 @@ SolidObjectFull:
 		lea	(Player_2).w,a1
 		tst.b	render_flags(a1)
 		bpl.w	locret_1DCB4
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 SolidObjectFull_1P:
 		btst	d6,status(a0)
@@ -66,7 +66,7 @@ SolidObjectFull2:
 		bsr.s	SolidObjectFull2_1P
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 SolidObjectFull2_1P:
 		btst	d6,status(a0)
@@ -121,7 +121,7 @@ SolidObjectFullSloped_Spring:
 		bsr.s	SolidObjectFullSloped_Spring_1P
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 sub_1DD24:
 SolidObjectFullSloped_Spring_1P:
@@ -164,7 +164,7 @@ sub_1DD6E:
 		bsr.s	sub_1DD84
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 sub_1DD84:
 		btst	d6,status(a0)
@@ -204,7 +204,7 @@ SolidObjectFullSloped:
 		bsr.s	SolidObjectFullSloped_1P
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 sub_1DDDC:
 SolidObjectFullSloped_1P:
@@ -246,7 +246,7 @@ SolidObjectFull_Offset:
 		bsr.s	sub_1DE36
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 sub_1DE36:
 SolidObjectFull_Offset_1P:
@@ -436,8 +436,10 @@ SolidObject_cont:
 SolidObject_ChkBounds:
 		tst.b	object_control(a1)
 		bmi.w	SolidObject_TestClearPush
-		cmpi.b	#id_SonicDeath,routine(a1)
-		bhs.w	SolidObject_NoCollision
+		tst.b	(ObjectFreezeFlag).w
+		bne.w	SolidObject_NoCollision
+	;	cmpi.b	#id_SonicDeath,routine(a1)
+	;	bhs.w	SolidObject_NoCollision
 		tst.w	(Debug_placement_mode).w
 		bne.w	SolidObject_NoCollision
 		move.w	d0,d5
@@ -653,8 +655,10 @@ loc_1E1AA:
 loc_1E1CA:
 		tst.b	object_control(a1)
 		bmi.s	locret_1E1F2
-		cmpi.b	#id_SonicDeath,routine(a1)
-		bhs.s	locret_1E1F2
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	locret_1E1F2
+	;	cmpi.b	#id_SonicDeath,routine(a1)
+	;	bhs.s	locret_1E1F2
 		tst.w	(Debug_placement_mode).w
 		bne.s	locret_1E1F2
 		moveq	#0,d1
@@ -671,8 +675,10 @@ locret_1E1F2:
 loc_1E1F4:
 		tst.b	object_control(a1)
 		bmi.s	locret_1E21C
-		cmpi.b	#id_SonicDeath,routine(a1)
-		bhs.s	locret_1E21C
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	locret_1E21C
+	;	cmpi.b	#id_SonicDeath,routine(a1)
+	;	bhs.s	locret_1E21C
 		tst.w	(Debug_placement_mode).w
 		bne.s	locret_1E21C
 		moveq	#0,d1
@@ -757,7 +763,7 @@ SolidObjectTop:
 		bsr.s	SolidObjectTop_1P
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 sub_1E2BC:
 SolidObjectTop_1P:
@@ -797,7 +803,7 @@ SolidObjectTopSloped2:
 		bsr.s	SolidObjectTopSloped2_1P
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 sub_1E314:
 SolidObjectTopSloped2_1P:
@@ -837,7 +843,7 @@ SolidObjectTopSloped:
 		bsr.s	SolidObjectTopSloped_1P
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 sub_1E36C:
 SolidObjectTopSloped_1P:
@@ -877,7 +883,7 @@ sub_1E3AE:
 		bsr.s	sub_1E3C4
 		movem.l	(sp)+,d1-d4
 		lea	(Player_2).w,a1
-		addq.b	#1,d6
+		addq.b	#p2_standing_bit-p1_standing_bit,d6
 
 sub_1E3C4:
 		btst	d6,status(a0)
@@ -958,8 +964,10 @@ loc_1E45A:
 		blo.s		locret_1E4D4
 		tst.b	object_control(a1)
 		bmi.s	locret_1E4D4
-		cmpi.b	#id_SonicDeath,routine(a1)
-		bhs.s	locret_1E4D4
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	locret_1E4D4
+	;	cmpi.b	#id_SonicDeath,routine(a1)
+	;	bhs.s	locret_1E4D4
 		add.w	d0,d2
 		addq.w	#3,d2
 		move.w	d2,y_pos(a1)
@@ -1002,11 +1010,13 @@ loc_1E4D6:
 		sub.w	d0,d1
 		bhi.s	locret_1E4D4
 		cmpi.w	#-$10,d1
-		blo.s		locret_1E4D4
+		blo.s	locret_1E4D4
 		tst.b	object_control(a1)
 		bmi.s	locret_1E4D4
-		cmpi.b	#id_SonicDeath,routine(a1)
-		bhs.s	locret_1E4D4
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	locret_1E4D4
+	;	cmpi.b	#id_SonicDeath,routine(a1)
+	;	bhs.s	locret_1E4D4
 		sub.w	d1,d2
 		subq.w	#4,d2
 		move.w	d2,y_pos(a1)

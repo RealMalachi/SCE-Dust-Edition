@@ -12,10 +12,11 @@ DebugMode:
 		bne.s	.control
 		addq.b	#2,(Debug_placement_routine).w
 		move.l	mappings(a0),(Saved_mappings).w
-		cmpi.b	#id_SonicDeath,routine(a0)
-		bhs.s	.death
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	.death
+	;	cmpi.b	#id_SonicDeath,routine(a0)
+	;	bhs.s	.death
 		move.w	art_tile(a0),(Saved_art_tile).w
-
 .death
 		bset	#7,art_tile(a0)
 		move.b	#DebugMode_Speed,(Debug_camera_speed).w
@@ -46,6 +47,8 @@ DebugMode:
 		move.l	(Saved_mappings).w,mappings(a1)
 		move.w	(Saved_art_tile).w,art_tile(a1)
 		moveq	#0,d0
+		move.b	d0,(ObjectFreezeFlag).w
+		move.b	d0,(Deform_lock).w
 		move.b	d0,anim(a1)
 		move.w	d0,x_sub(a1)
 		move.w	d0,y_sub(a1)

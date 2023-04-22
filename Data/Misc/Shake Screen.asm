@@ -7,8 +7,10 @@
 ShakeScreen_Setup:
 		move.w	(Screen_shaking_offset).w,(Screen_shaking_last_offset).w
 		moveq	#0,d1
-		cmpi.b	#id_SonicDeath,(Player_1+routine).w
-		bhs.s	++
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	++
+	;	cmpi.b	#id_SonicDeath,(Player_1+routine).w
+	;	bhs.s	++
 		move.w	(Screen_shaking_flag).w,d0
 		beq.s	++
 		bmi.s	+

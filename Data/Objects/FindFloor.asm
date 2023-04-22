@@ -1274,6 +1274,7 @@ ChkFloorEdge_ReverseGravity_Part2:
 ; =============== S U B R O U T I N E =======================================
 
 sub_FCA0:
+RingCheckFloorDist_ReverseGravity:
 		move.w	x_pos(a0),d3
 		move.w	y_pos(a0),d2
 		move.b	y_radius(a0),d0

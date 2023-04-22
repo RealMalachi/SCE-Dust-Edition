@@ -5,12 +5,14 @@
 ; =============== S U B R O U T I N E =======================================
 
 Handle_Onscreen_Water_Height:
-		tst.b	(Water_flag).w							; does level have water?
-		beq.s	.return								; if not, branch
+		tst.b	(Water_flag).w				; does level have water?
+		beq.s	.return					; if not, branch
 		tst.b	(Deform_lock).w
 		bne.s	.skip
-		cmpi.b	#id_SonicDeath,(Player_1+routine).w	; is player dead?
-		bhs.s	.skip								; if yes, branch
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	.skip
+	;	cmpi.b	#id_SonicDeath,(Player_1+routine).w	; is player dead?
+	;	bhs.s	.skip					; if yes, branch
 		bsr.s	DynamicWaterHeight
 
 .skip
@@ -68,6 +70,8 @@ No_WaterResize:
 ; =============== S U B R O U T I N E =======================================
 
 CheckLevelForWater:
+		tst.b	(Current_act).w
+		beq.s	StartLevelWater
 		move.w	#$1000,d0
 		move.w	d0,(Water_level).w
 		move.w	d0,(Mean_water_level).w

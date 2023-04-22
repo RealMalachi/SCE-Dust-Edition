@@ -119,14 +119,15 @@ locret_DDCC:
 
 UpdateHUD_TimeOver:
 		clr.b	(Update_HUD_timer).w
-		lea	(Player_1).w,a0
-		cmpi.b	#id_SonicDeath,routine(a0)
-		bhs.s	.finish
-		movea.w	a0,a2
-		bsr.w	Kill_Character
-
-.finish
 		st	(Time_over_flag).w
+		lea	(Player_1).w,a0
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	.finish
+	;	cmpi.b	#id_SonicDeath,routine(a0)
+	;	bhs.s	.finish
+		movea.w	a0,a2
+		bra.w	Kill_Character
+.finish
 		rts
 ; ---------------------------------------------------------------------------
 

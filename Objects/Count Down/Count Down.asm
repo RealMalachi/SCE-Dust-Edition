@@ -211,8 +211,10 @@ AirCountdown_Countdown:
 		movea.w	parent(a0),a2		; a2=character
 		tst.w	objoff_30(a0)
 		bne.w	loc_1857C
-		cmpi.b	#id_SonicDeath,routine(a2)
-		bhs.s	locret_18464
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	locret_18464
+	;	cmpi.b	#id_SonicDeath,routine(a2)
+	;	bhs.s	locret_18464
 		btst	#Status_BublShield,status_secondary(a2)
 		bne.s	locret_18464
 		btst	#Status_Underwater,status(a2)
@@ -256,7 +258,6 @@ AirCountdown_ReduceAir:
 		subq.b	#1,air_left(a2)
 		bcc.w	loc_18592
 		move.b	#$81,object_control(a2)
-		sfx	sfx_Drown
 		move.b	#10,objoff_38(a0)
 		move.w	#1,objoff_3A(a0)
 		move.w	#120,objoff_30(a0)
@@ -271,9 +272,13 @@ AirCountdown_ReduceAir:
 		clr.l	x_vel(a0)
 		clr.w	ground_vel(a0)
 		move.b	#id_SonicDrown,routine(a0)
-		movea.w	(sp)+,a0
+		cmpa.w	#Player_1,a0
+		bne.s	+
+		st	(ObjectFreezeFlag).w
 		st	(Deform_lock).w
-		rts
++
+		movea.w	(sp)+,a0
+		sfx	sfx_Drown,1
 ; ---------------------------------------------------------------------------
 
 loc_1857C:

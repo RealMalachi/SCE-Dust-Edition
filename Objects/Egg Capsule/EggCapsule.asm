@@ -397,13 +397,15 @@ byte_86A74:
 sub_868F8:
 		subq.w	#1,$2E(a0)
 		bpl.s	locret_86930
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	locret_86930
 		lea	(Player_1).w,a1
 		btst	#7,status(a1)
 		bne.s	locret_86930
 		btst	#Status_InAir,status(a1)
 		bne.s	locret_86930
-		cmpi.b	#id_SonicDeath,routine(a1)
-		bcc.s	locret_86930
+	;	cmpi.b	#id_SonicDeath,routine(a1)
+	;	bcc.s	locret_86930
 		move.b	d0,routine(a0)
 		jsr	(Set_PlayerEndingPose).w
 		jsr	(Create_New_Sprite).w
@@ -437,9 +439,11 @@ Check_TailsEndPose:
 sub_86984:
 		subq.w	#1,$2E(a0)
 		bpl.s	locret_869C4
+		tst.b	(ObjectFreezeFlag).w
+		bne.s	locret_869C4
 		lea	(Player_1).w,a1
-		cmpi.b	#id_SonicDeath,routine(a1)
-		bhs.s	locret_869C4
+	;	cmpi.b	#id_SonicDeath,routine(a1)
+	;	bhs.s	locret_869C4
 		tst.b	render_flags(a1)
 		bpl.s	locret_869C4
 		cmpi.b	#1,character_id(a1)
