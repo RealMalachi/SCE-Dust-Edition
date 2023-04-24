@@ -256,7 +256,8 @@ y_radius		ds.b 1 ; byte ; collision height / 2
 x_radius		ds.b 1 ; byte ; collision width / 2
 anim			ds.b 1 ; byte
 next_anim	; when this isn't equal to anim the animation restarts (yes, previous and next are the same in this context)
-prev_anim		ds.b 1 ; byte ; when this isn't equal to anim the animation restarts
+prev_anim
+anim_copy		ds.b 1 ; byte ; when this isn't equal to anim the animation restarts
 mapping_frame		ds.b 1 ; byte
 anim_frame		ds.b 1 ; byte
 anim_frame_timer	ds.b 1 ; byte
@@ -300,7 +301,7 @@ respawn_addr		ds.w 1 ; word ; the address of this object's entry in the respawn 
 double_jump_property	ds.b 1 ; byte ; remaining frames of flight / 2 for Tails, gliding-related for Knuckles
 	ds.b 1	; $26 ; angle
 flip_angle		ds.b 1 ; byte ; angle about horizontal axis (360 degrees = 256)
-	ds.b 2	; $28, $29 ; unused????
+	ds.w 1	; unused for now
 	ds.b 1	; $2A ; status
 status_secondary	ds.b 1 ; byte ; see SCHG for details
 
@@ -325,7 +326,9 @@ restart_timer		; word
 spin_dash_counter	ds.w 1 ; word
 jumping			ds.b 1 ; byte
 mapping_frame_copy	ds.b 1 ; byte, $41 ; used for DPLC routines
+playeradd_parent	; word ; RAM address of the player parent object for child objects (Tails' tails)
 interact		ds.w 1 ; word ; RAM address of the last object the character stood on
+
 default_y_radius	ds.b 1 ; byte ; default value of y_radius
 default_x_radius	ds.b 1 ; byte ; default value of x_radius
 top_solid_bit		ds.b 1 ; byte ; the bit to check for top solidity (either $C or $E)

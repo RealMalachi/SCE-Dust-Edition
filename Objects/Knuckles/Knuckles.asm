@@ -2645,16 +2645,17 @@ loc_17EE4:
 ; =============== S U B R O U T I N E =======================================
 
 Knuckles_Load_PLC:
+		lea	(a0),a1
 		moveq	#0,d0
 		move.b	mapping_frame(a0),d0
 
 Knuckles_Load_PLC2:
-		cmp.b	(Player_prev_frame).w,d0
+		cmp.b	mapping_frame_copy(a1),d0
 		beq.s	locret_18162
-		move.b	d0,(Player_prev_frame).w
-		move.w	#tiles_to_bytes(ArtTile_Player_1),d4
-
-loc_18122:
+		move.b	d0,mapping_frame_copy(a1)
+		move.w	#tiles_to_bytes(ArtTile_Player_1),d4	; placed here because PLC3
+;loc_18122:
+Knuckles_Load_PLC3:
 		lea	(DPLC_Knuckles).l,a2
 		add.w	d0,d0
 		adda.w	(a2,d0.w),a2

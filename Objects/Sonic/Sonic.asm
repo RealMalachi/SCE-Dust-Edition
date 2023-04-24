@@ -2806,13 +2806,14 @@ loc_12A8A:
 ; =============== S U B R O U T I N E =======================================
 
 Sonic_Load_PLC:
+		lea	(a0),a1
 		moveq	#0,d0
 		move.b	mapping_frame(a0),d0
 
 Sonic_Load_PLC2:
-		cmp.b	(Player_prev_frame).w,d0
+		cmp.b	mapping_frame_copy(a1),d0
 		beq.s	.return
-		move.b	d0,(Player_prev_frame).w
+		move.b	d0,mapping_frame_copy(a1)
 		lea	(DPLC_Sonic).l,a2
 		add.w	d0,d0
 		adda.w	(a2,d0.w),a2
@@ -2845,10 +2846,11 @@ Sonic_Load_PLC2:
 		rts
 
 ; =============== S U B R O U T I N E =======================================
-
+; input
+; a1 = player address
 Perform_Player_DPLC:
-		tst.b	character_id(a1)
-		beq.s	Sonic_Load_PLC2
-		cmpi.b	#1,character_id(a1)
+		move.b	character_id(a1),d1
+		beq.s	Sonic_Load_PLC2		; 0 = Sonic
+		subq.b	#1,d1			; 1 = Tails
 		beq.w	Tails_Load_PLC2
-		bra.w	Knuckles_Load_PLC2
+		bra.w	Knuckles_Load_PLC2	; 2+ = Knuckles

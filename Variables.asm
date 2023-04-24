@@ -4,11 +4,13 @@
 
 ; RAM variables - General
 	phase	ramaddr($FFFF0000)	; Pretend we're in the RAM
-RAM_start:					= *
-Chunk_table:					ds.b $8000		; Chunk (128x128) definitions, $80 bytes per definition
-Chunk_table_end					= *
+RAM_start:				= *
+Chunk_table:				ds.b $8000	; Chunk (128x128) definitions, $80 bytes per definition
+Chunk_table_end				= *
 
 	if CompBlocks=1
+; engine supports $400 max uncompressed
+; compressed is variable, but will usually be $300
 Block_table:				ds.w	$300*4
 Block_table_end:
 	endif
@@ -26,10 +28,10 @@ Level_layout_end:
 	endif
 
 	if CompCollision=1
-Collision_table:		ds.b $600
+Collision_table:			ds.b $300*2
 Collision_table_end:
-Primary_collision:		= Collision_table
-Secondary_collision:		= Primary_collision+1
+Primary_collision:			= Collision_table
+Secondary_collision:			= Primary_collision+1
 	endif
 ; ---------------------------------------------------------------------------
 
@@ -57,9 +59,13 @@ v_GameOver_Over	=	v_Breathing_bubbles_P2
 ;	if ((Object_RAM_end-Object_RAM)/object_size)/10 <> 11	; TODO: figure out how to 
 ;	fatal "Object RAM isn't divisible by 10!!! Fix this immediately!"
 ;	endif
-
 ObjectRamMarker			ds.b 1	; a fast failsafe to end dynamic object checking routines dynamically, set during game init
 ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects
+
+; used by DPLC routines to detect whether a DMA transfer is required
+Player_prev_frame			= Player_1+mapping_frame_copy
+Player_prev_frame_P2			= Player_1+mapping_frame_copy
+Player_prev_frame_P2_tail		= v_Tails_tails+mapping_frame_copy
 ; ---------------------------------------------------------------------------
 
 Kos_decomp_buffer:				ds.w $800		; Each module in a KosM archive is decompressed here and then DMAed to VRAM
@@ -126,9 +132,9 @@ Pos_table_byte_P2:				ds.b 1
 Distance_from_top:				ds.w 1			; The vertical scroll manager scrolls the screen until the player's distance from the top of the screen is equal to this (or between this and this + $40 when in the air). $60 by default
 Distance_from_top_P2:				ds.w 1
 Camera_max_Y_pos_changing:			ds.b 1			; Set when the maximum camera Y pos is undergoing a change
-					ds.b 1			; even
 Fast_V_scroll_flag:				ds.b 1			; If this is set vertical scroll when the player is on the ground and has a speed of less than $800 is capped at 24 pixels per frame instead of 6
 Scroll_lock:					ds.b 1			; If this is set scrolling routines aren't called
+	evenram
 v_screenposx:					= *
 Camera_X_pos:					ds.l 1
 v_screenposy:					= *
@@ -164,6 +170,7 @@ Draw_delayed_rowcount:				ds.w 1			; number of rows for screen redrawing. Screen
 Events_bg:					ds.b $18		; various flags used by background events
 Boss_events:					ds.b $10
 Camera_RAM_end					= *
+; ---------------------------------------------------------------------------
 
 Ring_start_addr_ROM:				ds.l 1			; Address in the ring layout of the first ring whose X position is >= camera X position - 8
 Ring_end_addr_ROM:				ds.l 1			; Address in the ring layout of the first ring whose X position is >= camera X position + 328
@@ -176,14 +183,18 @@ Ring_consumption_table_end			= *
 Plane_buffer:					ds.w $240		; Used by level drawing routines
 ; ---------------------------------------------------------------------------
 
-v_snddriver_ram:				ds.b $39A		; Start of RAM for the sound driver data
+v_snddriver_ram:				ds.b $399	; Start of RAM for the sound driver data
 v_snddriver_ram_end:
-
+	evenram
+; sound data moreso related to game code then driver code
+Current_music:					ds.w 1		; music id to play back when a jingle ends
+	evenram
+; ---------------------------------------------------------------------------
 v_gamemode:					= *
 Game_mode:					ds.b 1
-V_int_flag:					ds.b 1	; If 0, game hasn't reached Vsync, lag. If 1, waiting for Vsync. If -1, Vsync has occurred
+V_int_flag:					ds.b 1		; If 0, game hasn't reached Vsync, lag. If 1, waiting for Vsync. If -1, Vsync has occurred
 V_int_routine:					= *
-v_vbla_routine:					ds.l 1	; address to routine that V-int will run if not lagging
+v_vbla_routine:					ds.l 1		; address to routine that V-int will run if not lagging
 ; ---------------------------------------------------------------------------
 ; joypad control
 Ctrl1:			; longword
@@ -222,7 +233,7 @@ Ctrl2State:		ds.b 1		; ditto
 	else
 ; uses of CtrlXState should give undefined errors
 	endif
-
+	evenram
 ; backwards compatibility...ish
 Joypad:			= Ctrl1_Hd_ABC
 Ctrl_1:			= Ctrl1_Hd_ABC
@@ -253,9 +264,9 @@ Ctrl_2_logical:			= Ctrl2_Player_Hd_ABC	; both held and pressed
 Ctrl_2_held_logical:		= Ctrl2_Player_Hd_ABC
 Ctrl_2_pressed_logical:		= Ctrl2_Player_Pr_ABC
 ; ---------------------------------------------------------------------------
-
+; VDP
 v_vdp_buffer1:					= *
-VDP_reg_1_command:				ds.w 1			; AND the lower byte by $BF and write to VDP control port to disable display, OR by $40 to enable
+VDP_reg_1_command:				ds.w 1		; AND the lower byte by $BF and write to VDP control port to disable display, OR by $40 to enable
 Demo_timer:					= *
 v_demolength:					ds.w 1			; The time left for a demo to start/run
 V_scroll_value:					= *			; Both foreground and background
@@ -270,6 +281,7 @@ v_hbla_hreg:					= *
 H_int_counter_command:				ds.b 1			; Contains a command to write to VDP register $0A (line interrupt counter)
 v_hbla_line:					= *
 H_int_counter:					ds.b 1			; Just the counter part of the command
+
 v_random:					= *
 RNG_seed:					ds.l 1			; Used by the random number generator
 v_pfade_start:					= *
@@ -320,10 +332,8 @@ Collision_addr:					ds.l 1			; Points to the primary or secondary collision data
 Primary_collision_addr:				ds.l 1
 Secondary_collision_addr:			ds.l 1
 	endif
-Player_prev_frame:				ds.b 1
-Player_prev_frame_P2:				ds.b 1			; used by DPLC routines to detect whether a DMA transfer is required
-Player_prev_frame_P2_tail:			ds.b 1			; used by DPLC routines to detect whether a DMA transfer is required
 Reverse_gravity_flag:				ds.b 1
+	evenram
 Primary_Angle:					ds.b 1
 Secondary_Angle:				ds.b 1
 Deform_lock:					ds.b 1
@@ -335,7 +345,7 @@ Screen_event_routine:				ds.b 1
 Screen_event_flag:				ds.b 1
 Background_event_routine:			ds.b 1
 Background_event_flag:				ds.b 1
-					ds.b 1		; even
+	evenram
 Debug_placement_mode:				= *			; Both routine and type (word)
 Debug_placement_routine:			ds.b 1
 Debug_placement_type:				ds.b 1			; 0 = normal gameplay, 1 = normal object placement, 2 = frame cycling
@@ -378,7 +388,7 @@ Tails_CPU_star_post_flag:			ds.b 1			; copy of Last_star_post_hit, sets Tails' s
 _unkFAAC:					ds.b 1
 Gliding_collision_flags:			ds.b 1
 Disable_wall_grab:				ds.b 1			; if set, disables Knuckles wall grab
-
+	evenram
 Lag_frame_count_end				= *
 ; ---------------------------------------------------------------------------
 
@@ -400,7 +410,6 @@ Next_extra_life_score:				ds.l 1
 Graphics_flags:					ds.b 1			; Bit 7 set = English system, bit 6 set = PAL system
 Last_star_post_hit:				= *
 Last_star_pole_hit:				ds.b 1
-Current_music:					ds.w 1
 Palette_fade_timer:				ds.w 1			; The palette gets faded in until this timer expires
 SegaCD_Mode:					ds.b 1
 Respawn_table_keep:				ds.b 1			; If set, respawn table is not reset during level load
@@ -430,6 +439,8 @@ Level_data_addr_RAM:				= *
 .AnimateTiles:					ds.l 1
 .AniPLC:					ds.l 1
 Level_data_addr_RAM_end				= *
+	evenram
+; ---------------------------------------------------------------------------
 
 Kos_decomp_queue_count:				ds.w 1			; The number of pieces of data on the queue. Sign bit set indicates a decompression is in progress
 Kos_decomp_stored_registers:			ds.w 20			; Allows decompression to be spread over multiple frames
@@ -446,6 +457,7 @@ Kos_module_queue:				ds.b 6*PLCKosM_Count	; 6 bytes per entry, first longword is
 Kos_module_source:				= Kos_module_queue	; The compressed data location for the first module in the queue
 Kos_module_destination:				= Kos_module_queue+4	; The VRAM destination for the first module in the queue
 Kos_module_queue_end				= *
+; ---------------------------------------------------------------------------
 
 v_pal_water_dup:				= *
 Target_water_palette:				= *			; Used by palette fading routines
@@ -514,15 +526,14 @@ Timer_frame:					= *
 Timer_centisecond:				ds.b 1			; The second gets incremented when this reaches 60
 v_score:					= *
 Score:						ds.l 1
+DecimalScoreRAM:				ds.l 1
+DecimalScoreRAM2:				ds.l 1
 
 HUD_RAM:					= *
 .Xpos:						ds.w 1
 .Ypos:						ds.w 1
 .status:					ds.b 1
-					ds.b 1			; even
-
-DecimalScoreRAM:				ds.l 1
-DecimalScoreRAM2:				ds.l 1
+	evenram
 
 Saved_zone_and_act:				ds.w 1
 Saved_apparent_zone_and_act:			ds.w 1
@@ -541,7 +552,7 @@ Saved_dynamic_resize:				ds.l 1
 Saved_water_full_screen_flag:			ds.b 1
 Saved_status_secondary:				ds.b 1
 Saved_last_star_post_hit:			ds.b 1
-					ds.b 1			; even
+	evenram
 
 Oscillating_variables:				= *
 Oscillating_Numbers:				= *
@@ -556,8 +567,9 @@ Ring_spill_anim_counter:			ds.b 1
 Ring_spill_anim_frame:				ds.b 1
 Ring_spill_anim_accum:				ds.w 1
 Oscillating_variables_end			= *
+	evenram
 
-System_stack_size				ds.b $100		; ~$100 bytes ; this is the top of the stack, it grows downwards
+System_stack_size				ds.l 64			; ~$100 bytes ; this is the top of the stack, it grows downwards
 System_stack:					= *
 Checksum_string:				ds.l 1			; set to 'INIT' once the checksum routine has run
 V_int_jump:					ds.w 1			; contains an instruction to jump to the V-int handler

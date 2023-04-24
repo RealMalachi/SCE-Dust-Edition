@@ -70,11 +70,17 @@ even macro
 
 ; define the even pseudo-instruction again
 ;evensimple macro
-;	if *&1
-;	dc.b 0
+;	if (*)&1
+;	dc.b 1
 ;	endif
 ;    endm
 
+; define the even pseudo-instruction for RAM
+evenram macro
+	if (*)&1
+	ds.b 1
+	endif
+    endm
 ; ---------------------------------------------------------------------------
 ; define a trace macro
 ; lets you easily check what address a location in this disassembly assembles to

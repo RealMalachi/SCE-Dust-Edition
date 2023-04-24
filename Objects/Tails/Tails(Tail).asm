@@ -1,3 +1,5 @@
+playerchild_anim_change	= air_left	; byte, if not equal to player anim, change anim
+playerchild_renderflag	= jumping	; byte, if 1 don't render (usually relying on player to render for it)
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -13,7 +15,7 @@ Obj_Tails_Tail:
 
 Obj_Tails_Tail_Main:
 		; Here, several SSTs are inheritied from the parent, normally Tails
-		movea.w	$30(a0),a2	; Is Parent in S2
+		movea.w	playeradd_parent(a0),a2
 		move.b	angle(a2),angle(a0)
 		move.b	status(a2),status(a0)
 		move.w	x_pos(a2),x_pos(a0)
@@ -38,9 +40,9 @@ Obj_Tails_Tail_Main:
 		moveq	#4,d0
 +
 .skipedgecases
-		cmp.b	objoff_34(a0),d0	; Has the input parent anim changed since last check?
-		beq.s	+			; If not, branch and skip setting a matching Tails' Tails anim
-		move.b	d0,objoff_34(a0)	; Store d0 for the above comparision
+		cmp.b	playerchild_anim_change(a0),d0	; Has the input parent anim changed since last check?
+		beq.s	+				; If not, branch and skip setting a matching Tails' Tails anim
+		move.b	d0,playerchild_anim_change(a0)	; Store d0 for the above comparision
 		move.b	Obj_Tails_Tail_AniSelection(pc,d0.w),anim(a0)	; Load anim relative to parent's
 +
 		lea	(AniTails_Tail).l,a1
@@ -51,8 +53,11 @@ Obj_Tails_Tail_Main:
 		beq.s	+			; If so, skip the gravity flip
 		eori.b	#2,render_flags(a0)	; Reverse the vertical mirror render_flag bit (On if Off beforehand and vice versa)
 +
+		tst.b	playerchild_renderflag(a0)
+		bne.s	+
+		jsr	(Draw_Sprite).w		; main tails object renders it to fix layering bugs
++
 		bra.w	Tails_Tail_Load_PLC
-	;	jmp	(Draw_Sprite).w		; main tails object renders it to fix layering bugs
 ; ---------------------------------------------------------------------------
 ; animation master script table for the tails
 ; chooses which animation script to run depending on what Tails is doing

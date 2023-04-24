@@ -100,8 +100,10 @@ Tails_Init_Continued:
 loc_137A4:
 		move.w	#0,(Tails_CPU_idle_timer).w
 		move.w	#0,(Tails_CPU_flight_timer).w
-		move.l	#Obj_Tails_Tail,(v_Tails_tails).w
-		move.w	a0,(v_Tails_tails+$30).w
+		lea	(v_Tails_tails).w,a1		; load tails' tails object
+		move.l	#Obj_Tails_Tail,address(a1)
+		move.w	a0,playeradd_parent(a1)
+		move.b	#1,playerchild_renderflag(a1)	; tails renders for it
 		move.b	(Last_star_post_hit).w,(Tails_CPU_star_post_flag).w
 		rts
 ; ---------------------------------------------------------------------------
@@ -3194,21 +3196,24 @@ loc_15A92:
 		move.b	#3,anim_frame_timer(a0)
 		bsr.w	sub_158B0
 		add.b	d3,mapping_frame(a0)
-		rts
+-		rts
 ; ---------------------------------------------------------------------------
 
 Tails_Tail_Load_PLC:
+		lea	(a0),a1
 		moveq	#0,d0
-		move.b	mapping_frame(a0),d0
-		cmp.b	(Player_prev_frame_P2_tail).w,d0
-		beq.w	locret_15CCE
-		move.b	d0,(Player_prev_frame_P2_tail).w
+		move.b	mapping_frame(a1),d0
+
+Tails_Tail_Load_PLC2:
+		cmp.b	mapping_frame_copy(a1),d0
+		beq.s	-	; rts
+		move.b	d0,mapping_frame_copy(a1)
 		lea	(DPLC_Tails_Tail).l,a2
 		add.w	d0,d0
 		adda.w	(a2,d0.w),a2
 		move.w	(a2)+,d5
 		subq.w	#1,d5
-		bmi.s	locret_15CCE
+		bmi.s	-	; rts
 		move.w	#tiles_to_bytes(ArtTile_Player_2_Tail),d4
 		move.l	#dmaSource(ArtUnc_Tails_Tail),d6
 		bra.s	loc_15CA6
@@ -3216,13 +3221,14 @@ Tails_Tail_Load_PLC:
 ; =============== S U B R O U T I N E =======================================
 
 Tails_Load_PLC:
+		lea	(a0),a1
 		moveq	#0,d0
 		move.b	mapping_frame(a0),d0
 
 Tails_Load_PLC2:
-		cmp.b	(Player_prev_frame_P2).w,d0
+		cmp.b	mapping_frame_copy(a1),d0
 		beq.s	locret_15CCE
-		move.b	d0,(Player_prev_frame_P2).w
+		move.b	d0,mapping_frame_copy(a1)
 		lea	(DPLC_Tails).l,a2
 		add.w	d0,d0
 		adda.w	(a2,d0.w),a2
