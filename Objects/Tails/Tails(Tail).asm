@@ -10,7 +10,7 @@ Obj_Tails_Tail:
 ;		move.w	#make_priority(2),priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$18,height_pixels(a0)
-		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
+;		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.l	#Obj_Tails_Tail_Main,address(a0)
 
 Obj_Tails_Tail_Main:
@@ -21,6 +21,7 @@ Obj_Tails_Tail_Main:
 		move.w	x_pos(a2),x_pos(a0)
 		move.w	y_pos(a2),y_pos(a0)
 		move.w	priority(a2),priority(a0)
+		move.b	render_flags(a2),render_flags(a0)
 		andi.w	#drawing_mask,art_tile(a0)
 		tst.w	art_tile(a2)
 		bpl.s	+
