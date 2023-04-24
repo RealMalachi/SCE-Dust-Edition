@@ -80,7 +80,7 @@ SolidObjectFull2_1P:
 		add.w	d1,d0
 		bmi.s	loc_1DCF0
 		cmp.w	d2,d0
-		blo.s		loc_1DD04
+		blo.s	loc_1DD04
 
 loc_1DCF0:
 		bclr	#Status_OnObj,status(a1)
@@ -136,7 +136,7 @@ SolidObjectFullSloped_Spring_1P:
 		add.w	d1,d0
 		bmi.s	loc_1DD48
 		cmp.w	d2,d0
-		blo.s		loc_1DD5C
+		blo.s	loc_1DD5C
 
 loc_1DD48:
 		bclr	#Status_OnObj,status(a1)
@@ -178,7 +178,7 @@ sub_1DD84:
 		add.w	d1,d0
 		bmi.s	loc_1DDA8
 		cmp.w	d2,d0
-		blo.s		loc_1DDBC
+		blo.s	loc_1DDBC
 
 loc_1DDA8:
 		bclr	#Status_OnObj,status(a1)
@@ -219,7 +219,7 @@ SolidObjectFullSloped_1P:
 		add.w	d1,d0
 		bmi.s	loc_1DE00
 		cmp.w	d2,d0
-		blo.s		loc_1DE0E
+		blo.s	loc_1DE0E
 
 loc_1DE00:
 		bclr	#Status_OnObj,status(a1)
@@ -260,7 +260,7 @@ SolidObjectFull_Offset_1P:
 		bmi.s	loc_1DE58
 		add.w	d1,d1
 		cmp.w	d1,d0
-		blo.s		loc_1DE6C
+		blo.s	loc_1DE6C
 
 loc_1DE58:
 		bclr	#Status_OnObj,status(a1)
@@ -516,18 +516,19 @@ SolidObject_TestClearPush:
 		addq.b	#pushing_bit_delta,d4
 		btst	d4,status(a0)
 		beq.s	SolidObject_NoCollision
-		cmpi.b	#id_Roll,anim(a1)
-		beq.s	Solid_NotPushing
-		cmpi.b	#id_SpinDash,anim(a1)
-		beq.s	Solid_NotPushing
-		cmpi.b	#id_Death,anim(a1)
-		beq.s	Solid_NotPushing
-		cmpi.b	#id_Drown,anim(a1)
-		beq.s	Solid_NotPushing
-		cmpi.b	#id_Landing,anim(a1)
-		beq.s	Solid_NotPushing
+		move.b	anim(a1),d4
+		cmpi.b	#id_Roll,d4
+		beq.s	+
+		cmpi.b	#id_SpinDash,d4
+		beq.s	+
+		cmpi.b	#id_Death,d4
+		beq.s	+
+		cmpi.b	#id_Drown,d4
+		beq.s	+
+		cmpi.b	#id_Landing,d4
+		beq.s	+
 		move.w	#bytes_to_word(id_Walk,id_Run),anim(a1)
-
++
 Solid_NotPushing:
 		move.l	d6,d4
 		addq.b	#pushing_bit_delta,d4
@@ -545,7 +546,7 @@ SolidObject_TopBottom:
 
 ; SolidObject_InsideTop:
 		cmpi.w	#$10,d3
-		blo.s		SolidObject_Landed
+		blo.s	SolidObject_Landed
 		bra.s	SolidObject_TestClearPush
 ; ---------------------------------------------------------------------------
 
@@ -778,7 +779,7 @@ SolidObjectTop_1P:
 		add.w	d1,d0
 		bmi.s	loc_1E2E0
 		cmp.w	d2,d0
-		blo.s		loc_1E2F4
+		blo.s	loc_1E2F4
 
 loc_1E2E0:
 		bclr	#Status_OnObj,status(a1)
@@ -818,7 +819,7 @@ SolidObjectTopSloped2_1P:
 		add.w	d1,d0
 		bmi.s	loc_1E338
 		cmp.w	d2,d0
-		blo.s		loc_1E34C
+		blo.s	loc_1E34C
 
 loc_1E338:
 		bclr	#Status_OnObj,status(a1)
@@ -858,7 +859,7 @@ SolidObjectTopSloped_1P:
 		add.w	d1,d0
 		bmi.s	loc_1E390
 		cmp.w	d2,d0
-		blo.s		loc_1E3A4
+		blo.s	loc_1E3A4
 
 loc_1E390:
 		bclr	#Status_OnObj,status(a1)
@@ -903,7 +904,7 @@ loc_1E3D6:
 		add.w	d1,d0
 		bmi.s	loc_1E3F2
 		cmp.w	d2,d0
-		blo.s		loc_1E406
+		blo.s	loc_1E406
 
 loc_1E3F2:
 		bclr	#3,status(a1)
@@ -961,7 +962,7 @@ loc_1E45A:
 		sub.w	d1,d0
 		bhi.w	locret_1E4D4
 		cmpi.w	#-16,d0
-		blo.s		locret_1E4D4
+		blo.s	locret_1E4D4
 		tst.b	object_control(a1)
 		bmi.s	locret_1E4D4
 		tst.b	(ObjectFreezeFlag).w
