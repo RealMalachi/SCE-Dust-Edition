@@ -3,9 +3,8 @@
 ; ---------------------------------------------------------------------------
 
 ; =============== S U B R O U T I N E =======================================
-
-DrawSpriteUnsafe_cus_macro macro prid,obj,reg
-	if ("prid"=="")
+DrawSpriteUnsafe_cus_macro macro prid,obj,reg,dum
+	if ("prid"=="") || ("prid"=="no") || ("prid"=="none") || ("prid"=="null") || ("prid"=="terra nullius")
 	movea.w	priority(obj),reg
 	elseif ("prid"=="set") || ("prid"=="s")
 ;  if ErrorChecks<>0	; make sure it's set.
@@ -18,22 +17,26 @@ DrawSpriteUnsafe_cus_macro macro prid,obj,reg
 ;	rts
 ;+
 ;  endif
-	elseif prid <= priority_queue	; prid >=0 &&
-	movea.w	#make_priority(prid),reg
 	else
-	fatal "Priority exceeds the intended amount of queue (prid)"
+	  if prid < 0	; this covers negative number and non-labelled words
+	fatal "That's not something its meant to be... (prid)"
+	  elseif prid > priority_queue
+	fatal "Priority exceeds the amount of sprite rendering queues (prid)"
+	  else
+	movea.w	#make_priority(prid),reg
+	  endif
 	endif
-	move.w	(reg),d0		; get the amount of objects in the queue
-	addq.w	#2,d0		; add to the queue amount
-	move.w	d0,(reg)		; copy the addition to the queue amount
-	move.w	obj,(reg,d0.w)	; copy the objects address to the queue
+	move.w	(reg),dum		; get the amount of objects in the queue
+	addq.w	#2,dum			; add to the queue amount
+	move.w	dum,(reg)		; copy the addition to the queue amount
+	move.w	obj,(reg,dum.w)		; copy the objects address to the queue
 	endm
 
 DrawSpriteUnsafe_macro macro prid
-	DrawSpriteUnsafe_cus_macro prid,a0,a1
+	DrawSpriteUnsafe_cus_macro prid,a0,a1,d0
 	endm
 DrawOtherSpriteUnsafe_macro macro prid
-	DrawSpriteUnsafe_cus_macro prid,a1,a2
+	DrawSpriteUnsafe_cus_macro prid,a1,a2,d0
 	endm
 ; originally made by lavagaming1
 Draw_Sprite:
