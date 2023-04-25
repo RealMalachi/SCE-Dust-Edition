@@ -56,9 +56,9 @@ v_WaterWave:					ds.b object_size
 Object_RAM_end					= *
 v_GameOver_Game	=	v_Breathing_bubbles
 v_GameOver_Over	=	v_Breathing_bubbles_P2
-;	if ((Object_RAM_end-Object_RAM)/object_size)/10 <> 11	; TODO: figure out how to 
-;	fatal "Object RAM isn't divisible by 10!!! Fix this immediately!"
-;	endif
+	if ((Object_RAM_end-Object_RAM)/object_size)#10<>0	;
+	fatal "Object RAM slots aren't divisible by 10 (off by \{((Object_RAM_end-Object_RAM)/object_size)#10})"
+	endif
 ObjectRamMarker			ds.b 1	; a fast failsafe to end dynamic object checking routines dynamically, set during game init
 ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects
 
