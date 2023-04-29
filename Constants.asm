@@ -502,10 +502,30 @@ Status_LtngShield		= 5
 Status_BublShield		= 6
 Status_Sliding			= 7
 
-Shield_Reflect			= 3	; TODO: Make consistent with Status_Shield instead
-Status_FireImmune		= Status_FireShield
-Status_LtngImmune		= Status_LtngShield
-Status_BublImmune		= Status_BublShield
+Status_Shield_Mask		= 1<<Status_Shield
+Status_Invincible_Mask		= 1<<Status_Invincible
+Status_SpeedShoes_Mask		= 1<<Status_SpeedShoes
+
+Status_FireShield_Mask		= 1<<Status_FireShield
+Status_LtngShield_Mask		= 1<<Status_LtngShield
+Status_BublShield_Mask		= 1<<Status_BublShield
+Status_Sliding_Mask		= 1<<Status_Sliding
+
+Status_Elements			= Status_FireShield_Mask|Status_LtngShield_Mask|Status_BublShield_Mask
+Status_AllShields		= Status_Elements|Status_Shield_Mask
+
+; shield_reaction, should mirror status_secondary
+Shield_Reflect			= 3	; TODO: Status_Shield instead
+Shield_FireImmune		= Status_FireShield
+Shield_LtngImmune		= Status_LtngShield
+Shield_BublImmune		= Status_BublShield
+
+Shield_Reflect_Mask		= 1<<Shield_Reflect
+Shield_FireImmune_Mask		= 1<<Shield_FireImmune
+Shield_LtngImmune_Mask		= 1<<Shield_LtngImmune
+Shield_BublImmune_Mask		= 1<<Shield_BublImmune
+
+
 ; S2 labels
 status_sec_hasShield:		= Status_Shield
 status_sec_isInvincible:	= Status_Invincible

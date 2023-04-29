@@ -7,21 +7,21 @@
 TouchResponse:
 		bsr.w	Test_Ring_Collisions
 		bsr.w	ShieldTouchResponse
-		tst.b	character_id(a0)								; is the player Sonic?
-		bne.s	.Touch_NoInstaShield						; if not, branch
+		tst.b	character_id(a0)					; is the player Sonic?
+		bne.s	.Touch_NoInstaShield					; if not, branch
 		move.b	status_secondary(a0),d0
-		andi.b	#$73,d0									; does the player have any shields or is invincible?
-		bne.s	.Touch_NoInstaShield						; if so, branch
+		andi.b	#Status_AllShields|Status_Invincible_Mask,d0		; does the player have any shields or is invincible?
+		bne.s	.Touch_NoInstaShield					; if so, branch
 		; By this point, we're focussing purely on the Insta-Shield
 		cmpi.b	#1,double_jump_flag(a0)					; is the Insta-Shield currently in its 'attacking' mode?
-		bne.s	.Touch_NoInstaShield						; if not, branch
+		bne.s	.Touch_NoInstaShield					; if not, branch
 		bset	#Status_Invincible,status_secondary(a0)			; make the player invincible
-		move.w	x_pos(a0),d2								; get player's x_pos
-		move.w	y_pos(a0),d3								; get player's y_pos
-		subi.w	#$18,d2									; subtract width of Insta-Shield
-		subi.w	#$18,d3									; subtract height of Insta-Shield
-		moveq	#$30,d4									; player's width
-		moveq	#$30,d5									; player's height
+		move.w	x_pos(a0),d2						; get player's x_pos
+		move.w	y_pos(a0),d3						; get player's y_pos
+		subi.w	#$18,d2							; subtract width of Insta-Shield
+		subi.w	#$18,d3							; subtract height of Insta-Shield
+		moveq	#$30,d4							; player's width
+		moveq	#$30,d5							; player's height
 		bsr.s	.Touch_Process
 		bclr	#Status_Invincible,status_secondary(a0)			; make the player vulnerable again
 
@@ -399,9 +399,9 @@ Enemy_Points:	dc.w 10, 20, 50, 100					; points awarded div 10
 
 Touch_ChkHurt:
 		move.b	status_secondary(a0),d0
-		andi.b	#$73,d0								; does player have any shields or is invincible?
-		beq.s	Touch_ChkHurt_NoPowerUp			; if not, branch
-		and.b	shield_reaction(a1),d0					; does one of the player's shields grant immunity to this object??
+		andi.b	#Status_AllShields|Status_Invincible_Mask,d0	; does player have any shields or is invincible?
+		beq.s	Touch_ChkHurt_NoPowerUp				; if not, branch
+		and.b	shield_reaction(a1),d0				; does one of the player's shields grant immunity to this object??
 		bne.s	Touch_ChkHurt_Return				; if so, branch
 		btst	#Status_Shield,status_secondary(a0)		; does the player have a shield (strange time to ask)
 		bne.s	Touch_ChkHurt_HaveShield			; if so, branch
@@ -416,17 +416,15 @@ Touch_ChkHurt_Return:
 ; ---------------------------------------------------------------------------
 
 Touch_ChkHurt_NoPowerUp:
-
 		; note that this check could apply to the Insta-Shield,
 		; but the check that branches to this requires the player not be invincible.
 		; the Insta-Shield grants temporary invincibility. see the problem?
 		cmpi.b	#1,double_jump_flag(a0)				; is player Insta-Shield-attacking (Sonic), flying (Tails) or gliding (Knuckles)?
-		bne.s	Touch_ChkHurt2						; if not, branch
+		bne.s	Touch_ChkHurt2					; if not, branch
 
 Touch_ChkHurt_HaveShield:
-		move.b	shield_reaction(a1),d0
-		andi.b	#8,d0								; should the object be bounced away by a shield?
-		beq.s	Touch_ChkHurt2						; if not, branch
+		btst	#Shield_Reflect,shield_reaction(a1)		; should the object be bounced away by a shield?
+		beq.s	Touch_ChkHurt2					; if not, branch
 
 Touch_ChkHurt_Bounce_Projectile:
 		move.w	x_pos(a0),d1
@@ -478,7 +476,7 @@ HurtCharacter:
 		move.w	a0,$3E(a1)
 
 .hasshield
-		andi.b	#$8E,status_secondary(a0)
+		andi.b	#~Status_AllShields,status_secondary(a0)	; remove shield bits
 
 .bounce
 		move.b	#id_SonicHurt,routine(a0)
@@ -595,27 +593,27 @@ loc_103FA:
 
 ShieldTouchResponse:
 		move.b	status_secondary(a0),d0
-		andi.b	#$71,d0								; does the player have any shields?
+		andi.b	#Status_AllShields,d0					; does the player have any shields?
 		beq.s	ShieldTouch_Return
-		move.w	x_pos(a0),d2							; get player's x_pos
-		move.w	y_pos(a0),d3							; get player's y_pos
-		subi.w	#$18,d2								; subtract width of shield
-		subi.w	#$18,d3								; subtract height of shield
-		moveq	#$30,d4								; player's width
-		moveq	#$30,d5								; player's height
+		move.w	x_pos(a0),d2						; get player's x_pos
+		move.w	y_pos(a0),d3						; get player's y_pos
+		subi.w	#$18,d2							; subtract width of shield
+		subi.w	#$18,d3							; subtract height of shield
+		moveq	#$30,d4							; player's width
+		moveq	#$30,d5							; player's height
 		lea	(Collision_response_list).w,a4
 		move.w	(a4)+,d6								; get number of objects queued
 		beq.s	ShieldTouch_Return					; if there are none, return
 
 ShieldTouch_Loop:
-		movea.w	(a4)+,a1								; get address of first object's RAM
+		movea.w	(a4)+,a1						; get address of first object's RAM
 		move.b	collision_flags(a1),d0					; get its collision_flags
-		andi.b	#$C0,d0								; get only collision type bits
-		cmpi.b	#$80,d0								; is only the high bit set ("harmful")?
+		andi.b	#$C0,d0							; get only collision type bits
+		cmpi.b	#$80,d0							; is only the high bit set ("harmful")?
 		beq.s	ShieldTouch_Width					; if so, branch
 
 ShieldTouch_NextObj:
-		subq.w	#2,d6								; count the object as done
+		subq.w	#2,d6							; count the object as done
 		bne.s	ShieldTouch_Loop					; if there are still objects left, loop
 
 ShieldTouch_Return:
@@ -624,48 +622,47 @@ ShieldTouch_Return:
 
 ShieldTouch_Width:
 		move.b	collision_flags(a1),d0					; get collision_flags
-		andi.w	#$3F,d0								; get only collision size
+		andi.w	#$3F,d0							; get only collision size
 		beq.s	ShieldTouch_NextObj					; if it doesn't have a size, branch
-		add.w	d0,d0								; turn into index
+		add.w	d0,d0							; turn into index
 		lea	Touch_Sizes(pc),a2
-		lea	(a2,d0.w),a2								; go to correct entry
+		lea	(a2,d0.w),a2						; go to correct entry
 		moveq	#0,d1
-		move.b	(a2)+,d1								; get width value from Touch_Sizes
-		move.w	x_pos(a1),d0							; get object's x_pos
-		sub.w	d1,d0								; subtract object's width
-		sub.w	d2,d0								; subtract player's left collision boundary
+		move.b	(a2)+,d1						; get width value from Touch_Sizes
+		move.w	x_pos(a1),d0						; get object's x_pos
+		sub.w	d1,d0							; subtract object's width
+		sub.w	d2,d0							; subtract player's left collision boundary
 		bhs.s	.checkrightside						; if player's left side is to the left of the object, branch
-		add.w	d1,d1								; double object's width value
-		add.w	d1,d0								; add object's width*2 (now at right of object)
-		blo.s		ShieldTouch_Height					; if carry, branch (player is within the object's boundaries)
+		add.w	d1,d1							; double object's width value
+		add.w	d1,d0							; add object's width*2 (now at right of object)
+		blo.s	ShieldTouch_Height					; if carry, branch (player is within the object's boundaries)
 		bra.s	ShieldTouch_NextObj					; if not, loop and check next object
 ; ---------------------------------------------------------------------------
 
 .checkrightside:
-		cmp.w	d4,d0								; is player's right side to the left of the object?
+		cmp.w	d4,d0							; is player's right side to the left of the object?
 		bhi.s	ShieldTouch_NextObj					; if so, loop and check next object
 
 ShieldTouch_Height:
 		moveq	#0,d1
-		move.b	(a2)+,d1								; get height value from Touch_Sizes
-		move.w	y_pos(a1),d0							; get object's y_pos
-		sub.w	d1,d0								; subtract object's height
-		sub.w	d3,d0								; subtract player's bottom collision boundary
-		bcc.s	.checktop							; if bottom of player is under the object, branch
-		add.w	d1,d1								; double object's height value
-		add.w	d1,d0								; add object's height*2 (now at top of object)
-		bcs.s	.checkdeflect							; if carry, branch (player is within the object's boundaries)
-		bra.s	ShieldTouch_NextObj					; if not, loop and check next object
+		move.b	(a2)+,d1						; get height value from Touch_Sizes
+		move.w	y_pos(a1),d0						; get object's y_pos
+		sub.w	d1,d0							; subtract object's height
+		sub.w	d3,d0							; subtract player's bottom collision boundary
+		bcc.s	.checktop						; if bottom of player is under the object, branch
+		add.w	d1,d1							; double object's height value
+		add.w	d1,d0							; add object's height*2 (now at top of object)
+		bcs.s	.checkdeflect						; if carry, branch (player is within the object's boundaries)
+		bra.s	ShieldTouch_NextObj				; if not, loop and check next object
 ; ---------------------------------------------------------------------------
 
 .checktop:
-		cmp.w	d5,d0								; is top of player under the object?
-		bhi.s	ShieldTouch_NextObj					; if so, loop and check next object
+		cmp.w	d5,d0						; is top of player under the object?
+		bhi.s	ShieldTouch_NextObj				; if so, loop and check next object
 
 .checkdeflect:
-		move.b	shield_reaction(a1),d0
-		andi.b	#8,d0								; should the object be bounced away by a shield?
-		beq.s	ShieldTouch_NextObj					; if not, branch
+		btst	#Shield_Reflect,shield_reaction(a1)		; should the object be bounced away by a shield?
+		beq.s	ShieldTouch_NextObj				; if not, branch
 		move.w	x_pos(a0),d1
 		move.w	y_pos(a0),d2
 		sub.w	x_pos(a1),d1
