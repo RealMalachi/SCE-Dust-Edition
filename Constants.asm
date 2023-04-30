@@ -487,8 +487,8 @@ Status_Roll			= 2
 Status_OnObj			= 3
 Status_RollJump			= 4
 Status_Push			= 5
-Status_Underwater		= 6
-; TODO: 7 is used, but purpose is unknown
+Status_Underwater		= 6	; if 1, mark that you're underwater
+Status_WaterMove		= 7	; if 1, apply water physics (separate for "Gravity Suit")
 
 ; ---------------------------------------------------------------------------
 ; Player status secondary and object shield_reaction variables

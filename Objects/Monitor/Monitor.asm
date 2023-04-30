@@ -358,23 +358,16 @@ loc_1D8FE:
 Monitor_Give_SpeedShoes:
 		bset	#Status_SpeedShoes,status_secondary(a1)
 		move.b	#150,speed_shoes_timer(a1)
+		music	mus_Speedup				; speed up the music
+		lea	(Max_speed).w,a2
+		cmpi.b	#1,character_id(a1)	; are we Tails?
+		beq.s	.tailsedgecase		; if so, fix edgecase
 		cmpa.w	#Player_1,a1
-		bne.s	loc_1D93A
-		cmpi.w	#2,(Player_mode).w
-		beq.s	loc_1D93A
-		move.w	#$C00,(Max_speed).w
-		move.w	#$18,(Acceleration).w
-		move.w	#$80,(Deceleration).w
-		bra.s	loc_1D94C
-; ---------------------------------------------------------------------------
-
-loc_1D93A:
-		move.w	#$C00,(Max_speed_P2).w
-		move.w	#$18,(Acceleration_P2).w
-		move.w	#$80,(Deceleration_P2).w
-
-loc_1D94C:
-		music	mus_Speedup,1								; speed up the music
+		beq.s	+
+.tailsedgecase	; TODO: Make Tails use real Max_speed if P1
+		lea	(Max_speed_P2).w,a2
++
+		bra.w	Player_SetSpeed.regset
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_Fire_Shield:

@@ -59,9 +59,7 @@ Sonic_Init:	; Routine 0
 		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)		; set height and width
 		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		clr.b	character_id(a0)
-		move.w	#$600,Max_speed-Max_speed(a4)
-		move.w	#$C,Acceleration-Max_speed(a4)
-		move.w	#$80,Deceleration-Max_speed(a4)
+		bsr.w	Player_SetSpeed
 		tst.b	(Last_star_post_hit).w
 		bne.s	Sonic_Init_Continued
 
@@ -116,7 +114,6 @@ loc_10BF0:
 		tst.b	(Ctrl_1_locked).w					; are controls locked?
 		bne.s	loc_10BFC					; if yes, branch
 		move.l	(Ctrl1).w,(Ctrl1_Player).w	; copy new held buttons, to enable joypad control
-
 loc_10BFC:
 		btst	#0,object_control(a0)				; is Sonic interacting with another object that holds him in place or controls his movement somehow?
 		beq.s	loc_10C0C					; if yes, branch to skip Sonic's control
@@ -213,12 +210,9 @@ Sonic_ChkShoes:										; checks if Speed Shoes have expired and disables them 
 		bne.s	Sonic_ExitChk
 		subq.b	#1,speed_shoes_timer(a0)				; reduce speed_shoes_timer only on every 8th frame
 		bne.s	Sonic_ExitChk
-		move.w	#$600,(a4)							; set Max_speed
-		move.w	#$C,2(a4)							; set Acceleration
-		move.w	#$80,4(a4)							; set Deceleration
 		bclr	#Status_SpeedShoes,status_secondary(a0)
 		music	mus_Slowdown						; run music at normal speed
-
+		bra.w	Player_SetSpeed
 Sonic_ExitChk:
 		rts
 ; ---------------------------------------------------------------------------
@@ -250,22 +244,32 @@ Sonic_RecordPos:
 		rts
 
 ; =============== S U B R O U T I N E =======================================
-
+; resets all pos_table and stat_table slots with current data
+; the init is rather slow, but makes up for it in the loop
 Reset_Player_Position_Array:
-		cmpa.w	#Player_1,a0				; is object player 1?
-		bne.s	.return					; if not, branc
+		cmpa.w	#Player_1,a0		; is object player 1?
+		bne.s	.return			; if not, branch
+		move.w	x_pos(a0),d1
+		moveq	#16,d2
+		lsl.l	d2,d1
+		move.w	y_pos(a0),d1
+
+		move.b	(Ctrl_1_held_logical).w,d2
+		lsl.w	#8,d2
+		move.b	(Ctrl_1_pressed_logical).w,d2
+		lsl.l	#8,d2
+		move.b	status(a0),d2
+		lsl.l	#8,d2
+		move.b	art_tile(a0),d2
 
 		lea	(Pos_table).w,a1
 		lea	(Stat_table).w,a2
-		moveq	#$3F,d0
-
+		moveq	#64-1,d0
 .loop
-		move.w	x_pos(a0),(a1)+			; write location to pos_table
-		move.w	y_pos(a0),(a1)+
-		clr.l	(a2)+
+		move.l	d1,(a1)+		; write x and y pos
+		move.l	d2,(a2)+		; write stat data
 		dbf	d0,.loop
 		clr.w	(Pos_table_index).w
-
 .return
 		rts
 
@@ -276,69 +280,59 @@ Reset_Player_Position_Array:
 ; =============== S U B R O U T I N E =======================================
 
 Sonic_Water:
-		tst.b	(Water_flag).w			; does level have water?
-		bne.s	Sonic_InWater		; if yes, branch
-
-locret_10E2C:
-		rts
-; ---------------------------------------------------------------------------
-
-Sonic_InWater:
+		tst.b	(Water_flag).w		; does level have water?
+		beq.s	.end			; if not, branch
+;Sonic_InWater:
 		move.w	(Water_level).w,d0
-		cmp.w	y_pos(a0),d0									; is Sonic above the water?
-		bge.s	Sonic_OutWater								; if yes, branch
-		bset	#Status_Underwater,status(a0)						; set underwater flag
-		bne.s	locret_10E2C									; if already underwater, branch
+		cmp.w	y_pos(a0),d0					; is Sonic above the water?
+		bge.s	.outofwater					; if yes, branch
+		bset	#Status_Underwater,status(a0)			; set underwater flag
+		bne.s	.end						; if already underwater, branch
 		addq.b	#1,(Water_entered_counter).w
 		movea.w	a0,a1
 		jsr	(Player_ResetAirTimer).l
 		move.l	#Obj_AirCountdown,(v_Breathing_bubbles).w	; load Sonic's breathing bubbles
 		move.b	#$81,(v_Breathing_bubbles+subtype).w
 		move.w	a0,(v_Breathing_bubbles+parent).w
-		move.w	#$300,Max_speed-Max_speed(a4)
-		move.w	#6,Acceleration-Max_speed(a4)
-		move.w	#$40,Deceleration-Max_speed(a4)
+		bsr.w	Player_SetSpeed
 		tst.b	object_control(a0)
-		bne.s	locret_10E2C
+		bne.s	.end
 		asr	x_vel(a0)
 		asr	y_vel(a0)				; memory operands can only be shifted one bit at a time
 		asr	y_vel(a0)
-		beq.s	locret_10E2C
-		move.w	#bytes_to_word(1,0),anim(a6)	; splash animation, write 1 to anim and clear prev_anim
-		sfx	sfx_Splash,1				; splash sound
+		beq.s	.end
+		move.w	#bytes_to_word(1,0),anim(a6)		; splash animation, write 1 to anim and clear prev_anim
+		sfx	sfx_Splash,2				; splash sound
+.end:
+		rts
 ; ---------------------------------------------------------------------------
 
-Sonic_OutWater:
+.outofwater:
 		bclr	#Status_Underwater,status(a0)	; unset underwater flag
-		beq.s	locret_10E2C				; if already above water, branch
+		beq.s	.end				; if already above water, branch
 		addq.b	#1,(Water_entered_counter).w
-
 		movea.w	a0,a1
 		jsr	(Player_ResetAirTimer).l
-		move.w	#$600,Max_speed-Max_speed(a4)
-		move.w	#$C,Acceleration-Max_speed(a4)
-		move.w	#$80,Deceleration-Max_speed(a4)
-		cmpi.b	#id_SonicHurt,routine(a0)		; is Sonic falling back from getting hurt?
-		beq.s	loc_10EFC			; if yes, branch
+		bsr.w	Player_SetSpeed
+		cmpi.b	#id_SonicHurt,routine(a0)	; is Sonic falling back from getting hurt?
+		beq.s	+				; if yes, branch
 		tst.b	object_control(a0)
-		bne.s	loc_10EFC
-		move.w	y_vel(a0),d0
-		cmpi.w	#-$400,d0
-		blt.s		loc_10EFC
+		bne.s	+
+		cmpi.w	#-$400,y_vel(a0)
+		blt.s	+
 		asl	y_vel(a0)
-
-loc_10EFC:
-		cmpi.b	#id_Null,anim(a0)	; is Sonic in his 'blank' animation
-		beq.w	locret_10E2C			; if so, branch
++
+		cmpi.b	#id_Null,anim(a0)		; is Sonic in his 'blank' animation
+		beq.s	.end				; if so, branch
 		tst.w	y_vel(a0)
-		beq.w	locret_10E2C
+		beq.s	.end
+		move.w	#-$1000,d0
+		cmp.w	y_vel(a0),d0
+		ble.s	+
+		move.w	d0,y_vel(a0)			; limit upward y velocity exiting the water
++
 		move.w	#bytes_to_word(1,0),anim(a6)	; splash animation, write 1 to anim and clear prev_anim
-		cmpi.w	#-$1000,y_vel(a0)
-		bgt.s	loc_10F22
-		move.w	#-$1000,y_vel(a0)	; limit upward y velocity exiting the water
-
-loc_10F22:
-		sfx	sfx_Splash,1				; splash sound
+		sfx	sfx_Splash,1			; splash sound
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -413,6 +407,7 @@ loc_10FEA:
 ; Sonic_Spin_Freespace:
 Sonic_MdJump:
 		bsr.w	Sonic_JumpHeight
+.firstframe
 		bsr.w	Sonic_ChgJumpDir
 		bsr.w	Player_LevelBound
 		jsr	(MoveSprite_TestGravity).w
@@ -463,10 +458,10 @@ Sonic_ChgFallAnim:
 
 Sonic_Move:
 		move.w	Max_speed-Max_speed(a4),d6		; set Max_speed
-		move.w	Acceleration-Max_speed(a4),d5	; set Acceleration
-		move.w	Deceleration-Max_speed(a4),d4	; set Deceleration
-		tst.b	status_secondary(a0)				; is bit 7 set? (Infinite inertia)
-		bmi.w	loc_11332					; if so, branch
+		move.w	Acceleration-Max_speed(a4),d5		; set Acceleration
+		move.w	Deceleration-Max_speed(a4),d4		; set Deceleration
+		tst.b	status_secondary(a0)			; is bit 7 set? (Infinite inertia)
+		bmi.w	loc_11332				; if so, branch
 		tst.w	move_lock(a0)
 		bne.w	loc_112EA
 		btst	#button_left,(Ctrl_1_logical).w		; is left being pressed?
@@ -487,10 +482,10 @@ Sonic_NotRight:
 		bset	#Status_Facing,status(a0)
 +		move.b	angle(a0),d0
 		addi.b	#$20,d0
-		andi.b	#$C0,d0						; is Sonic on a slope?
-		bne.w	loc_112EA					; if yes, branch
+		andi.b	#$C0,d0					; is Sonic on a slope?
+		bne.w	loc_112EA				; if yes, branch
 		tst.w	ground_vel(a0)				; is Sonic moving?
-		bne.w	loc_112EA					; if yes, branch
+		bne.w	loc_112EA				; if yes, branch
 		tst.w	d1
 		bne.w	loc_112EA
 		bclr	#Status_Push,status(a0)
@@ -498,54 +493,54 @@ Sonic_NotRight:
 		btst	#Status_OnObj,status(a0)
 		beq.w	Sonic_Balance
 		movea.w	interact(a0),a1				; load interacting object's RAM space
-		tst.b	status(a1)						; is status bit 7 set? (Balance anim off)
-		bmi.w	loc_11276					; if so, branch
+		tst.b	status(a1)				; is status bit 7 set? (Balance anim off)
+		bmi.w	loc_11276				; if so, branch
 
 		; Calculations to determine where on the object Sonic is, and make him balance accordingly
-		moveq	#0,d1						; Clear d1
+		moveq	#0,d1					; Clear d1
 		move.b	width_pixels(a1),d1			; Load interacting object's width into d1
-		move.w	d1,d2						; Move to d2 for seperate calculations
-		add.w	d2,d2						; Double object width, converting it to X pos' units of measurement
-		subq.w	#2,d2						; Subtract 2: This is the margin for 'on edge'
-		add.w	x_pos(a0),d1					; Add Sonic's X position to object width
-		sub.w	x_pos(a1),d1					; Subtract object's X position from width+Sonic's X pos, giving you Sonic's distance from left edge of object
-		cmpi.w	#2,d1						; is Sonic within two units of object's left edge?
-		blt.s		Sonic_BalanceOnObjLeft		; if so, branch
+		move.w	d1,d2					; Move to d2 for seperate calculations
+		add.w	d2,d2					; Double object width, converting it to X pos' units of measurement
+		subq.w	#2,d2					; Subtract 2: This is the margin for 'on edge'
+		add.w	x_pos(a0),d1				; Add Sonic's X position to object width
+		sub.w	x_pos(a1),d1				; Subtract object's X position from width+Sonic's X pos, giving you Sonic's distance from left edge of object
+		cmpi.w	#2,d1					; is Sonic within two units of object's left edge?
+		blt.s	Sonic_BalanceOnObjLeft			; if so, branch
 		cmp.w	d2,d1
-		bge.s	Sonic_BalanceOnObjRight		; if Sonic is within two units of object's right edge, branch (Realistically, it checks this, and BEYOND the right edge of the object)
-		bra.w	loc_11276					; if Sonic is more than 2 units from both edges, branch
+		bge.s	Sonic_BalanceOnObjRight			; if Sonic is within two units of object's right edge, branch (Realistically, it checks this, and BEYOND the right edge of the object)
+		bra.w	loc_11276				; if Sonic is more than 2 units from both edges, branch
 ; ---------------------------------------------------------------------------
 ; balancing checks for when you're on the right edge of an object
 
 Sonic_BalanceOnObjRight:
 		btst	#Status_Facing,status(a0)	; is Sonic facing right?
 		bne.s	loc_11128			; if so, branch
-		move.b	#id_Balance,anim(a0)	; Balance animation 1
+		move.b	#id_Balance,anim(a0)		; Balance animation 1
 		addq.w	#6,d2				; extend balance range
 		cmp.w	d2,d1				; is Sonic within (two units before and) four units past the right edge?
 		blt.w	loc_112EA			; if so branch
-		move.b	#id_Balance2,anim(a0)	; if REALLY close to the edge, use different animation (Balance animation 2)
+		move.b	#id_Balance2,anim(a0)		; if REALLY close to the edge, use different animation (Balance animation 2)
 		bra.w	loc_112EA
 loc_11128:	; +
 		; Somewhat dummied out/redundant code from Sonic 2
 		; Originally, Sonic displayed different animations for each direction faced
 		; But now, Sonic uses only the one set of animations no matter what, making the check pointless, and the code redundant
 		bclr	#Status_Facing,status(a0)
-		move.b	#id_Balance,anim(a0)	; Balance animation 1
+		move.b	#id_Balance,anim(a0)		; Balance animation 1
 		addq.w	#6,d2				; extend balance range
 		cmp.w	d2,d1				; is Sonic within (two units before and) four units past the right edge?
 		blt.w	loc_112EA			; if so branch
-		move.b	#id_Balance2,anim(a0)	; if REALLY close to the edge, use different animation (Balance animation 2)
+		move.b	#id_Balance2,anim(a0)		; if REALLY close to the edge, use different animation (Balance animation 2)
 		bra.w	loc_112EA
 ; ---------------------------------------------------------------------------
 
 Sonic_BalanceOnObjLeft:
 		btst	#Status_Facing,status(a0)	; is Sonic facing right?
 		beq.s	loc_11166
-		move.b	#id_Balance,anim(a0)	; Balance animation 1
+		move.b	#id_Balance,anim(a0)		; Balance animation 1
 		cmpi.w	#-4,d1		; is Sonic within (two units before and) four units past the left edge?
 		bge.w	loc_112EA	; if so branch (instruction signed to match)
-		move.b	#id_Balance2,anim(a0)	; if REALLY close to the edge, use different animation (Balance animation 2)
+		move.b	#id_Balance2,anim(a0)		; if REALLY close to the edge, use different animation (Balance animation 2)
 		bra.w	loc_112EA
 loc_11166:	; +
 		; Somewhat dummied out/redundant code from Sonic 2
@@ -706,10 +701,11 @@ loc_1132E:
 loc_11332:
 		move.b	angle(a0),d0
 		jsr	(GetSineCosine).w
-		muls.w	ground_vel(a0),d1
+		move.w	ground_vel(a0),d2
+		muls.w	d2,d1
 		asr.l	#8,d1
 		move.w	d1,x_vel(a0)
-		muls.w	ground_vel(a0),d0
+		muls.w	d2,d0
 		asr.l	#8,d0
 		move.w	d0,y_vel(a0)
 
@@ -717,20 +713,18 @@ loc_11350:
 		btst	#6,object_control(a0)
 		bne.s	locret_113CE
 		move.b	angle(a0),d0
+		move.b	d0,d1
 		andi.b	#$3F,d0
-		beq.s	loc_11370
-		move.b	angle(a0),d0
-		addi.b	#$40,d0
+		beq.s	+
+		addi.b	#$40,d1
 		bmi.s	locret_113CE
-
-loc_11370:
-		move.b	#$40,d1
++
+		moveq	#$40,d1
 		tst.w	ground_vel(a0)
 		beq.s	locret_113CE
-		bmi.s	loc_1137E
+		bmi.s	+
 		neg.w	d1
-
-loc_1137E:
++
 		move.b	angle(a0),d0
 		add.b	d1,d0
 		move.w	d0,-(sp)
@@ -886,9 +880,9 @@ locret_11506:
 ; =============== S U B R O U T I N E =======================================
 
 Sonic_RollSpeed:
-		move.w	(a4),d6
+		move.w	Max_speed-Max_speed(a4),d6
 		asl.w	#1,d6
-		move.w	2(a4),d5
+		move.w	Acceleration-Max_speed(a4),d5
 		asr.w	#1,d5
 		move.w	#$20,d4
 		tst.b	spin_dash_flag(a0)
@@ -971,21 +965,20 @@ loc_115D0:
 loc_115D2:
 		move.b	angle(a0),d0
 		jsr	(GetSineCosine).w
-		muls.w	ground_vel(a0),d0
+		move.w	ground_vel(a0),d2
+		muls.w	d2,d0
 		asr.l	#8,d0
 		move.w	d0,y_vel(a0)
-		muls.w	ground_vel(a0),d1
+		muls.w	d2,d1
 		asr.l	#8,d1
 		cmpi.w	#$1000,d1
-		ble.s		loc_115F6
+		ble.s	+
 		move.w	#$1000,d1
-
-loc_115F6:
++
 		cmpi.w	#-$1000,d1
-		bge.s	loc_11600
+		bge.s	+
 		move.w	#-$1000,d1
-
-loc_11600:
++
 		move.w	d1,x_vel(a0)
 		bra.w	loc_11350
 
@@ -1036,11 +1029,11 @@ loc_11648:
 ; =============== S U B R O U T I N E =======================================
 
 Sonic_ChgJumpDir:
+		btst	#Status_RollJump,status(a0)
+		bne.s	loc_116A2
 		move.w	Max_speed-Max_speed(a4),d6
 		move.w	Acceleration-Max_speed(a4),d5
 		asl.w	#1,d5
-		btst	#Status_RollJump,status(a0)
-		bne.s	loc_116A2
 		move.w	x_vel(a0),d0
 		btst	#button_left,(Ctrl_1_logical).w
 		beq.s	loc_11682
@@ -1227,44 +1220,38 @@ Sonic_Jump:
 		moveq	#0,d0
 		move.b	angle(a0),d0
 		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_117FC
+		beq.s	+
 		addi.b	#$40,d0
 		neg.b	d0
 		subi.b	#$40,d0
-
-loc_117FC:
++
 		addi.b	#$80,d0
-		movem.l	a4-a6,-(sp)
+		movem.l	d1/a4-a6,-(sp)
 		bsr.w	CalcRoomOverHead
-		movem.l	(sp)+,a4-a6
+		movem.l	(sp)+,d1/a4-a6
 		cmpi.w	#6,d1
-		blt.s		locret_117D8
-		move.w	#$680,d2
-		btst	#Status_Underwater,status(a0)	; Test if underwater
-		beq.s	loc_1182E
-		move.w	#$380,d2
+		blt.s	locret_117D8
 
-loc_1182E:
-		moveq	#0,d0
-		move.b	angle(a0),d0
-		subi.b	#$40,d0
-		jsr	(GetSineCosine).w
+		moveq	#0,d1
+		move.b	angle(a0),d1
+		subi.b	#$40,d1
+		jsr	(GetSineCosine.angd1).w
+		move.w	Jump_height-Max_speed(a4),d2
 		muls.w	d2,d1
 		asr.l	#8,d1
 		add.w	d1,x_vel(a0)
 		muls.w	d2,d0
 		asr.l	#8,d0
 		add.w	d0,y_vel(a0)
+		addq.l	#4,sp		; skip the rest of Sonic_MdNormal
+		move.b	#1,jumping(a0)
 		bset	#Status_InAir,status(a0)
 		bclr	#Status_Push,status(a0)
-		addq.l	#4,sp
-		move.b	#1,jumping(a0)
 		clr.b	stick_to_convex(a0)
-		sfx	sfx_Jump
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
+		move.w	default_y_radius(a0),y_radius(a0)
+	;	move.b	default_x_radius(a0),x_radius(a0)
 		btst	#Status_Roll,status(a0)
-		bne.s	locret_118B2
+		bne.s	.rolljump
 		move.w	#bytes_to_word(28/2,14/2),y_radius(a0)	; set y_radius and x_radius
 		move.b	#id_Roll,anim(a0)
 		bset	#Status_Roll,status(a0)
@@ -1272,45 +1259,45 @@ loc_1182E:
 		sub.b	default_y_radius(a0),d0
 		ext.w	d0
 		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_118AE
+		beq.s	+
 		neg.w	d0
-
-loc_118AE:
++
 		sub.w	d0,y_pos(a0)
+.rolljump
+		sfx	sfx_Jump,1
+	;	bra.w	Sonic_MdJump.firstframe	; this fixes the one frame delay when jumping, but is character specific
 
-locret_118B2:
-		rts
 
 ; =============== S U B R O U T I N E =======================================
 
 Sonic_JumpHeight:
-		tst.b	jumping(a0)	; is Sonic jumping?
-		beq.s	Sonic_UpVelCap						; if not, branch
+		tst.b	jumping(a0)			; is Sonic jumping?
+		beq.s	Sonic_UpVelCap			; if not, branch
 
 		move.w	#-$400,d1
-		btst	#Status_Underwater,status(a0)				; is Sonic underwater?
-		beq.s	loc_118D2							; if not, branch
-		move.w	#-$200,d1							; Underwater-specific
-
-loc_118D2:
-		cmp.w	y_vel(a0),d1							; is y speed greater than 4? (2 if underwater)
+		btst	#Status_Underwater,status(a0)			; is Sonic underwater?
+		beq.s	+						; if not, branch
+		move.w	#-$200,d1					; Underwater-specific
++
+		cmp.w	y_vel(a0),d1					; is y speed greater than 4? (2 if underwater)
 		ble.s	Sonic_InstaAndShieldMoves			; if not, branch
 		move.b	(Ctrl_1_logical).w,d0
-		andi.b	#btnA+btnB+btnC,d0					; are buttons A, B or C being pressed?
-		bne.s	locret_118E8							; if yes, branch
-		move.w	d1,y_vel(a0)							; cap jump height
+		andi.b	#btnA+btnB+btnC,d0				; are buttons A, B or C being held?
+		bne.s	locret_118E8					; if yes, branch
+		move.w	d1,y_vel(a0)					; cap jump height
 
 locret_118E8:
 		rts
 ; ---------------------------------------------------------------------------
 
 Sonic_UpVelCap:
-		tst.b	spin_dash_flag(a0)						; is Sonic charging his spin dash?
-		bne.s	locret_118FE							; if yes, branch
-		cmpi.w	#-$FC0,y_vel(a0)						; is Sonic's Y speed faster (less than) than -15.75 (-$FC0)?
-		bge.s	locret_118FE							; if not, branch
-		move.w	#-$FC0,y_vel(a0)						; cap upward speed
-
+		tst.b	spin_dash_flag(a0)		; is Sonic charging his spin dash?
+		bne.s	+				; if yes, branch
+		move.w	#-$FC0,d0
+		cmp.w	y_vel(a0),d0			; is Sonic's Y speed faster than -15.75 (-$FC0)?
+		blt.s	+				; if not, branch
+		move.w	d0,y_vel(a0)			; cap upward speed to -15.75
++
 locret_118FE:
 		rts
 ; ---------------------------------------------------------------------------
@@ -1371,8 +1358,8 @@ Sonic_ShieldTest:
 		st	double_jump_flag(a0)			; at this point we're definitely double jumping
 		bclr	#Status_RollJump,status(a0)
 		move.b	status_secondary(a0),d0
-		andi.w	#$70,d0			; TODO: Make byte versions of status_secondary bitfield
-		beq.s	Sonic_DropDash		; if Sonic has a normal shield, do drop dash
+		andi.w	#Status_Elements,d0		; does Sonic have any elemental shield?
+		beq.s	Sonic_DropDash			; if not, do drop dash
 
 Sonic_FireShield:
 		btst	#Status_FireShield,d0		; does Sonic have a Fire Shield?
@@ -2167,10 +2154,10 @@ BubbleShield_Bounce:
 		btst	#Status_Underwater,status(a0)
 		beq.s	+
 		move.w	#$400,d2
-+		moveq	#0,d0
-		move.b	angle(a0),d0
-		subi.b	#$40,d0
-		jsr	(GetSineCosine).w
++		moveq	#0,d1
+		move.b	angle(a0),d1
+		subi.b	#$40,d1
+		jsr	(GetSineCosine.angd1).w
 		muls.w	d2,d1
 		asr.l	#8,d1
 		add.w	d1,x_vel(a0)
@@ -2194,6 +2181,73 @@ BubbleShield_Bounce:
 +		sub.w	d0,y_pos(a0)
 		move.b	#2,(v_Shield+anim).w
 		sfx	sfx_BubbleAttack,1
+; ---------------------------------------------------------------------------
+; similar to this tutorial: https://info.sonicretro.org/SCHG_How-to:Fix_Speed_Bugs_in_Sonic_2
+; inputs:
+; a0, a1 = Player
+; a4, a2 = Max_speed
+; overwrites a1 and a2, make sure to backup if needed!
+Player_SetSpeed:
+		lea	(a0),a1
+		lea	(a4),a2
+.regset
+		moveq	#0,d0
+		move.b	character_id(a1),d0
+		lsl.w	#5,d0	; 
+	;	lsl.w	#6,d0
+		btst	#Status_Underwater,status(a1)
+		beq.s	+
+		addq.w	#.water-.normal,d0	; add underwater
++
+		btst	#Status_SpeedShoes,status_secondary(a1)
+		beq.s	+
+		add.w	#.speed-.normal,d0	; add speed shoes
++
+	;	tst.b	(Super).w
+	;	beq.s	+
+	;	add.w	#.super-.normal,d0	; add super
++
+		lea	.data(pc,d0.w),a1
+		move.l	(a1)+,(a2)+		; Max_speed-Max_speed    ; Set Max_speed and Acceleration
+		move.l	(a1)+,(a2)+		; Deceleration-Max_speed ; Set Deceleration and Jump_height
+		rts
+; data size is x8, each thing that can effect speed makes it go up by another power of 2
+.data:
+; 0 = Sonic.
+.normal
+	dc.w	$700, $10, $80, $680
+.water
+	dc.w	$380,   8, $40, $380
+.speed
+	dc.w	$E00, $20, $80, $680
+.speedwater
+	dc.w	$700, $10, $40, $380
+;.super
+;	dc.w	0, 0, 0, 0
+;.superwater
+;	dc.w	0, 0, 0, 0
+;.superspeed
+;	dc.w	0, 0, 0, 0
+;.superspeedwater
+;	dc.w	0, 0, 0, 0
+; 1 = Tails
+	dc.w	$600,  $C, $80, $680
+	dc.w	$300,   6, $40, $380
+	dc.w	$C00, $18, $80, $680
+	dc.w	$600,  $C, $40, $380
+;	dc.w	0, 0, 0, 0
+;	dc.w	0, 0, 0, 0
+;	dc.w	0, 0, 0, 0
+;	dc.w	0, 0, 0, 0
+; 2 = Knuckles
+	dc.w	$600,  $C, $80, $600
+	dc.w	$300,   6, $40, $300
+	dc.w	$C00, $18, $80, $600
+	dc.w	$600,  $C, $40, $300
+;	dc.w	0, 0, 0, $600
+;	dc.w	0, 0, 0, $300
+;	dc.w	0, 0, 0, $600
+;	dc.w	0, 0, 0, $300
 ; ---------------------------------------------------------------------------
 
 Sonic_Hurt:

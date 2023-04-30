@@ -58,9 +58,7 @@ Knuckles_Init:
 		move.b	#$18,height_pixels(a0)
 		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.b	#2,character_id(a0)
-		move.w	#$600,Max_speed-Max_speed(a4)
-		move.w	#$C,Acceleration-Max_speed(a4)
-		move.w	#$80,Deceleration-Max_speed(a4)
+		bsr.w	Player_SetSpeed
 		tst.b	(Last_star_post_hit).w
 		bne.s	Knuckles_Init_Continued
 
@@ -215,12 +213,9 @@ loc_1669A:
 		bne.s	locret_166EC
 		subq.b	#1,$36(a0)
 		bne.s	locret_166EC
-		move.w	#$600,(a4)
-		move.w	#$C,2(a4)
-		move.w	#$80,render_flags(a4)
 		bclr	#2,$2B(a0)
 		music	mus_Slowdown						; run music at normal speed
-
+		bra.w	Player_SetSpeed
 locret_166EC:
 		rts
 
@@ -246,9 +241,7 @@ loc_166F6:
 		move.l	#Obj_AirCountdown,(v_Breathing_bubbles).w
 		move.b	#$81,(v_Breathing_bubbles+subtype).w
 		move.w	a0,(v_Breathing_bubbles+parent).w
-		move.w	#$300,Max_speed-Max_speed(a4)
-		move.w	#6,Acceleration-Max_speed(a4)
-		move.w	#$40,Deceleration-Max_speed(a4)
+		bsr.w	Player_SetSpeed
 		tst.b	object_control(a0)
 		bne.s	locret_166F4
 		asr	x_vel(a0)
@@ -265,9 +258,7 @@ loc_1676E:
 		addq.b	#1,(Water_entered_counter).w
 		movea.w	a0,a1
 		bsr.w	Player_ResetAirTimer
-		move.w	#$600,Max_speed-Max_speed(a4)
-		move.w	#$C,Acceleration-Max_speed(a4)
-		move.w	#$80,Deceleration-Max_speed(a4)
+		bsr.w	Player_SetSpeed
 		cmpi.b	#4,routine(a0)
 		beq.s	loc_167C4
 		tst.b	object_control(a0)
@@ -314,7 +305,7 @@ Knux_Stand_Freespace:
 		bsr.w	Knux_ChgJumpDir
 		bsr.w	Player_LevelBound
 		jsr	(MoveSprite_TestGravity).w
-		btst	#6,status(a0)
+		btst	#Status_Underwater,status(a0)
 		beq.s	loc_16872
 		subi.w	#$28,y_vel(a0)
 
@@ -1285,7 +1276,7 @@ Knuckles_Move_Glide:
 ; ---------------------------------------------------------------------------
 
 Knux_Spin_Path:
-		tst.b	$3D(a0)
+		tst.b	spin_dash_flag(a0)
 		bne.s	loc_170CC
 		bsr.w	Knux_Jump
 
@@ -1303,7 +1294,7 @@ Knux_Spin_Freespace:
 		bsr.w	Knux_ChgJumpDir
 		bsr.w	Player_LevelBound
 		jsr	(MoveSprite_TestGravity).w
-		btst	#6,status(a0)
+		btst	#Status_Underwater,status(a0)
 		beq.s	loc_17138
 		subi.w	#$28,y_vel(a0)
 
@@ -1314,9 +1305,9 @@ loc_17138:
 ; =============== S U B R O U T I N E =======================================
 
 Knux_InputAcceleration_Path:
-		move.w	(a4),d6
-		move.w	2(a4),d5
-		move.w	4(a4),d4
+		move.w	Max_speed-Max_speed(a4),d6
+		move.w	Acceleration-Max_speed(a4),d5
+		move.w	Deceleration-Max_speed(a4),d4
 		tst.b	$2B(a0)
 		bmi.w	loc_17364
 		tst.w	$32(a0)
@@ -1337,9 +1328,9 @@ loc_17174:
 		bne.w	loc_1731C
 		tst.w	ground_vel(a0)
 		bne.w	loc_1731C
-		bclr	#5,status(a0)
+		bclr	#Status_Push,status(a0)
 		move.b	#5,anim(a0)
-		btst	#3,status(a0)
+		btst	#Status_OnObj,status(a0)
 		beq.w	loc_1722C
 		movea.w	interact(a0),a1
 		tst.b	status(a1)
@@ -1359,14 +1350,14 @@ loc_17174:
 ; ---------------------------------------------------------------------------
 
 loc_171D0:
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		bne.s	loc_171E2
 		move.b	#6,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_171E2:
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		move.b	#0,$24(a0)
 		move.b	#4,$23(a0)
 		move.w	#$606,anim(a0)
@@ -1374,14 +1365,14 @@ loc_171E2:
 ; ---------------------------------------------------------------------------
 
 loc_171FE:
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		beq.s	loc_17210
 		move.b	#6,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_17210:
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		move.b	#0,$24(a0)
 		move.b	#4,$23(a0)
 		move.w	#$606,anim(a0)
@@ -1395,14 +1386,14 @@ loc_1722C:
 		blt.w	loc_172A8
 		cmpi.b	#3,$3A(a0)
 		bne.s	loc_17272
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		bne.s	loc_17256
 		move.b	#6,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_17256:
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		move.b	#0,$24(a0)
 		move.b	#4,$23(a0)
 		move.w	#$606,anim(a0)
@@ -1412,14 +1403,14 @@ loc_17256:
 loc_17272:
 		cmpi.b	#3,$3B(a0)
 		bne.s	loc_172A8
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		beq.s	loc_1728C
 		move.b	#6,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_1728C:
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		move.b	#0,$24(a0)
 		move.b	#4,$23(a0)
 		move.w	#$606,anim(a0)
@@ -1560,9 +1551,9 @@ loc_173D2:
 		beq.s	loc_17402
 		add.w	d1,x_vel(a0)
 		move.w	#0,ground_vel(a0)
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		bne.s	locret_17400
-		bset	#5,status(a0)
+		bset	#Status_Push,status(a0)
 
 locret_17400:
 		rts
@@ -1576,9 +1567,9 @@ loc_17402:
 loc_17408:
 		sub.w	d1,x_vel(a0)
 		move.w	#0,ground_vel(a0)
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		beq.s	locret_17400
-		bset	#5,status(a0)
+		bset	#Status_Push,status(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -1596,9 +1587,9 @@ sub_17428:
 		bpl.s	loc_17462
 
 loc_17430:
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		bne.s	loc_17444
-		bclr	#5,status(a0)
+		bclr	#Status_Push,status(a0)
 		move.b	#1,$21(a0)
 
 loc_17444:
@@ -1635,7 +1626,7 @@ loc_1746A:
 		bmi.s	locret_174B2
 		sfx	sfx_Skid
 		move.b	#$D,anim(a0)
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		cmpi.b	#$C,air_left(a0)
 		blo.s	locret_174B2
 		move.b	#6,routine(a6)
@@ -1649,9 +1640,9 @@ locret_174B2:
 sub_174B4:
 		move.w	ground_vel(a0),d0
 		bmi.s	loc_174E8
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		beq.s	loc_174CE
-		bclr	#5,status(a0)
+		bclr	#Status_Push,status(a0)
 		move.b	#1,$21(a0)
 
 loc_174CE:
@@ -1686,7 +1677,7 @@ loc_174F0:
 		bmi.s	locret_17538
 		sfx	sfx_Skid
 		move.b	#$D,anim(a0)
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		cmpi.b	#$C,air_left(a0)
 		blo.s	locret_17538
 		move.b	#6,routine(a6)
@@ -1698,12 +1689,12 @@ locret_17538:
 ; =============== S U B R O U T I N E =======================================
 
 Knux_RollSpeed:
-		move.w	(a4),d6
+		move.w	Max_speed-Max_speed(a4),d6
 		asl.w	#1,d6
-		move.w	2(a4),d5
+		move.w	Acceleration-Max_speed(a4),d5
 		asr.w	#1,d5
 		move.w	#$20,d4
-		tst.b	$3D(a0)
+		tst.b	spin_dash_flag(a0)
 		bmi.w	loc_175F8
 		tst.b	$2B(a0)
 		bmi.w	loc_175F8
@@ -1747,9 +1738,9 @@ loc_175A2:
 loc_175AA:
 		cmpi.w	#$80,d0
 		bhs.s	loc_175F8
-		tst.b	$3D(a0)
+		tst.b	spin_dash_flag(a0)
 		bne.s	loc_175E6
-		bclr	#2,status(a0)
+		bclr	#Status_Roll,status(a0)
 		move.b	y_radius(a0),d0
 		move.b	default_y_radius(a0),y_radius(a0)
 		move.b	default_x_radius(a0),x_radius(a0)
@@ -1767,7 +1758,7 @@ loc_175E0:
 
 loc_175E6:
 		move.w	#$400,ground_vel(a0)
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		beq.s	loc_175F8
 		neg.w	ground_vel(a0)
 
@@ -1809,7 +1800,7 @@ sub_1763A:
 		bpl.s	loc_17650
 
 loc_17642:
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		move.b	#2,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -1828,7 +1819,7 @@ loc_17658:
 sub_1765E:
 		move.w	ground_vel(a0),d0
 		bmi.s	loc_17672
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		move.b	#2,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -1846,15 +1837,15 @@ loc_1767A:
 
 ; sub_17680:
 Knux_ChgJumpDir:
-		move.w	(a4),d6
-		move.w	2(a4),d5
+		move.w	Max_speed-Max_speed(a4),d6
+		move.w	Acceleration-Max_speed(a4),d5
 		asl.w	#1,d5
-		btst	#4,status(a0)
+		btst	#Status_RollJump,status(a0)
 		bne.s	loc_176D4
 		move.w	x_vel(a0),d0
 		btst	#2,(Ctrl_1_logical).w
 		beq.s	loc_176B4
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		sub.w	d5,d0
 		move.w	d6,d1
 		neg.w	d1
@@ -1868,7 +1859,7 @@ Knux_ChgJumpDir:
 loc_176B4:
 		btst	#3,(Ctrl_1_logical).w
 		beq.s	loc_176D0
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		add.w	d5,d0
 		cmp.w	d6,d0
 		blt.s	loc_176D0
@@ -1938,36 +1929,32 @@ loc_17732:
 		movem.l	(sp)+,a4-a6
 		cmpi.w	#6,d1
 		blt.w	locret_177E0
-		move.w	#$600,d2
-		btst	#6,status(a0)
-		beq.s	loc_1775C
-		move.w	#$300,d2
 
-loc_1775C:
 		moveq	#0,d0
 		move.b	angle(a0),d0
 		subi.b	#$40,d0
 		jsr	(GetSineCosine).w
+		move.w	Jump_height-Max_speed(a4),d2
 		muls.w	d2,d1
 		asr.l	#8,d1
 		add.w	d1,x_vel(a0)
 		muls.w	d2,d0
 		asr.l	#8,d0
 		add.w	d0,y_vel(a0)
-		bset	#1,status(a0)
-		bclr	#5,status(a0)
+		bset	#Status_InAir,status(a0)
+		bclr	#Status_Push,status(a0)
 		addq.l	#4,sp
 		move.b	#1,jumping(a0)
 		clr.b	$3C(a0)
 		sfx	sfx_Jump
 		move.b	default_y_radius(a0),y_radius(a0)
 		move.b	default_x_radius(a0),x_radius(a0)
-		btst	#2,status(a0)
+		btst	#Status_Roll,status(a0)
 		bne.s	loc_177E2
 		move.b	#$E,y_radius(a0)
 		move.b	#7,x_radius(a0)
 		move.b	#2,anim(a0)
-		bset	#2,status(a0)
+		bset	#Status_Roll,status(a0)
 		move.b	y_radius(a0),d0
 		sub.b	default_y_radius(a0),d0
 		ext.w	d0
@@ -1983,7 +1970,7 @@ locret_177E0:
 ; ---------------------------------------------------------------------------
 
 loc_177E2:
-		bset	#4,status(a0)
+		bset	#Status_RollJump,status(a0)
 		rts
 
 ; =============== S U B R O U T I N E =======================================
@@ -1992,7 +1979,7 @@ Knux_JumpHeight:
 		tst.b	jumping(a0)
 		beq.s	loc_17818
 		move.w	#-$400,d1
-		btst	#6,status(a0)
+		btst	#Status_Underwater,status(a0)
 		beq.s	loc_17800
 		move.w	#-$200,d1
 
@@ -2009,7 +1996,7 @@ locret_17816:
 ; ---------------------------------------------------------------------------
 
 loc_17818:
-		tst.b	$3D(a0)
+		tst.b	spin_dash_flag(a0)
 		bne.s	locret_1782C
 		cmpi.w	#-$FC0,y_vel(a0)
 		bge.s	locret_1782C
@@ -2026,10 +2013,10 @@ Knux_Test_For_Glide:
 		andi.b	#$70,d0
 		beq.s	locret_178CC
 
-		bclr	#2,status(a0)
+		bclr	#Status_Roll,status(a0)
 		move.b	#$A,y_radius(a0)
 		move.b	#$A,x_radius(a0)
-		bclr	#4,status(a0)
+		bclr	#Status_RollJump,status(a0)
 		move.b	#1,double_jump_flag(a0)
 		addi.w	#$200,y_vel(a0)
 		bpl.s	+
@@ -2057,7 +2044,7 @@ Knux_Test_For_Glide:
 +
 		move.w	d0,ground_vel(a0)
 		moveq	#0,d1
-		btst	#0,status(a0)	; are you facing left?
+		btst	#Status_Facing,status(a0)	; are you facing left?
 		beq.s	+		; if not, branch
 		neg.w	d0
 		moveq	#-$80,d1
@@ -2262,9 +2249,9 @@ Knux_TouchFloor:
 		move.b	y_radius(a0),d0
 		move.b	default_y_radius(a0),y_radius(a0)
 		move.b	default_x_radius(a0),x_radius(a0)
-		btst	#2,status(a0)
+		btst	#Status_Roll,status(a0)
 		beq.s	loc_17B6A
-		bclr	#2,status(a0)
+		bclr	#Status_Roll,status(a0)
 		move.b	#0,anim(a0)
 		sub.b	default_y_radius(a0),d0
 		ext.w	d0
@@ -2284,9 +2271,9 @@ loc_17B64:
 		add.w	d0,y_pos(a0)
 
 loc_17B6A:
-		bclr	#1,status(a0)
-		bclr	#5,status(a0)
-		bclr	#4,status(a0)
+		bclr	#Status_InAir,status(a0)
+		bclr	#Status_Push,status(a0)
+		bclr	#Status_RollJump,status(a0)
 		moveq	#0,d0
 		move.b	d0,jumping(a0)
 		move.b	d0,(Chain_bonus_counter).w
@@ -2316,7 +2303,7 @@ loc_17BB6:
 loc_17BD0:
 		jsr	(MoveSprite2_TestGravity).w
 		addi.w	#$30,y_vel(a0)
-		btst	#6,status(a0)
+		btst	#Status_Underwater,status(a0)
 		beq.s	loc_17BEA
 		subi.w	#$20,y_vel(a0)
 
@@ -2358,7 +2345,7 @@ loc_17C3C:
 		movem.l	a4-a6,-(sp)
 		bsr.w	Player_DoLevelCollision
 		movem.l	(sp)+,a4-a6
-		btst	#1,status(a0)
+		btst	#Status_InAir,status(a0)
 		bne.s	locret_17C80
 		moveq	#0,d0
 		move.w	d0,y_vel(a0)
@@ -2369,7 +2356,7 @@ loc_17C3C:
 		move.w	#make_priority(2),priority(a0)
 		move.b	#2,routine(a0)
 		move.b	#$78,$34(a0)
-		move.b	#0,$3D(a0)
+		move.b	#0,spin_dash_flag(a0)
 
 locret_17C80:
 		rts
@@ -2459,7 +2446,7 @@ Animate_Knuckles:
 		move.b	d0,$21(a0)
 		move.b	#0,$23(a0)
 		move.b	#0,$24(a0)
-		bclr	#5,status(a0)
+		bclr	#Status_Push,status(a0)
 
 loc_17D58:
 		add.w	d0,d0
@@ -2545,7 +2532,7 @@ loc_17E00:
 		andi.b	#-4,render_flags(a0)
 		eor.b	d1,d2
 		or.b	d2,render_flags(a0)
-		btst	#5,status(a0)
+		btst	#Status_Push,status(a0)
 		bne.w	loc_17ECC
 		lsr.b	#4,d0
 		andi.b	#6,d0

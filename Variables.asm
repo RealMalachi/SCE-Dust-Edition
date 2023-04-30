@@ -320,9 +320,12 @@ Disable_death_plane:				ds.b 1			; if set, going below the screen wont kill the 
 Max_speed:					ds.w 1
 Acceleration:					ds.w 1
 Deceleration:					ds.w 1
-Max_speed_P2:					ds.w 1
+Jump_height:					ds.w 1
+Max_speed_P2:					ds.w 1			; identical use for player 2 (or as it stands right now, Tails. Even P1 Tails.)
 Acceleration_P2:				ds.w 1
 Deceleration_P2:				ds.w 1
+Jump_height_P2:					ds.w 1
+
 Object_load_addr_front:				ds.l 1			; The address inside the object placement data of the first object whose X pos is >= Camera_X_pos_coarse + $280
 Object_load_addr_back:				ds.l 1			; The address inside the object placement data of the first object whose X pos is >= Camera_X_pos_coarse - $80
 Object_respawn_index_front:			ds.w 1			; The object respawn table index for the object at Obj_load_addr_front

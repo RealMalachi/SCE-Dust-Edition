@@ -13,6 +13,9 @@ GetSineCosine:
 CalcSine.unsafe:
 GetSineCosine.unsafe:
 		move.b	d0,d1
+; assumes d1 is angle, and the high byte is already clear
+CalcSine.angd1:
+GetSineCosine.angd1:
 ;		addq.w	#8/2,d1				; add 8 (4x2) so cosine can reach further
 		add.w	d1,d1				; double because we're handling words
 		move.w	SineTable(pc,d1.w),d0		; sin

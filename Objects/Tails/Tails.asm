@@ -60,9 +60,7 @@ Tails_Init:
 		move.b	#$18,height_pixels(a0)
 		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
 		move.b	#1,character_id(a0)
-		move.w	#$600,Max_speed_P2-Max_speed_P2(a4)
-		move.w	#$C,Acceleration_P2-Max_speed_P2(a4)
-		move.w	#$80,Deceleration_P2-Max_speed_P2(a4)
+		bsr.w	Player_SetSpeed
 		cmpi.w	#2,(Player_mode).w
 		bne.s	loc_1375E
 		tst.b	(Last_star_post_hit).w
@@ -165,7 +163,7 @@ loc_1384A:
 		beq.s	loc_1388C
 		lea	(Player_1).w,a1
 		clr.b	object_control(a1)
-		bset	#1,status(a1)
+		bset	#Status_InAir,status(a1)
 		clr.w	(Flying_carrying_Sonic_flag).w
 		bra.s	loc_1388C
 ; ---------------------------------------------------------------------------
@@ -267,12 +265,9 @@ loc_1394E:
 		bne.s	locret_139A6
 		subq.b	#1,speed_shoes_timer(a0)
 		bne.s	locret_139A6
-		move.w	#$600,Max_speed_P2-Max_speed_P2(a4)
-		move.w	#$C,Acceleration_P2-Max_speed_P2(a4)
-		move.w	#$80,Deceleration_P2-Max_speed_P2(a4)
 		bclr	#2,status_secondary(a0)
 		music	mus_Slowdown						; run music at normal speed
-
+		bra.w	Player_SetSpeed
 locret_139A6:
 		rts
 
@@ -313,13 +308,12 @@ off_139EC:
 ; ---------------------------------------------------------------------------
 
 loc_13A10:
-		tst.b	(Tails_CPU_star_post_flag).w
-		bne.w	loc_13AF4
-		nop
-		nop
-		nop
-
-loc_13AF4:
+	;	tst.b	(Tails_CPU_star_post_flag).w
+	;	bne.s	+
+	;	nop
+	;	nop
+	;	nop
++
 		move.b	#0,anim(a0)
 		move.w	#0,x_vel(a0)
 		move.w	#0,y_vel(a0)
@@ -370,7 +364,7 @@ loc_13B78:
 		move.w	d0,ground_vel(a0)
 		move.b	d0,flip_type(a0)
 		move.b	d0,double_jump_flag(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		move.b	#$1E,air_left(a0)
 		move.b	#$81,object_control(a0)
 		move.b	d0,flips_remaining(a0)
@@ -403,7 +397,7 @@ Tails_FlySwim_Unknown:
 		move.w	#0,(Tails_CPU_flight_timer).w
 		move.w	#2,(Tails_CPU_routine).w
 		move.b	#$81,object_control(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		move.w	#0,x_pos(a0)
 		move.w	#0,y_pos(a0)
 		move.b	#$F0,double_jump_property(a0)
@@ -413,7 +407,7 @@ Tails_FlySwim_Unknown:
 
 loc_13C3A:
 		move.b	#$F0,double_jump_property(a0)
-		ori.b	#2,status(a0)
+		ori.b	#1<<Status_InAir,status(a0)
 		bsr.w	Tails_Set_Flying_Animation
 		move.w	#0,(Tails_CPU_flight_timer).w
 
@@ -449,7 +443,7 @@ loc_13C90:
 		addq.w	#1,d2
 		tst.w	d0
 		bmi.s	loc_13CAA
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		cmp.w	d0,d2
 		blo.s	loc_13CA6
 		move.w	d0,d2
@@ -461,7 +455,7 @@ loc_13CA6:
 ; ---------------------------------------------------------------------------
 
 loc_13CAA:
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		neg.w	d0
 		cmp.w	d0,d2
 		blo.s	loc_13CBA
@@ -497,8 +491,8 @@ loc_13CD2:
 		move.w	#0,x_vel(a0)
 		move.w	#0,y_vel(a0)
 		move.w	#0,ground_vel(a0)
-		andi.b	#$40,status(a0)
-		ori.b	#2,status(a0)
+		andi.b	#1<<Status_Underwater,status(a0)	; only keep underwater flag
+		ori.b	#1<<Status_InAir,status(a0)		; set in-air flag
 		move.w	#0,move_lock(a0)
 		andi.w	#$7FFF,art_tile(a0)
 		tst.b	art_tile(a1)
@@ -522,7 +516,7 @@ loc_13D4A:
 		move.b	#0,spin_dash_flag(a0)
 		move.w	#0,spin_dash_counter(a0)
 		move.b	#$81,object_control(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		move.b	#$20,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -548,7 +542,7 @@ loc_13D78:
 		move.w	(Pos_table_index).w,d0
 		sub.b	d1,d0
 		move.w	(a2,d0.w),d2
-		btst	#3,status(a1)
+		btst	#Status_OnObj,status(a1)
 		bne.s	+
 		cmpi.w	#$400,ground_vel(a1)
 		bge.s	+
@@ -559,7 +553,7 @@ loc_13D78:
 		move.w	(a2,d0.w),d1
 		move.b	2(a2,d0.w),d4
 		move.w	d1,d0
-		btst	#5,status(a0)
+		btst	#Status_Push,status(a0)
 		beq.s	+
 		btst	#5,d4
 		beq.w	loc_13E9C
@@ -576,7 +570,7 @@ loc_13D78:
 +
 		tst.w	ground_vel(a0)
 		beq.s	loc_13E64
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		beq.s	loc_13E64
 		btst	#0,object_control(a0)
 		bne.s	loc_13E64
@@ -592,7 +586,7 @@ loc_13D78:
 +
 		tst.w	ground_vel(a0)
 		beq.s	loc_13E64
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		bne.s	loc_13E64
 		btst	#0,object_control(a0)
 		bne.s	loc_13E64
@@ -601,17 +595,17 @@ loc_13D78:
 ; ---------------------------------------------------------------------------
 
 .null:
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		move.b	d4,d0
 		andi.b	#1,d0
 		beq.s	+
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 +
 loc_13E64:
 		tst.b	(Tails_CPU_auto_jump_flag).w
 		beq.s	+
 		ori.w	#(button_ABC_mask)<<8,d1
-		btst	#1,status(a0)
+		btst	#Status_InAir,status(a0)
 		bne.s	loc_13EB8
 		move.b	#0,(Tails_CPU_auto_jump_flag).w
 +
@@ -657,7 +651,7 @@ loc_13EBE:
 sub_13EFC:
 		tst.b	render_flags(a0)
 		bmi.s	loc_13F28
-		btst	#3,status(a0)
+		btst	#Status_OnObj,status(a0)
 		beq.s	loc_13F18
 		moveq	#0,d0
 		movea.w	interact(a0),a3
@@ -677,7 +671,7 @@ sub_13ECA:
 		move.w	#0,(Tails_CPU_flight_timer).w
 		move.w	#2,(Tails_CPU_routine).w
 		move.b	#$81,object_control(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		move.w	#$7F00,x_pos(a0)
 		move.w	#0,y_pos(a0)
 		move.b	#0,double_jump_flag(a0)
@@ -688,7 +682,7 @@ loc_13F28:
 		move.w	#0,(Tails_CPU_flight_timer).w
 
 loc_13F2E:
-		btst	#3,status(a0)
+		btst	#Status_OnObj,status(a0)
 		beq.s	+
 		movea.w	interact(a0),a3
 		move.w	(a3),(Tails_CPU_interact).w
@@ -708,11 +702,11 @@ loc_13F40:
 		bne.s	loc_13F94
 		tst.w	ground_vel(a0)
 		bne.s	locret_13FBE
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		move.w	x_pos(a0),d0
 		sub.w	x_pos(a1),d0
 		bcs.s	+
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 +
 		move.l	#(button_down_mask)<<16|button_down_mask,d0
 		move.b	(Level_frame_counter+1).w,d1
@@ -751,7 +745,7 @@ loc_13FB2:
 loc_13FC2:
 		move.b	#1,double_jump_flag(a0)
 		move.b	#$F0,double_jump_property(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		move.w	#$100,x_vel(a0)
 		move.w	#0,y_vel(a0)
 		move.w	#0,ground_vel(a0)
@@ -772,7 +766,7 @@ loc_13FFA:
 		move.l	d0,(Ctrl2_Player).w
 		lea	(Flying_carrying_Sonic_flag).w,a2
 		lea	(Player_1).w,a1
-		btst	#1,status(a1)
+		btst	#Status_InAir,status(a1)
 		bne.s	loc_14082
 		move.w	#6,(Tails_CPU_routine).w
 		move.b	#0,object_control(a0)
@@ -780,8 +774,8 @@ loc_13FFA:
 		move.w	#0,x_vel(a0)
 		move.w	#0,y_vel(a0)
 		move.w	#0,ground_vel(a0)
-		move.b	#2,status(a0)
 		move.w	#0,move_lock(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		andi.w	#$7FFF,art_tile(a0)
 		tst.b	art_tile(a1)
 		bpl.s	loc_14068
@@ -829,7 +823,7 @@ loc_140C6:
 loc_140CE:
 		move.b	#1,double_jump_flag(a0)
 		move.b	#$F0,double_jump_property(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		moveq	#0,d0
 		move.l	d0,x_vel(a0)	; clear x_vel and y_vel
 		move.w	d0,ground_vel(a0)
@@ -921,7 +915,7 @@ loc_141E2:
 loc_141F2:
 		move.b	#1,double_jump_flag(a0)
 		move.b	#$F0,double_jump_property(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		moveq	#0,d0
 		move.l	d0,x_vel(a0)	; clear x_vel and y_vel
 		move.w	d0,ground_vel(a0)
@@ -956,7 +950,7 @@ loc_14254:
 loc_1425C:
 		move.b	#1,double_jump_flag(a0)
 		move.b	#$F0,double_jump_property(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		move.w	#$100,x_vel(a0)
 		move.w	#0,y_vel(a0)
 		move.w	#0,ground_vel(a0)
@@ -971,7 +965,7 @@ loc_14286:
 		move.l	#(button_right_mask)<<16|button_right_mask,d0
 +
 		move.l	d0,(Ctrl2_Player).w
-		btst	#1,status(a0)
+		btst	#Status_InAir,status(a0)
 		bne.s	locret_142E0
 		move.w	#6,(Tails_CPU_routine).w
 		move.b	#0,object_control(a0)
@@ -979,7 +973,7 @@ loc_14286:
 		move.w	#0,x_vel(a0)
 		move.w	#0,y_vel(a0)
 		move.w	#0,ground_vel(a0)
-		move.b	#2,status(a0)
+		move.b	#1<<Status_InAir,status(a0)
 		move.w	#0,move_lock(a0)
 		andi.w	#$7FFF,art_tile(a0)
 
@@ -1043,10 +1037,10 @@ loc_14362:
 		move.w	y_pos(a0),d1
 		subi.w	#$10,d1
 		move.w	(Camera_stored_max_X_pos).w,d2
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		cmp.w	x_pos(a1),d0
 		blo.s	loc_14390
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		neg.w	d2
 
 loc_14390:
@@ -1079,7 +1073,7 @@ Tails_Carry_Sonic:
 		beq.w	loc_14534
 		cmpi.b	#4,routine(a1)
 		bhs.w	loc_14466
-		btst	#1,status(a1)
+		btst	#Status_InAir,status(a1)
 		beq.w	loc_1445A
 		move.w	(_unkF744).w,d1
 		cmp.w	x_vel(a1),d1
@@ -1110,13 +1104,13 @@ loc_1441C:
 
 loc_14428:
 		move.w	#-$380,y_vel(a1)
-		bset	#1,status(a1)
+		bset	#Status_InAir,status(a1)
 		move.b	#1,jumping(a1)
 		move.b	#$E,y_radius(a1)
 		move.b	#7,x_radius(a1)
 		move.b	#id_Roll,anim(a1)
-		bset	#2,status(a1)
-		bclr	#4,status(a1)
+		bset	#Status_Roll,status(a1)
+		bclr	#Status_RollJump,status(a1)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -1145,9 +1139,9 @@ loc_14474:
 
 loc_14492:
 		andi.b	#-4,render_flags(a1)
-		andi.b	#-2,status(a1)
+		andi.b	#~(1<<Status_Facing),status(a1)
 		move.b	status(a0),d0
-		andi.b	#1,d0
+		andi.b	#1<<Status_Facing,d0
 		or.b	d0,render_flags(a1)
 		or.b	d0,status(a1)
 		tst.b	(Reverse_gravity_flag).w
@@ -1242,13 +1236,13 @@ sub_1459E:
 		clr.b	anim_frame_timer(a1)
 		clr.b	anim_frame(a1)
 		move.b	#3,object_control(a1)
-		bset	#1,status(a1)
-		bclr	#4,status(a1)
+		bset	#Status_InAir,status(a1)
+		bclr	#Status_RollJump,status(a1)
 		move.b	#0,spin_dash_flag(a1)
 		andi.b	#-4,render_flags(a1)
-		andi.b	#-2,status(a1)
+		andi.b	#~(1<<Status_Facing),status(a1)
 		move.b	status(a0),d0
-		andi.b	#1,d0
+		andi.b	#1<<Status_Facing,d0
 		or.b	d0,render_flags(a1)
 		or.b	d0,status(a1)
 		move.w	x_vel(a0),(_unkF744).w
@@ -1285,9 +1279,7 @@ loc_1463A:
 		move.l	#Obj_AirCountdown,(v_Breathing_bubbles_P2).w
 		move.b	#$81,(v_Breathing_bubbles_P2+subtype).w
 		move.w	a0,(v_Breathing_bubbles_P2+parent).w
-		move.w	#$300,Max_speed_P2-Max_speed_P2(a4)
-		move.w	#6,Acceleration_P2-Max_speed_P2(a4)
-		move.w	#$40,Deceleration_P2-Max_speed_P2(a4)
+		bsr.w	Player_SetSpeed
 		cmpi.w	#4,(Tails_CPU_routine).w
 		beq.s	loc_1469C
 		tst.b	object_control(a0)
@@ -1308,9 +1300,7 @@ loc_146BA:
 		addq.b	#1,(Water_entered_counter).w
 		movea.l	a0,a1
 		bsr.w	Player_ResetAirTimer
-		move.w	#$600,Max_speed_P2-Max_speed_P2(a4)
-		move.w	#$C,Acceleration_P2-Max_speed_P2(a4)
-		move.w	#$80,Deceleration_P2-Max_speed_P2(a4)
+		bsr.w	Player_SetSpeed
 		cmpi.b	#4,routine(a0)
 		beq.s	loc_14718
 		cmpi.w	#4,(Tails_CPU_routine).w
@@ -1343,7 +1333,7 @@ Tails_Stand_Path:
 		beq.s	loc_14760
 		lea	(Player_1).w,a1
 		clr.b	object_control(a1)
-		bset	#1,status(a1)
+		bset	#Status_InAir,status(a1)
 		clr.w	(Flying_carrying_Sonic_flag).w
 
 loc_14760:
@@ -1368,11 +1358,10 @@ Tails_Stand_Freespace:
 		bsr.w	Tails_InputAcceleration_Freespace
 		bsr.w	Tails_Check_Screen_Boundaries
 		jsr	(MoveSprite_TestGravity).w
-		btst	#6,status(a0)
-		beq.s	loc_147DE
+		btst	#Status_Underwater,status(a0)
+		beq.s	+
 		subi.w	#$28,y_vel(a0)
-
-loc_147DE:
++
 		bsr.w	Player_JumpAngle
 		bra.w	Tails_DoLevelCollision
 ; ---------------------------------------------------------------------------
@@ -1432,7 +1421,7 @@ loc_14860:
 		blt.s	loc_1488C
 		tst.b	double_jump_property(a0)
 		beq.s	loc_1488C
-		btst	#6,status(a0)
+		btst	#Status_Underwater,status(a0)
 		beq.s	loc_14886
 		tst.b	(Flying_carrying_Sonic_flag).w
 		bne.s	loc_1488C
@@ -1455,7 +1444,7 @@ loc_14892:
 ; =============== S U B R O U T I N E =======================================
 
 Tails_Set_Flying_Animation:
-		btst	#6,status(a0)
+		btst	#Status_Underwater,status(a0)
 		bne.s	loc_14914
 		moveq	#$20,d0
 		tst.w	y_vel(a0)
@@ -1524,7 +1513,7 @@ Tails_Spin_Path:
 		beq.s	loc_1494C
 		lea	(Player_1).w,a1
 		clr.b	object_control(a1)
-		bset	#1,status(a1)
+		bset	#Status_InAir,status(a1)
 		clr.w	(Flying_carrying_Sonic_flag).w
 
 loc_1494C:
@@ -1546,7 +1535,7 @@ Tails_Spin_Freespace:
 		beq.s	loc_149BA
 		lea	(Player_1).w,a1
 		clr.b	object_control(a1)
-		bset	#1,status(a1)
+		bset	#Status_InAir,status(a1)
 		clr.w	(Flying_carrying_Sonic_flag).w
 
 loc_149BA:
@@ -1554,14 +1543,12 @@ loc_149BA:
 		bsr.w	Tails_InputAcceleration_Freespace
 		bsr.w	Tails_Check_Screen_Boundaries
 		jsr	(MoveSprite_TestGravity).w
-		btst	#6,status(a0)
-		beq.s	loc_149DA
+		btst	#Status_Underwater,status(a0)
+		beq.s	+
 		subi.w	#$28,y_vel(a0)
-
-loc_149DA:
++
 		bsr.w	Player_JumpAngle
-		bsr.w	Tails_DoLevelCollision
-		rts
+		bra.w	Tails_DoLevelCollision
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -1590,9 +1577,9 @@ loc_14A16:
 		bne.w	loc_14B14
 		tst.w	ground_vel(a0)
 		bne.w	loc_14B14
-		bclr	#5,status(a0)
+		bclr	#Status_Push,status(a0)
 		move.b	#5,anim(a0)
-		btst	#3,status(a0)
+		btst	#Status_OnObj,status(a0)
 		beq.s	loc_14A6C
 		movea.w	interact(a0),a1
 		tst.b	status(a1)
@@ -1620,7 +1607,7 @@ loc_14A6C:
 		bne.s	loc_14A8A
 
 loc_14A82:
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		bra.s	loc_14A98
 ; ---------------------------------------------------------------------------
 
@@ -1629,7 +1616,7 @@ loc_14A8A:
 		bne.s	loc_14AA0
 
 loc_14A92:
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 
 loc_14A98:
 		move.b	#6,anim(a0)
@@ -1763,9 +1750,9 @@ loc_14BA8:
 		beq.s	loc_14BFA
 		add.w	d1,x_vel(a0)
 		move.w	#0,ground_vel(a0)
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		bne.s	locret_14BF8
-		bset	#5,status(a0)
+		bset	#Status_Push,status(a0)
 
 locret_14BF8:
 		rts
@@ -1779,9 +1766,9 @@ loc_14BFA:
 loc_14C00:
 		sub.w	d1,x_vel(a0)
 		move.w	#0,ground_vel(a0)
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		beq.s	locret_14BF8
-		bset	#5,status(a0)
+		bset	#Status_Push,status(a0)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -1799,9 +1786,9 @@ sub_14C20:
 		bpl.s	loc_14C5A
 
 loc_14C28:
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		bne.s	loc_14C3C
-		bclr	#5,status(a0)
+		bclr	#Status_Push,status(a0)
 		move.b	#1,prev_anim(a0)
 
 loc_14C3C:
@@ -1838,7 +1825,7 @@ loc_14C62:
 		bmi.s	locret_14CAA
 		sfx	sfx_Skid
 		move.b	#$D,anim(a0)
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		cmpi.b	#$C,air_left(a0)
 		blo.s	locret_14CAA
 		move.b	#6,routine(a6)
@@ -1852,9 +1839,9 @@ locret_14CAA:
 sub_14CAC:
 		move.w	ground_vel(a0),d0
 		bmi.s	loc_14CE0
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		beq.s	loc_14CC6
-		bclr	#5,status(a0)
+		bclr	#Status_Push,status(a0)
 		move.b	#1,prev_anim(a0)
 
 loc_14CC6:
@@ -1889,7 +1876,7 @@ loc_14CE8:
 		bmi.s	locret_14D30
 		sfx	sfx_Skid
 		move.b	#$D,anim(a0)
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		cmpi.b	#$C,air_left(a0)
 		blo.s	locret_14D30
 		move.b	#6,routine(a6)
@@ -1952,7 +1939,7 @@ loc_14DA2:
 		bhs.s	loc_14DF0
 		tst.b	spin_dash_flag(a0)
 		bne.s	loc_14DDE
-		bclr	#2,status(a0)
+		bclr	#Status_Roll,status(a0)
 		move.b	y_radius(a0),d0
 		move.b	default_y_radius(a0),y_radius(a0)
 		move.b	default_x_radius(a0),x_radius(a0)
@@ -1970,7 +1957,7 @@ loc_14DD8:
 
 loc_14DDE:
 		move.w	#$400,ground_vel(a0)
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		beq.s	loc_14DF0
 		neg.w	ground_vel(a0)
 
@@ -2012,7 +1999,7 @@ sub_14E32:
 		bpl.s	loc_14E48
 
 loc_14E3A:
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		move.b	#2,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -2031,7 +2018,7 @@ loc_14E50:
 sub_14E56:
 		move.w	ground_vel(a0),d0
 		bmi.s	loc_14E6A
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		move.b	#2,anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -2051,12 +2038,12 @@ Tails_InputAcceleration_Freespace:
 		move.w	Max_speed_P2-Max_speed_P2(a4),d6
 		move.w	Acceleration_P2-Max_speed_P2(a4),d5
 		asl.w	#1,d5
-		btst	#4,status(a0)
+		btst	#Status_RollJump,status(a0)
 		bne.s	loc_14ECC
 		move.w	x_vel(a0),d0
 		btst	#2,(Ctrl_2_logical).w
 		beq.s	loc_14EAC
-		bset	#0,status(a0)
+		bset	#Status_Facing,status(a0)
 		sub.w	d5,d0
 		move.w	d6,d1
 		neg.w	d1
@@ -2070,7 +2057,7 @@ Tails_InputAcceleration_Freespace:
 loc_14EAC:
 		btst	#3,(Ctrl_2_logical).w
 		beq.s	loc_14EC8
-		bclr	#0,status(a0)
+		bclr	#Status_Facing,status(a0)
 		add.w	d5,d0
 		cmp.w	d6,d0
 		blt.s	loc_14EC8
@@ -2184,7 +2171,7 @@ Tails_Roll:
 loc_14F94:
 		cmpi.w	#$100,d0
 		bhs.s	loc_14FBA
-		btst	#3,status(a0)
+		btst	#Status_OnObj,status(a0)
 		bne.s	locret_14FA8
 		move.b	#8,anim(a0)
 
@@ -2200,13 +2187,13 @@ loc_14FAA:
 ; ---------------------------------------------------------------------------
 
 loc_14FBA:
-		btst	#2,status(a0)
+		btst	#Status_Roll,status(a0)
 		beq.s	loc_14FC4
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_14FC4:
-		bset	#2,status(a0)
+		bset	#Status_Roll,status(a0)
 		move.b	#$E,y_radius(a0)
 		move.b	#7,x_radius(a0)
 		move.b	#2,anim(a0)
@@ -2245,36 +2232,31 @@ loc_15024:
 		movem.l	(sp)+,a4-a6
 		cmpi.w	#6,d1
 		blt.w	locret_150D0
-		move.w	#$680,d2
-		btst	#6,status(a0)
-		beq.s	loc_1504C
-		move.w	#$380,d2
-
-loc_1504C:
 		moveq	#0,d0
 		move.b	angle(a0),d0
 		subi.b	#$40,d0
 		jsr	(GetSineCosine).w
+		move.w	Jump_height_P2-Max_speed_P2(a4),d2
 		muls.w	d2,d1
 		asr.l	#8,d1
 		add.w	d1,x_vel(a0)
 		muls.w	d2,d0
 		asr.l	#8,d0
 		add.w	d0,y_vel(a0)
-		bset	#1,status(a0)
-		bclr	#5,status(a0)
+		bset	#Status_InAir,status(a0)
+		bclr	#Status_Push,status(a0)
 		addq.l	#4,sp
 		move.b	#1,jumping(a0)
 		clr.b	stick_to_convex(a0)
 		sfx	sfx_Jump
 		move.b	default_y_radius(a0),y_radius(a0)
 		move.b	default_x_radius(a0),x_radius(a0)
-		btst	#2,status(a0)
+		btst	#Status_Roll,status(a0)
 		bne.s	loc_150D2
 		move.b	#$E,y_radius(a0)
 		move.b	#7,x_radius(a0)
 		move.b	#2,anim(a0)
-		bset	#2,status(a0)
+		bset	#Status_Roll,status(a0)
 		move.b	y_radius(a0),d0
 		sub.b	default_y_radius(a0),d0
 		ext.w	d0
@@ -2290,7 +2272,7 @@ locret_150D0:
 ; ---------------------------------------------------------------------------
 
 loc_150D2:
-		bset	#4,status(a0)
+		bset	#Status_RollJump,status(a0)
 		rts
 
 ; =============== S U B R O U T I N E =======================================
@@ -2299,11 +2281,10 @@ Tails_JumpHeight:
 		tst.b	jumping(a0)
 		beq.s	loc_15106
 		move.w	#-$400,d1
-		btst	#6,status(a0)
-		beq.s	loc_150F0
+		btst	#Status_Underwater,status(a0)
+		beq.s	+
 		move.w	#-$200,d1
-
-loc_150F0:
++
 		cmp.w	y_vel(a0),d1
 		ble.s	Tails_Test_For_Flight
 		move.b	(Ctrl_2_logical).w,d0
@@ -2342,9 +2323,9 @@ loc_15156:
 		beq.s	locret_151A2
 
 loc_1515C:
-		btst	#2,status(a0)
+		btst	#Status_Roll,status(a0)
 		beq.s	loc_1518C
-		bclr	#2,status(a0)
+		bclr	#Status_Roll,status(a0)
 		move.b	y_radius(a0),d1
 		move.b	default_y_radius(a0),y_radius(a0)
 		move.b	default_x_radius(a0),x_radius(a0)
@@ -2358,7 +2339,7 @@ loc_15188:
 		add.w	d1,y_pos(a0)
 
 loc_1518C:
-		bclr	#4,status(a0)
+		bclr	#Status_RollJump,status(a0)
 		move.b	#1,double_jump_flag(a0)
 		move.b	#-$10,double_jump_property(a0)
 		bsr.w	Tails_Set_Flying_Animation
@@ -2431,11 +2412,11 @@ loc_152A8:
 		move.b	d0,(a1)+			; H_scroll_frame_offset
 		move.b	(Pos_table_byte).w,(a1)+	; H_scroll_frame_copy ; Back up the position array index for later.
 
-		btst	#0,status(a0)
+		btst	#Status_Facing,status(a0)
 		beq.s	loc_152F8
 		neg.w	ground_vel(a0)
 loc_152F8:
-		bset	#2,status(a0)
+		bset	#Status_Roll,status(a0)
 		move.b	#0,anim(a6)
 		sfx	sfx_Dash
 		bra.s	loc_1537A
@@ -2751,9 +2732,9 @@ Tails_TouchFloor:
 		move.b	y_radius(a0),d0
 		move.b	default_y_radius(a0),y_radius(a0)
 		move.b	default_x_radius(a0),x_radius(a0)
-		btst	#2,status(a0)
+		btst	#Status_Roll,status(a0)
 		beq.s	loc_1565E
-		bclr	#2,status(a0)
+		bclr	#Status_Roll,status(a0)
 		move.b	#0,anim(a0)
 		sub.b	default_y_radius(a0),d0
 		ext.w	d0
@@ -2773,9 +2754,9 @@ loc_15658:
 		add.w	d0,y_pos(a0)
 
 loc_1565E:
-		bclr	#1,status(a0)
-		bclr	#5,status(a0)
-		bclr	#4,status(a0)
+		bclr	#Status_InAir,status(a0)
+		bclr	#Status_Push,status(a0)
+		bclr	#Status_RollJump,status(a0)
 		move.b	#0,jumping(a0)
 		moveq	#0,d0
 		move.b	d0,(Chain_bonus_counter).w
@@ -2804,17 +2785,16 @@ loc_156BE:
 		beq.s	loc_156D6
 		lea	(Player_1).w,a1
 		clr.b	object_control(a1)
-		bset	#1,status(a1)
+		bset	#Status_InAir,status(a1)
 		clr.w	(Flying_carrying_Sonic_flag).w
 
 loc_156D6:
 		jsr	(MoveSprite2_TestGravity).w
 		addi.w	#$30,y_vel(a0)
-		btst	#6,status(a0)
-		beq.s	loc_156F0
+		btst	#Status_Underwater,status(a0)
+		beq.s	+
 		subi.w	#$20,y_vel(a0)
-
-loc_156F0:
++
 		cmpi.w	#-$100,(Camera_min_Y_pos).w
 		bne.s	loc_15700
 		move.w	(Screen_Y_wrap_value).w,d0
@@ -2853,7 +2833,7 @@ loc_15742:
 		movem.l	a4-a6,-(sp)
 		bsr.w	Tails_DoLevelCollision
 		movem.l	(sp)+,a4-a6
-		btst	#1,status(a0)
+		btst	#Status_InAir,status(a0)
 		bne.s	locret_15786
 		moveq	#0,d0
 		move.w	d0,y_vel(a0)
@@ -2891,7 +2871,7 @@ loc_157B0:
 		beq.s	loc_157C8
 		lea	(Player_1).w,a1
 		clr.b	object_control(a1)
-		bset	#1,status(a1)
+		bset	#Status_InAir,status(a1)
 		clr.w	(Flying_carrying_Sonic_flag).w
 
 loc_157C8:
@@ -2930,7 +2910,7 @@ loc_15810:
 		beq.s	loc_15828
 		lea	(Player_1).w,a1
 		clr.b	object_control(a1)
-		bset	#1,status(a1)
+		bset	#Status_InAir,status(a1)
 		clr.w	(Flying_carrying_Sonic_flag).w
 
 loc_15828:
@@ -2964,7 +2944,7 @@ Animate_Tails_Part2:
 		move.b	d0,prev_anim(a0)
 		move.b	#0,anim_frame(a0)
 		move.b	#0,anim_frame_timer(a0)
-		bclr	#5,status(a0)
+		bclr	#Status_Push,status(a0)
 
 loc_1588A:
 		add.w	d0,d0
@@ -3052,7 +3032,7 @@ loc_15932:
 		andi.b	#-4,render_flags(a0)
 		eor.b	d1,d2
 		or.b	d2,render_flags(a0)
-		btst	#5,status(a0)
+		btst	#Status_Push,status(a0)
 		bne.w	loc_15A14
 		lsr.b	#4,d0
 		andi.b	#6,d0
