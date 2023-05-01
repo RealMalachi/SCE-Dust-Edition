@@ -19,17 +19,24 @@ off_1E5EE: offsetTable
 ; ---------------------------------------------------------------------------
 
 loc_1E5F6:
-		addq.b	#2,routine(a0)
 		jsr	(Create_New_Sprite).w
-		bne.s	loc_1E61A
+		bne.s	+
 		move.l	#Obj_Animal,address(a1)
-		move.w	x_pos(a0),x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		move.w	objoff_3E(a0),objoff_3E(a1)
-
+		move.w	x_pos(a0),d1
+		move.w	y_pos(a0),d2
+		move.w	d1,x_pos(a1)
+		move.w	d2,y_pos(a1)
+		jsr	(Create_New_Sprite.cont).w
+		bne.s	+
+		move.l	#Obj_EnemyScore,address(a1)
+		move.w	d1,x_pos(a1)
+		move.w	d2,y_pos(a1)
+		move.w	objoff_3E(a0),d1
+		lsr.w	#1,d1
+		move.b	d1,mapping_frame(a1)
++
 loc_1E61A:
 		sfx	sfx_Break
-		addq.b	#2,routine(a0)
 
 loc_1E626:
 		move.l	#Map_Explosion,mappings(a0)
@@ -37,9 +44,8 @@ loc_1E626:
 		andi.w	#$8000,d0
 		ori.w	#$5A0,d0
 		move.w	d0,art_tile(a0)
-		move.b	#4,render_flags(a0)
 		move.w	#make_priority(1),priority(a0)
-		clr.b	collision_flags(a0)
+		move.b	#4,render_flags(a0)
 		move.w	#bytes_to_word(24/2,24/2),height_pixels(a0)		; set height and width
 		move.b	#3,anim_frame_timer(a0)
 		clr.b	mapping_frame(a0)

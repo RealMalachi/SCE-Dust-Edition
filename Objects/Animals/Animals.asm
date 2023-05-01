@@ -171,15 +171,7 @@ loc_2C924:
 		move.w	#-$400,y_vel(a0)
 		tst.b	$38(a0)
 		bne.s	loc_2C9CA
-		jsr	(Create_New_Sprite).w
-		bne.s	+
-		move.l	#Obj_EnemyScore,address(a1)
-		move.w	x_pos(a0),x_pos(a1)
-		move.w	y_pos(a0),y_pos(a1)
-		move.w	$3E(a0),d0
-		lsr.w	#1,d0
-		move.b	d0,mapping_frame(a1)
-+		jmp	(Draw_Sprite).w
+		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 
 loc_2C9CA:

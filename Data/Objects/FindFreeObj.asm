@@ -19,8 +19,10 @@ SingleObjLoad:
 Create_New_Sprite:
 	lea	(Dynamic_object_RAM-next_object).w,a1	; start address for dynamic object RAM
 	moveq	#((Dynamic_object_RAM_end-Dynamic_object_RAM)/object_size)-1,d0
+.cont
 .loop
 	lea	next_object(a1),a1	; goto next object RAM slot
+.arbitrary
 	tst.l	address(a1)		; is object RAM slot empty?
 	dbeq	d0,.loop		; if so, rts. Otherwise, loop. If loop counter hits 0, rts
 	rts
@@ -35,6 +37,7 @@ SingleObjLoad2:
 FindNextFreeObj:
 Create_New_Sprite3:
 	movea.l	a0,a1
+;	lea	(a0),a1
 ; find free slot starting directly after an arbitrary position (assumed to be in Dynamic_Object_RAM)
 ; commonly used as a continuation in object creating loops
 Create_New_Sprite4:
