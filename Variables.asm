@@ -502,9 +502,9 @@ Apparent_zone_and_act:				ds.b 1
 a_act:						= *
 Apparent_act:					ds.b 1
 
-Player_mode:					ds.w 1			; 0 = Sonic and Tails, 1 = Sonic alone, 2 = Tails alone, 3 = Knuckles alone
-Life_count:					ds.b 1
-Continue_count:					ds.b 1
+Player_mode:					ds.w 1		; 0 = Sonic and Tails, 1 = Sonic alone, 2 = Tails alone, 3 = Knuckles alone
+Life_count:					ds.b 1		; BCD Format
+Continue_count:					ds.b 1		; Still hex
 f_timeover:					= *
 Time_over_flag:					ds.b 1
 Extra_life_flags:				ds.b 1

@@ -148,7 +148,7 @@ LevelSelect_Controls:
 		move.w	d3,(Apparent_zone_and_act).w
 
 		; set
-		move.b	#3,(Life_count).w
+		move.b	#$10,(Life_count).w
 		move.b	#3,(Continue_count).w
 		move.l	#5000,(Next_extra_life_score).w
 

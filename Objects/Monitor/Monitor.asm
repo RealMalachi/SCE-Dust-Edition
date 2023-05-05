@@ -319,9 +319,7 @@ Monitor_Give_Eggman:
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_1up:
-		addq.b	#1,(Life_count).w
-		addq.b	#1,(Update_HUD_life_count).w
-		music	mus_ExtraLife,1								; play the 1up song
+		jmp	(AddExtraLife)			; see Hud_Update
 ; ---------------------------------------------------------------------------
 
 Monitor_Give_Rings:
@@ -331,17 +329,17 @@ Monitor_Give_Rings:
 
 		addi.w	#10,(a2)										; add 10 to rings
 		cmpi.w	#999,(a2)									; does the player 1 have 999 or less rings?
-		blo.s		loc_1D8DA									; if yes, branch
+		blo.s	loc_1D8DA									; if yes, branch
 		move.w	#999,(a2)									; set max rings
 
 loc_1D8DA:
 		ori.b	#1,(a3)										; update the rings counter
 		cmpi.w	#100,(a2)									; does the player 1 have less than 100 rings?
-		blo.s		loc_1D8F6									; if yes, play the ring sound
+		blo.s	loc_1D8F6									; if yes, play the ring sound
 		bset	#1,(a4)											; test and set the flag for the first extra life
 		beq.s	loc_1D8FE									; if it was clear before, branch
 		cmpi.w	#200,(a2)									; does the player 1 have less than 200 rings?
-		blo.s		loc_1D8F6									; if yes, play the ring sound
+		blo.s	loc_1D8F6									; if yes, play the ring sound
 		bset	#2,(a4)											; test and set the flag for the second extra life
 		beq.s	loc_1D8FE									; if it was set before, play the ring sound
 

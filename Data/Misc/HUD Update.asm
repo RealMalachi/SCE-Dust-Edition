@@ -6,24 +6,36 @@
 
 AddPoints:
 HUD_AddToScore:
-		move.b	#1,(Update_HUD_score).w						; set score counter to update
+		move.b	#1,(Update_HUD_score).w		; set score counter to update
 		lea	(Score).w,a3
-		add.l	d0,(a3)										; add d0*10 to the score
-		move.l	#999999,d1									; 9999990 maximum points
-		cmp.l	(a3),d1										; is score below 999999?
-		bhi.s	.check										; if yes, branch
-		move.l	d1,(a3)										; reset score to 999999
-
+		add.l	d0,(a3)				; add d0*10 to the score
+		move.l	#999999,d1			; 9999990 maximum points
+		cmp.l	(a3),d1				; is score below 999999?
+		bhi.s	.check				; if yes, branch
+		move.l	d1,(a3)				; reset score to 999999
 .check
 		move.l	(a3),d0
-		cmp.l	(Next_extra_life_score).w,d0					; if score is greater than next 50000 point increment
-		blo.s		.return
+		cmp.l	(Next_extra_life_score).w,d0	; if score is greater than next 50000 point increment
+		blo.s	HUD_AddToLifeCounter.return
 		addi.l	#5000,(Next_extra_life_score).w
-		addq.b	#1,(Life_count).w								; give an additional extra life
+AddExtraLife:
+HUD_AddToLifeCounter:
+	;	moveq	#0,d0
+		move.b	(Life_count).w,d0		; get life count
+		cmp.b	#$99,d0				; is it 99?
+		bhs.s	.maxlife			; if so, don't increase
+		moveq	#1,d1
+		abcd	d1,d0				; add number in d1 to d0
+		bcc.s	+
+		moveq	#signextendB($99),d0		; if it overflowed, cap to $99
++
+.final
+		move.b	d0,(Life_count).w		; give an additional extra life
 		addq.b	#1,(Update_HUD_life_count).w
-		music	mus_ExtraLife,1								; play the 1up song
-; ---------------------------------------------------------------------------
-
+		music	mus_ExtraLife,1			; play the 1up song
+; play a unique sound when you hit 99 lives. A fun easter egg, me thinks
+.maxlife
+		sfx	sfx_Menu,2
 .return
 		rts
 
@@ -416,55 +428,35 @@ loc_1C9D6:
 ; =============== S U B R O U T I N E =======================================
 
 HUD_Lives:
+		lea	(VDP_data_port).l,a6
 		locVRAM	tiles_to_bytes(ArtTile_LifeIcon+9),d0		; set VRAM address
-		moveq	#0,d1
 		move.b	(Life_count).w,d1
-		lea	Hud_10(pc),a2
-		moveq	#2-1,d6
-		moveq	#0,d4
-		lea	(ArtUnc_LivesDigits).l,a1
-
-loc_E138:
-		move.l	d0,VDP_control_port-VDP_data_port(a6)
-		moveq	#0,d2
-		move.l	(a2)+,d3
-
-loc_E140:
-		sub.l	d3,d1
-		bcs.s	loc_E148
-		addq.w	#1,d2
-		bra.s	loc_E140
-; ---------------------------------------------------------------------------
-
-loc_E148:
-		add.l	d3,d1
-		tst.w	d2
-		beq.s	loc_E152
-		move.w	#1,d4
-
-loc_E152:
-		tst.w	d4
-		beq.s	loc_E178
-
-loc_E156:
+		move.b	d1,d2
+		andi.w	#$F0,d1
+		lsl.w	#5-4,d1
+		andi.w	#$F,d2
 		lsl.w	#5,d2
-		lea	(a1,d2.w),a3
-	rept 8
-		move.l	(a3)+,VDP_data_port-VDP_data_port(a6)
-	endr
-
-loc_E16C:
-		addi.l	#$400000,d0
-		dbf	d6,loc_E138
+		lea	(ArtUnc_LivesDigits).l,a1
+; first number
+		moveq	#0,d5
+		bsr.s	.loop
+; second number
+		move.w	d2,d1
+		addi.l	#$400000,d0	; go up by a tile
+		moveq	#-1,d5		; make the last number never blank
+.loop
+		move.l	d0,VDP_control_port-VDP_data_port(a6)
+		moveq	#8-1,d6
+		tst.w	d1		; is the number 0?
+		sne	d5		; if not, prevent further blanking...
+		add.w	d5,d5		; double the blanking flag with any other times it was set
+		beq.s	.blanktiles	; if it's 0, blanking wasn't disabled
+		lea	(a1,d1.w),a2
+-		move.l	(a2)+,VDP_data_port-VDP_data_port(a6)
+		dbf	d6,-
 		rts
-; ---------------------------------------------------------------------------
-
-loc_E178:
-		tst.w	d6
-		beq.s	loc_E156
-		moveq	#8-1,d5
-
-loc_E17E:
-		move.l	#0,(a6)
-		dbf	d5,loc_E17E
-		bra.s	loc_E16C
+.blanktiles
+		moveq	#0,d1
+-		move.l	d1,VDP_data_port-VDP_data_port(a6)
+		dbf	d6,-
+		rts

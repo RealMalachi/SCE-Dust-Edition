@@ -2384,17 +2384,21 @@ loc_12432:
 		move.b	#id_SonicRestart,routine(a0)
 		move.w	#1*60,restart_timer(a0)
 		clr.b	(Respawn_table_keep).w
+		move.b	(Life_count).w,d0
+		beq.s	.gameover		; if already 0, game over
+		moveq	#1,d1
+		sbcd	d1,d0
+		move.b	d0,(Life_count).w								; give an additional extra life
 		addq.b	#1,(Update_HUD_life_count).w
-		subq.b	#1,(Life_count).w
-		bne.s	.test_timeover
-		clr.b	(Time_over_flag).w
-		moveq	#0,d0	; use Game Over frames
-		bra.s	.gameover
 .test_timeover
-		tst.b	(Time_over_flag).w
-		beq.s	locret_1258E
-		moveq	#2,d0	; use Time Over frames
+		tst.b	(Time_over_flag).w	; did we get a time over?
+		beq.s	locret_1258E		; if not, no game over
+		moveq	#2,d0			; use Time Over frames
+		bra.s	+
 .gameover
+		clr.b	(Time_over_flag).w	; game over takes priority
+		moveq	#0,d0			; use Game Over frames
++
 		clr.w	restart_timer(a0)	; don't restart with player object (use Game Over instead)
 		lea	(v_GameOver_Game).w,a1
 		lea	v_GameOver_Over-v_GameOver_Game(a1),a2

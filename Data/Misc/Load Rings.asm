@@ -296,26 +296,24 @@ AddRings:
 
 GiveRing:
 CollectRing:
-		addq.w	#1,(Ring_count).w					; add 1 to rings
-		cmpi.w	#999,(Ring_count).w				; does the player 1 have 999 or less rings?
-		blo.s		.skip							; if yes, branch
-		move.w	#999,(Ring_count).w				; set max rings
+		addq.w	#1,(Ring_count).w		; add 1 to rings
+		cmpi.w	#999,(Ring_count).w		; does the player 1 have 999 or less rings?
+		blo.s	.skip				; if yes, branch
+		move.w	#999,(Ring_count).w		; set max rings
 
 .skip
 		ori.b	#1,(Update_HUD_ring_count).w	; update the rings counter
-		cmpi.w	#100,(Ring_count).w				; does the player 1 have less than 100 rings?
-		blo.s		JmpTo_Play_SFX					; if yes, play the ring sound
-		bset	#1,(Extra_life_flags).w					; test and set the flag for the first extra life
-		beq.s	loc_1A5D8						; if it was clear before, branch
-		cmpi.w	#200,(Ring_count).w				; does the player 1 have less than 200 rings?
-		blo.s		JmpTo_Play_SFX					; if yes, play the ring sound
-		bset	#2,(Extra_life_flags).w					; test and set the flag for the second extra life
-		bne.s	JmpTo_Play_SFX					; if it was set before, play the ring sound
+		cmpi.w	#100,(Ring_count).w		; does the player 1 have less than 100 rings?
+		blo.s	JmpTo_Play_SFX			; if yes, play the ring sound
+		bset	#1,(Extra_life_flags).w		; test and set the flag for the first extra life
+		beq.s	loc_1A5D8			; if it was clear before, branch
+		cmpi.w	#200,(Ring_count).w		; does the player 1 have less than 200 rings?
+		blo.s	JmpTo_Play_SFX			; if yes, play the ring sound
+		bset	#2,(Extra_life_flags).w		; test and set the flag for the second extra life
+		bne.s	JmpTo_Play_SFX			; if it was set before, play the ring sound
 
 loc_1A5D8:
-		addq.b	#1,(Life_count).w					; add 1 to the life count
-		addq.b	#1,(Update_HUD_life_count).w		; add 1 to the displayed life count
-		music	mus_ExtraLife,1					; play the 1up song
+		jmp	(AddExtraLife)			; see Hud_Update
 ; ---------------------------------------------------------------------------
 
 JmpTo_Play_SFX:
