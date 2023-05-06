@@ -1,3 +1,18 @@
+; they all have to be even numbers
+PlayCamera_Middle	= (224/2)-16
+PlayCamera_Up		= PlayCamera_Middle+104
+PlayCamera_Down		= PlayCamera_Middle-88
+PlayCamera_UpRev	= PlayCamera_Middle-72
+PlayCamera_DownRev	= PlayCamera_Middle+120
+; adjusts player camera back to the middle
+resetlookcamerapos macro reg
+	cmpi.w	#PlayCamera_Middle,reg
+	beq.s	++
+	bge.s	+
+	addq.w	#2+2,reg
++	subq.w	#2,reg
++
+	endm
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -666,13 +681,7 @@ loc_112EA:
 		clr.b	scroll_delay_counter(a0)
 
 loc_112F0:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_112FC
-		bcc.s	loc_112FA
-		addq.w	#4,(a5)
-
-loc_112FA:
-		subq.w	#2,(a5)
+	resetlookcamerapos (a5)
 
 loc_112FC:
 		move.b	(Ctrl_1_logical).w,d0
@@ -954,15 +963,7 @@ loc_115B4:
 		neg.w	ground_vel(a0)
 
 loc_115C6:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_115D2
-		bcc.s	loc_115D0
-		addq.w	#4,(a5)
-
-loc_115D0:
-		subq.w	#2,(a5)
-
-loc_115D2:
+	resetlookcamerapos (a5)
 		move.b	angle(a0),d0
 		jsr	(GetSineCosine).w
 		move.w	ground_vel(a0),d2
@@ -1064,15 +1065,7 @@ loc_1169E:
 		move.w	d0,x_vel(a0)
 
 loc_116A2:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_116AE
-		bcc.s	loc_116AC
-		addq.w	#4,(a5)
-
-loc_116AC:
-		subq.w	#2,(a5)
-
-loc_116AE:
+	resetlookcamerapos (a5)
 		cmpi.w	#-$400,y_vel(a0)
 		bcs.s	locret_116DC
 		move.w	x_vel(a0),d0
@@ -1435,16 +1428,17 @@ loc_11C5E:
 		move.b	#id_Roll,anim(a0)
 		addq.w	#5,y_pos(a0)
 		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_11C8C
+		beq.s	+
 		subi.w	#$A,y_pos(a0)
-
-loc_11C8C:
++
 		moveq	#0,d0
 		move.b	d0,spin_dash_flag(a0)
 		move.b	spin_dash_counter(a0),d0
 		add.w	d0,d0
-		move.w	word_11CF2(pc,d0.w),ground_vel(a0)
-		move.w	ground_vel(a0),d0
+		move.w	word_11CF2(pc,d0.w),d0
+		move.w	d0,ground_vel(a0)
+		btst	#Status_Underwater,status(a0)
+		bne.s	.water
 		subi.w	#$800,d0
 
 	; To fix a bug in 'MoveCameraX', we need an extra variable, so this
@@ -1459,12 +1453,14 @@ loc_11C8C:
 		lea	(H_scroll_frame_offset).w,a1
 		move.b	d0,(a1)+			; H_scroll_frame_offset
 		move.b	(Pos_table_byte).w,(a1)+	; H_scroll_frame_copy ; Back up the position array index for later.
-
+		bra.s	+
+.water
+		lsr.w	ground_vel(a0)
++
 		btst	#Status_Facing,status(a0)
-		beq.s	loc_11CDC
+		beq.s	+
 		neg.w	ground_vel(a0)
-
-loc_11CDC:
++
 		bset	#Status_Roll,status(a0)
 		clr.b	anim(a6)		; v_Dust
 		sfx	sfx_Dash
@@ -1495,45 +1491,37 @@ word_11D04:
 
 loc_11D16:
 		tst.w	spin_dash_counter(a0)
-		beq.s	loc_11D2E
+		beq.s	+
 		move.w	spin_dash_counter(a0),d0
 		lsr.w	#5,d0
 		sub.w	d0,spin_dash_counter(a0)
-		bcc.s	loc_11D2E
+		bcc.s	+
 		clr.w	spin_dash_counter(a0)
-
-loc_11D2E:
++
 		move.b	(Ctrl_1_pressed_logical).w,d0
 		andi.b	#btnA+btnB+btnC,d0
-		beq.w	loc_11D5E
+		beq.s	+
 		move.w	#bytes_to_word(id_SpinDash,id_Walk),anim(a0)
 		sfx	sfx_SpinDash
 		addi.w	#$200,spin_dash_counter(a0)
 		cmpi.w	#$800,spin_dash_counter(a0)
-		bcs.s	loc_11D5E
+		bcs.s	+
 		move.w	#$800,spin_dash_counter(a0)
-
++
 loc_11D5E:
 	if	ExtendedCamera
 		moveq	#0,d0
 		move.b	spin_dash_counter(a0),d0
 		add.w	d0,d0
-		move.w	word_11CF2(pc,d0.w),ground_vel(a0)
+		move.w	word_11CF2(pc,d0.w),d0
 		btst	#Status_Facing,status(a0)
 		beq.s	+
-		neg.w	ground_vel(a0)
+		neg.w	d0
 +
+		move.w	d0,ground_vel(a0)
 	endif
 		addq.l	#4,sp
-		cmpi.w	#$60,(a5)
-		beq.s	loc_11D6C
-		bcc.s	loc_11D6A
-		addq.w	#4,(a5)
-
-loc_11D6A:
-		subq.w	#2,(a5)
-
-loc_11D6C:
+	resetlookcamerapos (a5)
 		bsr.w	Player_LevelBound
 		bra.w	Call_Player_AnglePos
 

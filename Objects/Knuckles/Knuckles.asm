@@ -1263,15 +1263,7 @@ Knuckles_Move_Glide:
 		asr.w	ground_vel(a0)
 ; loc_170B4:
 .doNotKillspeed:
-		cmpi.w	#$60,(a5)
-		beq.s	.doNotModifyBias
-		bhs.s	.goUp
-		addq.w	#2*2,(a5)
-
-.goUp:
-		subq.w	#2,(a5)
-; locret_170C0:
-.doNotModifyBias:
+	resetlookcamerapos (a5)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -1467,13 +1459,7 @@ loc_1731C:
 		move.b	#0,scroll_delay_counter(a0)
 
 loc_17322:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_1732E
-		bcc.s	loc_1732C
-		addq.w	#4,(a5)
-
-loc_1732C:
-		subq.w	#2,(a5)
+	resetlookcamerapos (a5)
 
 loc_1732E:
 		move.b	(Ctrl_1_logical).w,d0
@@ -1763,13 +1749,7 @@ loc_175E6:
 		neg.w	ground_vel(a0)
 
 loc_175F8:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_17604
-		bcc.s	loc_17602
-		addq.w	#4,(a5)
-
-loc_17602:
-		subq.w	#2,(a5)
+	resetlookcamerapos (a5)
 
 loc_17604:
 		move.b	angle(a0),d0
@@ -1872,13 +1852,7 @@ loc_176D0:
 		move.w	d0,x_vel(a0)
 
 loc_176D4:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_176E0
-		bcc.s	loc_176DE
-		addq.w	#4,(a5)
-
-loc_176DE:
-		subq.w	#2,(a5)
+	resetlookcamerapos (a5)
 
 loc_176E0:
 		cmpi.w	#-$400,y_vel(a0)

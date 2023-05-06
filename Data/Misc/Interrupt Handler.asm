@@ -1,3 +1,11 @@
+UpdatePaletteVint macro
+	tst.b	(Water_full_screen_flag).w
+	beq.s	+
+	dma68kToVDP Water_palette,$0000,$80,CRAM
+	bra.s	++
++	dma68kToVDP Normal_palette,$0000,$80,CRAM
++
+	endm
 ; ---------------------------------------------------------------------------
 ; Vertical interrupt handler
 ; ---------------------------------------------------------------------------
@@ -24,7 +32,7 @@ VInt:
 .notpal
 		st	(H_int_flag).w		; allow Horizontal Interrupt code to run
 		st	(V_int_flag).w		; set that Vsync was successful
-		movea.l	(V_int_routine).w,a0	; load address to special Vint routine in a1
+		movea.l	(V_int_routine).w,a0	; load address to the gamemodes Vint routine
 		jsr	(a0)			; run code
 
 VInt_Music:
@@ -71,16 +79,7 @@ VInt_Lag_Level:
 .notpal
 		st	(H_int_flag).w							; set HInt flag
 		stopZ80
-		tst.b	(Water_full_screen_flag).w					; is water above top of screen?
-		bne.s	VInt_Lag_FullyUnderwater 			; if yes, branch
-		dma68kToVDP Normal_palette,$0000,$80,CRAM
-		bra.s	VInt_Lag_Water_Cont
-; ---------------------------------------------------------------------------
-
-VInt_Lag_FullyUnderwater:
-		dma68kToVDP Water_palette,$0000,$80,CRAM
-
-VInt_Lag_Water_Cont:
+	UpdatePaletteVint
 		move.w	(H_int_counter_command).w,VDP_control_port-VDP_control_port(a5)
 		startZ80
 		bra.w	VInt_Music
@@ -152,15 +151,7 @@ Do_ControllerPal:
 		stopZ802
 		jsr	(Poll_Controllers).w
 		startZ802
-		tst.b	(Water_full_screen_flag).w
-		bne.s	.water
-		dma68kToVDP Normal_palette,$0000,$80,CRAM
-		bra.s	.skipwater
-
-.water
-		dma68kToVDP Water_palette,$0000,$80,CRAM
-
-.skipwater
+	UpdatePaletteVint
 		dma68kToVDP Sprite_table_buffer,vram_sprites,$280,VRAM
 		dma68kToVDP H_scroll_buffer,vram_hscroll,(224<<2),VRAM
 		if OptimiseStopZ80=0
@@ -246,15 +237,7 @@ VInt_Level_NoFlash:
 ; ---------------------------------------------------------------------------
 
 VInt_Level_NoNegativeFlash:
-		tst.b	(Water_full_screen_flag).w
-		bne.s	.water
-		dma68kToVDP Normal_palette,$0000,$80,CRAM
-		bra.s	.skipwater
-
-.water
-		dma68kToVDP Water_palette,$0000,$80,CRAM
-
-.skipwater
+	UpdatePaletteVint
 		move.w	(H_int_counter_command).w,VDP_control_port-VDP_control_port(a5)
 
 VInt_Level_Cont:

@@ -529,13 +529,13 @@ loc_86AB0:
 		moveq	#0,d2
 		move.b	(Current_zone).w,d2
 		add.w	d2,d2
-		lea	byte_2C7BA(pc),a1
+		lea	Obj_Animal_ZoneNumber(pc),a1
 		adda.w	d2,a1
 		lsr.w	#1,d0
 		move.b	(a1,d0.w),d0
-		lsl.w	#3,d0
-		lea	word_2C7EA(pc),a2
-		move.l	4(a2,d0.w),mappings(a0)
+	;	lsl.w	#3,d0
+		lea	Obj_Animal_Prop(pc),a2
+		move.l	(a2,d0.w),mappings(a0)
 		lsl.w	#2,d1
 		move.w	d1,$2E(a0)
 		movea.w	$46(a0),a1

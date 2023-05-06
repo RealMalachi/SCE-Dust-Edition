@@ -166,20 +166,18 @@ Player_Angle:
 		move.w	d0,d3
 		move.b	(Secondary_Angle).w,d2
 		cmp.w	d0,d1
-		ble.s		loc_ED5E
+		ble.s	+
 		move.b	(Primary_Angle).w,d2
 		move.w	d1,d3
 		move.w	d0,d1
-
-loc_ED5E:
++
 		btst	#0,d2
 		bne.s	loc_ED7A
 		move.b	d2,d0
 		sub.b	angle(a0),d0
-		bpl.s	loc_ED6E
+		bpl.s	+
 		neg.b	d0
-
-loc_ED6E:
++
 		cmpi.b	#$20,d0
 		bhs.s	loc_ED7A
 		move.b	d2,angle(a0)
@@ -240,16 +238,14 @@ loc_EE22:
 		tst.b	stick_to_convex(a0)
 		bne.s	loc_EE40
 		move.b	y_vel(a0),d0
-		bpl.s	loc_EE30
+		bpl.s	+
 		neg.b	d0
-
-loc_EE30:
++
 		addq.b	#4,d0
 		cmpi.b	#$E,d0
-		blo.s		loc_EE3C
+		blo.s	+
 		move.b	#$E,d0
-
-loc_EE3C:
++
 		cmp.b	d0,d1
 		bgt.s	loc_EE46
 
@@ -318,7 +314,7 @@ loc_EED0:
 loc_EEDE:
 		addq.b	#4,d0
 		cmpi.b	#$E,d0
-		blo.s		loc_EEEA
+		blo.s	loc_EEEA
 		move.b	#$E,d0
 
 loc_EEEA:
@@ -390,7 +386,7 @@ loc_EF7E:
 loc_EF8C:
 		addq.b	#4,d0
 		cmpi.b	#$E,d0
-		blo.s		loc_EF98
+		blo.s	loc_EF98
 		move.b	#$E,d0
 
 loc_EF98:

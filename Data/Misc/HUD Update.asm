@@ -47,85 +47,93 @@ HUD_AddToLifeCounter:
 
 UpdateHUD:
 		lea	(VDP_data_port).l,a6
-		tst.w	(Debug_placement_mode).w					; is debug mode on?
-		bne.w	HudDebug									; if yes, branch
-		tst.b	(Update_HUD_score).w							; does the score need updating?
-		beq.s	.chkrings										; if not, branch
+	if GameDebug
+		tst.w	(Debug_placement_mode).w		; is debug mode on?
+		bne.w	HudDebug				; if yes, branch
+	endif
+		tst.b	(Update_HUD_score).w			; does the score need updating?
+		beq.s	.chkrings				; if not, branch
 		clr.b	(Update_HUD_score).w
-		locVRAM	tiles_to_bytes(ArtTile_HUD+$1A),d0		; set VRAM address
-		move.l	(Score).w,d1									; load score
+		locVRAM	tiles_to_bytes(ArtTile_HUD+$1A),d0	; set VRAM address
+		move.l	(Score).w,d1				; load score
 		bsr.w	DrawSixDigitNumber
-
 .chkrings
-		tst.b	(Update_HUD_ring_count).w						; does the ring counter	need updating?
-		beq.s	.chktime										; if not, branch
+		tst.b	(Update_HUD_ring_count).w		; does the ring counter	need updating?
+		beq.s	.chktime				; if not, branch
 		bpl.s	.notzero
-		bsr.w	HUD_DrawZeroRings							; reset rings to 0 if Sonic is hit
-
+		bsr.w	HUD_DrawZeroRings			; reset rings to 0 if Sonic is hit
 .notzero
 		clr.b	(Update_HUD_ring_count).w
-		locVRAM	tiles_to_bytes(ArtTile_HUD+$36),d0		; set VRAM address
+		locVRAM	tiles_to_bytes(ArtTile_HUD+$36),d0	; set VRAM address
 		moveq	#0,d1
-		move.w	(Ring_count).w,d1								; load number of rings
+		move.w	(Ring_count).w,d1			; load number of rings
 		bsr.w	DrawThreeDigitNumber
-
 .chktime
-		tst.b	(Update_HUD_timer).w							; does the time need updating?
-		bpl.s	loc_DD64									; if not, branch
+		tst.b	(Update_HUD_timer).w			; does the time need updating?
+		bpl.s	+					; if not, branch
 		move.b	#1,(Update_HUD_timer).w
 		bra.s	loc_DD9E
-; ---------------------------------------------------------------------------
-
-loc_DD64:
-		beq.s	loc_DDBE
-		tst.b	(Game_paused).w									; is the game paused?
-		bne.s	loc_DDBE									; if yes, branch
+.rts
+		rts
++
+		beq.s	.rts
+		tst.b	(Game_paused).w				; is the game paused?
+		bne.s	.rts					; if yes, branch
 		lea	(Timer).w,a1
-		cmpi.l	#(9*$10000)+(59*$100)+59,(a1)+				; is the time 9:59:59?
-		beq.s	UpdateHUD_TimeOver						; if yes, branch
+		cmpi.l	#(9*$10000)+(59*$100)+59,(a1)+		; is the time 9:59:59?
+		beq.w	UpdateHUD_TimeOver			; if yes, branch
 
-		addq.b	#1,-(a1)										; increment 1/60s counter
-		cmpi.b	#60,(a1)										; check if passed 60
-		blo.s		loc_DD9E
+		addq.b	#1,-(a1)				; increment 1/60s counter
+		moveq	#60,d0
+		btst	#6,(Graphics_flags).w
+		beq.s	+
+		moveq	#50,d0
++		cmp.b	(a1),d0					; check if passed 60
+		bhi.s	loc_DD9E
 		clr.b	(a1)
-		addq.b	#1,-(a1)										; increment second counter
-		cmpi.b	#60,(a1)										; check if passed 60
-		blo.s		loc_DD9E
+
+		addq.b	#1,-(a1)				; increment second counter
+		cmpi.b	#60,(a1)				; check if passed 60
+		blo.s	loc_DD9E
 		clr.b	(a1)
-		addq.b	#1,-(a1)										; increment minute counter
-		cmpi.b	#9,(a1)										; check if passed 9
-		blo.s		loc_DD9E
-		move.b	#9,(a1)										; keep as 9
+
+		addq.b	#1,-(a1)				; increment minute counter
+		cmpi.b	#9,(a1)					; check if passed 9
+		blo.s	loc_DD9E
+		move.b	#9,(a1)					; keep as 9
 
 loc_DD9E:
 		locVRAM	tiles_to_bytes(ArtTile_HUD+$28),d0
 		moveq	#0,d1
-		move.b	(Timer_minute).w,d1 							; load minutes
+		move.b	(Timer_minute).w,d1 			; load minutes
 		bsr.w	DrawSingleDigitNumber
 		locVRAM	tiles_to_bytes(ArtTile_HUD+$2C),d0
 		moveq	#0,d1
-		move.b	(Timer_second).w,d1 							; load seconds
+		move.b	(Timer_second).w,d1 			; load seconds
 		bsr.w	DrawTwoDigitNumber
-		locVRAM	tiles_to_bytes(ArtTile_HUD+$32),d0
+
 		moveq	#0,d1
-		move.b	(Timer_frame).w,d1 							; load centisecond
+		move.b	(Timer_frame).w,d1 			; load centisecond
 		mulu.w	#100,d1
-		divu.w	#60,d1
+		moveq	#60,d0
+		btst	#6,(Graphics_flags).w
+		beq.s	+
+		moveq	#50,d0
++		divu.w	d0,d1
 		swap	d1
 		clr.w	d1
 		swap	d1
 		cmpi.l	#(9*$10000)+(59*$100)+59,(Timer).w
 		bne.s	+
 		moveq	#99,d1
-+		bsr.w	DrawTwoDigitNumber
++		locVRAM	tiles_to_bytes(ArtTile_HUD+$32),d0
+		bsr.w	DrawTwoDigitNumber
 
-loc_DDBE:
 		tst.b	(Update_HUD_life_count).w
-		beq.s	locret_DDCC
+		beq.s	+
 		clr.b	(Update_HUD_life_count).w
-		bsr.w	HUD_Lives
-
-locret_DDCC:
+		bra.w	HUD_Lives
++
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -142,56 +150,59 @@ UpdateHUD_TimeOver:
 .finish
 		rts
 ; ---------------------------------------------------------------------------
-
+	if GameDebug
 HudDebug:
 		bsr.w	HUD_Debug
 		tst.b	(Update_HUD_ring_count).w						; does the ring counter need updating?
 		beq.s	.objcounter									; if not, branch
 		bpl.s	.notzero
 		bsr.w	HUD_DrawZeroRings							; reset rings to 0 if Sonic is hit
-
 .notzero:
 		clr.b	(Update_HUD_ring_count).w
-		locVRAM	tiles_to_bytes(ArtTile_HUD+$36),d0		; set VRAM address
+		locVRAM	tiles_to_bytes(ArtTile_HUD+$36),d0	; set VRAM address
 		moveq	#0,d1
-		move.w	(Ring_count).w,d1								; load number of rings
+		move.w	(Ring_count).w,d1			; load number of rings
 		bsr.w	DrawThreeDigitNumber
-
 .objcounter
-		locVRAM	tiles_to_bytes(ArtTile_HUD+$28),d0		; set VRAM address
+	;	locVRAM	tiles_to_bytes(ArtTile_HUD+$28),d0	; set VRAM address
+	;	moveq	#0,d1
+	;	bsr.w	DrawSingleDigitNumber
+
+		locVRAM	tiles_to_bytes(ArtTile_HUD+$2C),d0	; set VRAM address
 		moveq	#0,d1
-		move.w	(Lag_frame_count).w,d1
-		bsr.w	DrawSingleDigitNumber
-		locVRAM	tiles_to_bytes(ArtTile_HUD+$2C),d0		; set VRAM address
-		moveq	#0,d1
-		move.b	(Sprites_drawn).w,d1							; load "number of objects" counter
+		move.b	(Sprites_drawn).w,d1			; load "number of objects" counter
 		bsr.w	DrawTwoDigitNumber
+
+		locVRAM	tiles_to_bytes(ArtTile_HUD+$32),d0
+		moveq	#0,d1
+		move.w	(Lag_frame_count).w,d1		
+		bsr.w	DrawTwoDigitNumber
+
 		tst.b	(Update_HUD_life_count).w
 		beq.s	.chkbonus
 		clr.b	(Update_HUD_life_count).w
 		bsr.w	HUD_Lives
-
 .chkbonus
 		tst.b	(Game_paused).w
 		bne.s	.return
-		lea	(Timer).w,a1
-		cmpi.l	#(9*$10000)+(59*$100)+59,(a1)+				; is the time 9:59:59?
-		nop
-		addq.b	#1,-(a1)										; increment 1/60s counter
-		cmpi.b	#60,(a1)										; check if passed 60
-		blo.s		.return
+		lea	(Timer+4).w,a1
+	;	cmpi.l	#(9*$10000)+(59*$100)+59,(a1)+		; is the time 9:59:59?
+	;	nop
+		addq.b	#1,-(a1)				; increment 1/60s counter
+		cmpi.b	#60,(a1)				; check if passed 60
+		blo.s	.return
 		clr.b	(a1)
-		addq.b	#1,-(a1)										; increment second counter
-		cmpi.b	#60,(a1)										; check if passed 60
-		blo.s		.return
+		addq.b	#1,-(a1)				; increment second counter
+		cmpi.b	#60,(a1)				; check if passed 60
+		blo.s	.return
 		clr.b	(a1)
-		addq.b	#1,-(a1)										; increment minute counter
-		cmpi.b	#9,(a1)										; check if passed 9
-		blo.s		.return
-		move.b	#9,(a1)										; keep as 9
-
+		addq.b	#1,-(a1)				; increment minute counter
+		cmpi.b	#9,(a1)					; check if passed 9
+		blo.s	.return
+		move.b	#9,(a1)					; keep as 9
 .return
 		rts
+	endif
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to load "0" on the HUD
@@ -217,10 +228,8 @@ HUD_DrawInitial:
 		locVRAM	tiles_to_bytes(ArtTile_HUD+$18),VDP_control_port-VDP_data_port(a6)
 		lea	HUD_Initial_Parts(pc),a2
 		moveq	#(HUD_Initial_Parts_end-HUD_Initial_Parts)-1,d2
-
 .main
 		lea	(ArtUnc_HUDDigits).l,a1
-
 .loop
 		moveq	#(8*2)-1,d1
 		move.b	(a2)+,d0
@@ -228,11 +237,9 @@ HUD_DrawInitial:
 		ext.w	d0
 		lsl.w	#5,d0
 		lea	(a1,d0.w),a3
-
 .copy
 		move.l	(a3)+,VDP_data_port-VDP_data_port(a6)
 		dbf	d1,.copy
-
 .next
 		dbf	d2,.loop
 		rts
@@ -295,7 +302,7 @@ HUD_Debug:
 		move.w	d1,d2
 		andi.w	#$F,d2
 		cmpi.w	#10,d2
-		blo.s		.skipsymbols
+		blo.s	.skipsymbols
 		addq.w	#7,d2
 
 .skipsymbols
@@ -339,7 +346,7 @@ Hud_ScoreLoop:
 
 loc_1C8EC:
 		sub.l	d3,d1
-		blo.s		loc_1C8F4
+		blo.s	loc_1C8F4
 		addq.w	#1,d2
 		bra.s	loc_1C8EC
 ; ---------------------------------------------------------------------------
@@ -370,11 +377,11 @@ loc_1C92C:
 ; ---------------------------------------------------------------------------
 
 Hud_100000:	dc.l 100000
-Hud_10000:		dc.l 10000
-Hud_1000:		dc.l 1000
-Hud_100:		dc.l 100
-Hud_10:			dc.l 10
-Hud_1:			dc.l 1
+Hud_10000:	dc.l 10000
+Hud_1000:	dc.l 1000
+Hud_100:	dc.l 100
+Hud_10:		dc.l 10
+Hud_1:		dc.l 1
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to load time numbers patterns

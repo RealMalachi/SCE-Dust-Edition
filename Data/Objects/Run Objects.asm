@@ -7,7 +7,7 @@
 ; ObjectRAMMarker idea by lavagaming1
 ; ---------------------------------------------------------------------------
 ; placed here for branch accessibility
-; this code is assuming most objects will be frozen, and is thus focusing on space over speed
+; this code is assuming most objects will be frozen, so is focusing on space over speed
 RunSomeObjects:
 .frzloop:
 	move.l	address(a0),d0		; load address to d0
@@ -51,10 +51,13 @@ RunObjects:
 
 ; of course there's an obvious faster method, at the cost of ROM space
 .loop:
-;	movea.l	address(a0),a1		; 12 ; load ROM address to a1
+; a     failed object takes 30 cycles
+; a successful object takes 48 cycles + whatever code it runs
+; the first objects per loop take an additional 8 cycles
 	move.l	address(a0),d0		; 12 ; load ROM address to d0 (if not used later, a tst.l will do fine)
 	bmi.s	RunSomeObjects.rts	; 8, 10 but ends routine ; if we've reached ObjectRAMMarker, end routine
 	beq.s	+			; 8, 10 but skips...     ; if we don't have an address loaded, skip
+;	movea.l	address(a0),a1		; 12 ; load ROM address to a1
 	movea.l	d0,a1			; 4  ; move that address to a1
 	jsr	(a1)			; 16 ; execute code
 +
@@ -63,6 +66,7 @@ RunObjects:
 ;	rept Object_Amount-1	; the "obvious faster method"
 	move.l	address(a0),d0		; 12
 	beq.s	+			; 8, 10 but skips...
+;	movea.l	address(a0),a1		; 12
 	movea.l	d0,a1			; 4
 	jsr	(a1)			; 16
 +

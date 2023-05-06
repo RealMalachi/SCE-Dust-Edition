@@ -8,6 +8,10 @@ Obj_Tails:
 
 		cmpi.w	#2,(Player_mode).w
 		bne.s	Tails_Normal
+	;	lea	(Max_speed_P2).w,a4
+		lea	(Distance_from_top).w,a5
+	;	lea	(v_Dust_P2).w,a6
+
 		tst.w	(Debug_placement_mode).w
 		beq.s	Tails_Normal
 		cmpi.b	#1,(Debug_placement_type).w
@@ -1673,13 +1677,7 @@ loc_14B14:
 		move.b	#0,scroll_delay_counter(a0)
 
 loc_14B1A:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_14B26
-		bcc.s	loc_14B24
-		addq.w	#4,(a5)
-
-loc_14B24:
-		subq.w	#2,(a5)
+	resetlookcamerapos (a5)
 
 loc_14B26:
 		move.b	(Ctrl_2_logical).w,d0
@@ -1962,15 +1960,7 @@ loc_14DDE:
 		neg.w	ground_vel(a0)
 
 loc_14DF0:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_14DFC
-		bcc.s	loc_14DFA
-		addq.w	#4,(a5)
-
-loc_14DFA:
-		subq.w	#2,(a5)
-
-loc_14DFC:
+	resetlookcamerapos (a5)
 		move.b	angle(a0),d0
 		jsr	(GetSineCosine).w
 		muls.w	ground_vel(a0),d0
@@ -2070,15 +2060,7 @@ loc_14EC8:
 		move.w	d0,x_vel(a0)
 
 loc_14ECC:
-		cmpi.w	#$60,(a5)
-		beq.s	loc_14ED8
-		bcc.s	loc_14ED6
-		addq.w	#4,(a5)
-
-loc_14ED6:
-		subq.w	#2,(a5)
-
-loc_14ED8:
+	resetlookcamerapos (a5)
 		cmpi.w	#-$400,y_vel(a0)
 		blo.s	locret_14F06
 		move.w	x_vel(a0),d0
@@ -2463,15 +2445,7 @@ loc_1534A:
 
 loc_1537A:
 		addq.l	#4,sp
-		cmpi.w	#$60,(a5)
-		beq.s	loc_15388
-		bcc.s	loc_15386
-		addq.w	#4,(a5)
-
-loc_15386:
-		subq.w	#2,(a5)
-
-loc_15388:
+	resetlookcamerapos (a5)
 		bsr.w	Tails_Check_Screen_Boundaries
 		bra.w	Call_Player_AnglePos
 
