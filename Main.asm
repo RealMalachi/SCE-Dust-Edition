@@ -82,9 +82,9 @@ RamEndLoc:	dc.l (RAM_start&$FFFFFF)+$FFFF
 SRAMSupport:
 	if EnableSRAM=1
 CartRAM_Info:	dc.b "RA"
-CartRAM_Type:	dc.b $A0+(BackupSRAM<<6)+(AddressSRAM<<3), $20
-CartRAMStartLoc:dc.l SRAM_Size|SRAM_Type.SRAM_Start	; SRAM start ($200000)
-CartRAMEndLoc:	dc.l SRAM_Size|SRAM_Type.SRAM_End	; SRAM end ($20xxxx)
+CartRAM_Type:	dc.b %10100000|(BackupSRAM<<6)|(AddressSRAM<<3),$20	; 1B1AA0000 00100000
+CartRAMStartLoc:dc.l SRAM_Address|sram_start	; SRAM start
+CartRAMEndLoc:	dc.l SRAM_Address|sram_end	; SRAM end
 	else
 CartRAM_Info:	dc.b "  "
 CartRAM_Type:	dc.w %10000000100000
@@ -165,6 +165,14 @@ EndOfHeader:
 
 	include "Data/Misc/Pause Game.asm"
 
+	if EnableSRAM=1
+; ---------------------------------------------------------------------------
+; SRAM Subroutines
+; ---------------------------------------------------------------------------
+
+	include "Data/Misc/SRAM.asm"
+
+	endif
 ; ---------------------------------------------------------------------------
 ; Random Number Subroutine
 ; ---------------------------------------------------------------------------

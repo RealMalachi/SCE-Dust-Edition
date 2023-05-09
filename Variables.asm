@@ -67,6 +67,14 @@ Player_prev_frame			= Player_1+mapping_frame_copy
 Player_prev_frame_P2			= Player_1+mapping_frame_copy
 Player_prev_frame_P2_tail		= v_Tails_tails+mapping_frame_copy
 ; ---------------------------------------------------------------------------
+	if EnableSRAM=1
+Save_pointer:			ds.l 1		; SRAM address to copy the RAM data to and vice versa
+Saved_data			=	*
+Save_RAM:			ds.b sram_main_end-sram_main
+Save_RAM_End:
+	evenram
+; ---------------------------------------------------------------------------
+	endif
 
 Kos_decomp_buffer:				ds.w $800		; Each module in a KosM archive is decompressed here and then DMAed to VRAM
 

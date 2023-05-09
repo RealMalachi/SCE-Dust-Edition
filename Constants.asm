@@ -2,7 +2,12 @@
 ; Constants
 ; ===========================================================================
 
+; ---------------------------------------------------------------------------
+; Misc
+; ---------------------------------------------------------------------------
+
 Ref_Checksum_String			= 'INIT'
+Security_addr =				$A14000
 
 ; ---------------------------------------------------------------------------
 ; VDP addresses
@@ -48,11 +53,96 @@ HW_Expansion_SCtrl =			$A1001F
 ; ---------------------------------------------------------------------------
 ; SRAM addresses
 ; ---------------------------------------------------------------------------
-SRAM_Size =				$200000
-
+	if AddressSRAM=3
+SRAM_Address =				$200001	; Odd
+	else
+SRAM_Address =				$200000	; Even
+	endif
 SRAM_access_flag =			$A130F1
-Security_addr =				$A14000
+SRAM_InitText_String			= 'VMAL'
+SRAM_InitText_String2			= 'ACHI'
+SRAM_GameVersion =			0		; change this every time the SRAM changes for a retail version
+SRAM_DefaultSettings =			%10000000
 
+; used for handling the unused bytes of SRAM
+	if AddressSRAM=0
+sramaddr	macro num,flag
+	if ("flag"="")
+	ds.b	num
+	else
+	ds.b	num_end-num
+	endif
+	endm
+SRAM_RAMSize	= 1
+	else
+sramaddr	macro num,flag
+	if ("flag"="")
+	ds.w	num
+	else
+	ds.w	num_end-num
+	endif
+	endm
+SRAM_RAMSize	= 2
+	endif
+; padding for word and longword data, to ensure AddressSRAM type 0 doesn't crash
+srampad macro
+	evenram
+	endm
+
+; Emulates structs without using AS' structs, by separating it from the main SRAM labels
+; Also frequently used in RAM, so it helps simplify setting that up
+	phase 0
+sram_main
+sram_main_lives		ds.b 1
+sram_main_continues	ds.b 1
+sram_main_emeraldcount	ds.b 1
+	srampad
+sram_main_emeraldarray	ds.b 2
+sram_main_end
+	dephase
+; Proof of concept
+	phase 0
+sram_submode
+	ds.b 2
+sram_submode_end
+	dephase
+
+
+	phase 0
+sram_start
+sram_checksum	sramaddr 2
+sram_inittext	sramaddr 4
+sram_inittext2	sramaddr 4
+sram_version	sramaddr 1
+	sramaddr 1	; just in case
+; universal save data
+sram_settings	sramaddr 1
+	srampad
+; separate save data
+sram_saves
+sramsave1	sramaddr sram_main,0
+sramsave2	sramaddr sram_main,0
+sramsub		sramaddr sram_submode,0
+	srampad
+sram_saves_end
+; copy of separate save data
+sram_copy	ds.b sram_saves_end-sram_saves
+sram_copy_end
+
+sram_padding
+; padding fixes some save data issues, notably on BlastEm
+; this space can potentially hold junk data, and should never be read
+	sramaddr $FF-(*/SRAM_RAMSize)
+	srampad
+sram_end
+	if * > $200000
+	fatal "SRAM exceeds its maximum limit of $200000 bytes! Fix immediately."
+	elseif * > $FFFF
+	  if MOMPASS=0
+	message "SRAM exceeds word length. It'll still work, just please try to optimize it a little."
+	  endif
+	endif
+	dephase
 ; ---------------------------------------------------------------------------
 ; MCD addresses
 ; ---------------------------------------------------------------------------

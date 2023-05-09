@@ -862,12 +862,17 @@ s3kPlayerDplcEntry macro tiles,offset
 
 gotoSRAM macro
 	move.b  #1,(SRAM_access_flag).l
-    endm
-
+	endm
 gotoROM macro
 	move.b  #0,(SRAM_access_flag).l
-    endm
+	endm
 
+enableSRAM macro
+	gotoSRAM
+	endm
+disableSRAM macro
+	gotoROM
+	endm
 ; ---------------------------------------------------------------------------
 ; Copy a tilemap from 68K (ROM/RAM) to the VRAM without using DMA
 ; input: destination, width [cells], height [cells], terminate

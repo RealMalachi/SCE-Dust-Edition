@@ -205,6 +205,9 @@ Game_Program:
 		bsr.s	Init_VDP
 		bsr.w	SoundDriverLoad
 		bsr.w	Init_Controllers
+	if EnableSRAM=1
+		bsr.w	Init_SRAM
+	endif
 		move.b	#id_LevelSelectScreen,(Game_mode).w		; set Game Mode
 
 .loop
