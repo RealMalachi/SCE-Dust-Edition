@@ -24,9 +24,10 @@ OptimiseStopZ80:	= 2	; if 1, remove stopZ80 and startZ80, if 2, use only for con
 ZeroOffsetOptimization:	= 1	; if 1, makes a handful of zero-offset instructions smaller
 AllOptimizations:	= 1	; if 1, enables all optimizations
 ; misc
-EnableSRAM:		= 0	; change to 1 to enable SRAM
+EnableSRAM:		= 1	; change to 1 to enable SRAM
 BackupSRAM:		= 0
-AddressSRAM:		= 0	; 0 = odd+even; 2 = even only; 3 = odd only
+AddressSRAM:		= 3	; 0 = odd+even; 2 = even only; 3 = odd only
+EnableModem:		= 0	; change to 1 to enable modem support (not implemented)
 
 CompBlocks:		= 1	;
 CompLevel:		= 1	;
@@ -42,6 +43,10 @@ CompCollision:		= 0	;
 	include "Macros - Sound.asm"		; include sound-related macros, labels, and functions
 	include "Misc Data/Debugger/ErrorHandler/Debugger.asm"	; include debugger macros and functions
 ; ---------------------------------------------------------------------------
+; https://plutiedev.com/rom-header
+; https://drive.google.com/uc?id=14WsmPYLmKawSQoSj0LPu2eZNVBgyfMwP	; header doc on pages 8-9, 41-42,46(cringe)-47
+; https://drive.google.com/uc?id=1cVtJnv0XdEhLINv73P13DpBlyvhprZpw	; Xband doc
+; https://gitlab.com/doragasu/mw					; MegaWifi doc
 
 StartOfROM:
 	if * <> 0
@@ -49,12 +54,12 @@ StartOfROM:
 	endif
 Vectors:
 	dc.l System_stack, EntryPoint, BusError, AddressError	; 0
-	dc.l IllegalInstr, ZeroDivide, ChkInstr, TrapvInstr		; 4
+	dc.l IllegalInstr, ZeroDivide, ChkInstr, TrapvInstr	; 4
 	dc.l PrivilegeViol, Trace, Line1010Emu, Line1111Emu	; 8
 	dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept	; 12
 	dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept	; 16
 	dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept	; 20
-	dc.l ErrorExcept, ErrorTrap, ErrorTrap, ErrorTrap		; 24
+	dc.l ErrorExcept, ErrorTrap, ErrorTrap, ErrorTrap	; 24
 	dc.l H_int_jump, ErrorTrap, V_int_jump, ErrorTrap	; 28
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 32
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 36
@@ -64,13 +69,15 @@ Vectors:
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 52
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 56
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 60
-Header:		dc.b "SEGA GENESIS    "
-Copyright:	dc.b "(C)SEGA XXXX.XXX"
-Domestic_Name:	dc.b "SONIC THE               HEDGEHOG                "
-Overseas_Name:	dc.b "SONIC THE               HEDGEHOG                "
-Serial_Number:	dc.b "GM MK-0000 -00"
+Header:		dc.b "SEGA GENESIS    "		; "SEGA" needed for TMSS
+Copyright:	dc.b "(C)CCCC YYYY.MMM"
+Domestic_Name:	dc.b "SONIC CLEAN ENGINE DUST"
+	dcb.b $150-*, ' '
+Overseas_Name:	dc.b "SONIC CLEAN ENGINE"
+	dcb.b $180-*, ' '
+Serial_Number:	dc.b "GM H-00000 -00"	; new serial type, since MK is apparently SEGA branding
 Checksum:	dc.w 0
-Input:		dc.b "J"	; https://plutiedev.com/rom-header#devices
+Input:		dc.b "J"
 	if Joypad_6BSupport=1
 		dc.b "6"
 	endif
@@ -88,11 +95,21 @@ CartRAMEndLoc:	dc.l SRAM_Address|sram_end	; SRAM end
 	else
 CartRAM_Info:	dc.b "  "
 CartRAM_Type:	dc.w %10000000100000
-CartRAMStartLoc:dc.l $20202020	; SRAM start ($200000)
-CartRAMEndLoc:	dc.l $20202020	; SRAM end ($20xxxx)
+CartRAMStartLoc:dc.l $20202020
+CartRAMEndLoc:	dc.l $20202020
 	endif
-Modem_Info:	dc.b "                                                    "
-Country_Code:	dc.b "JUE             "
+
+Modem_Info:
+	if EnableModem=1
+	dc.b "MO"		; indicator of modem support
+	dc.b "CCCCNN,VMM"	; C = Copright, N = game number, V = game version, M = region and mic support type
+	else
+	dc.b "  "
+	dc.b "          "
+	endif
+	dcb.b $1F0-*, ' '	; unused
+Country_Code:	dc.b "JUE"	; old style is the most reliable
+	dcb.b $200-*, ' '	; unused
 EndOfHeader:
 
 ; ---------------------------------------------------------------------------
