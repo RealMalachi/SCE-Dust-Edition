@@ -116,7 +116,7 @@ Poll_Controllers:
 	move.b	d2,(a1)			; request no.6
 	tst.b	d4			; DT (4) ; is up and down both being pressed?
 	beq.s	.handle6berror		; DT (8,4 bled) ; if so, branch
-	moveq	#%00001111,d1		; Prepare for 6pad check and positions of X,Y,Z,Mode
+	moveq	#%00001111,d1		; Prepare for 6pad check
     endif	; HardwareSafety
 ; check the controller type
 	move.b	(a1),d4			; copy no.6
@@ -131,10 +131,8 @@ Poll_Controllers:
 
 .handle6button
 	move.b	d3,(a1)			; request no.7
-;	nop2			; DT (8)
-	or.l	d0,d0			; DT (8) ; stall time
-;	moveq	#%00001111,d1		; DT (4) ; set the positions of X,Y,Z,Mode
-;	nop				; DT (4) ;
+	moveq	#%00001111,d1		; DT (4) ; set the positions of X,Y,Z,Mode
+	nop				; DT (4) ;
 	and.b	(a1),d1			; AND data with pressed X,Y,Z,Mode
 	lsl.w	#8,d1			; move to next byte
 	or.w	d1,d0			; combine with other inputs
@@ -150,9 +148,12 @@ Poll_Controllers:
 
   if HardwareSafety=1
 .handle6berror
+; if no ability to figure out if it was a 6pad, just use 3pad
     if Joypad_StateSupport<>1	; this creates a pseudo-6pad mode
 ;	move.b	#-1,(a2)+		; set CtrlXState to 6pad, increment to next controller
-	addq.w	#1,a2			; don't set CtrlXState, increment to next controller
+;	addq.w	#1,a2			; don't set CtrlXState, increment to next controller
+	tst.b	(a2)+			; use previous frames CtrlXState to determine if the controller was a 3pad or not
+	bne.s	.handle6button		; if 0, 3pad. Otherwise, 6pad
     endif
   endif
 .handle3button
