@@ -72,9 +72,12 @@ Save_pointer:			ds.l 1		; SRAM address to copy the RAM data to and vice versa
 Saved_data			=	*
 Save_RAM:			ds.b sram_main_end-sram_main
 Save_RAM_End:
-	evenram
 ; ---------------------------------------------------------------------------
 	endif
+	if EnableWifi=1
+Wifi_flag:			ds.b 1		; 0 = none, 1 = MegaWifi, -1 = Retro.Link
+	endif
+	evenram
 
 Kos_decomp_buffer:				ds.w $800		; Each module in a KosM archive is decompressed here and then DMAed to VRAM
 

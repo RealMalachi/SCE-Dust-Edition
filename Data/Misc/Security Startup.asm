@@ -188,17 +188,17 @@ Game_Program:
 		btst	#6,(HW_Expansion_Control).l
 		beq.s	.skip
 		cmpi.l	#Ref_Checksum_String,(Checksum_string).w	; has checksum routine already run?
-		beq.s	.init										; if yes, branch
+		beq.s	.init						; if yes, branch
 
 .skip
 		move.b	(HW_Version).l,d6
 		andi.b	#$C0,d6
-		move.b	d6,(Graphics_flags).w						; get region setting
+		move.b	d6,(Graphics_flags).w				; get region setting
 		move.l	#Ref_Checksum_String,(Checksum_string).w	; set flag so checksum won't run again
 
 .init
-	move.b	#1<<7,(ObjectRamMarker).w	; set marker for object RAM
-
+		move.b	#1<<7,(ObjectRamMarker).w			; set marker for object RAM
+		move.b	#id_LevelSelectScreen,(Game_mode).w		; set Game Mode (some inits set the game mode for failsafe screens)
 		jsr	(Init_MSU_Driver).l
 		seq	(SegaCD_Mode).w
 		bsr.w	Init_DMA_Queue
@@ -208,7 +208,7 @@ Game_Program:
 	if EnableSRAM=1
 		bsr.w	Init_SRAM
 	endif
-		move.b	#id_LevelSelectScreen,(Game_mode).w		; set Game Mode
+
 
 .loop
 		move.b	(Game_mode).w,d0						; load Game Mode

@@ -36,7 +36,6 @@ Init_SRAM:
 		enableSRAM
 		lea	(SRAM_Address).l,a1
 		move.l	a1,(Save_pointer).w
-		SRAM_SetWord d1,sram_checksum(a1)
 		move.l	#SRAM_InitText_String,d1
 		move.l	#SRAM_InitText_String2,d2
 		SRAM_GetLong sram_inittext(a1),d0
@@ -64,11 +63,13 @@ Init_SRAM:
 		addq.l	#1,a2
 	endif	
 		dbf	d1,-
+	;	move.l	a1,-(sp)
+	;	bsr.s	SRAM_SaveBackup
+	;	move.l	(sp)+,a1
 		move.b	#SRAM_GameVersion,sram_version(a1)
 		move.b	#SRAM_DefaultSettings,sram_settings(a1)
 		bsr.s	SRAM_GetChecksum
 		SRAM_SetWord d1,sram_checksum(a1)
-		bsr.s	SRAM_SaveBackup
 .end
 		disableSRAM
 		rts
@@ -77,9 +78,10 @@ Init_SRAM:
 ; check the version. If not the same, init the save conversion
 		moveq	#0,d0
 		move.b	sram_version(a1),d0
-		cmp.b	#SRAM_GameVersion,sram_version(a1)
+		cmp.b	#SRAM_GameVersion,d0
 		beq.s	.versionsuccess
-	;	bra.s	SRAM_OlderVersionDetected	; WIP, since it isn't needed yet
+		bhi.w	SRAM_LaterVersionDetected	; if a later number, branch
+		bsr.w	SRAM_OlderVersionDetected	; if an earlier version, silently fix it
 		bra.s	.end
 .versionsuccess
 ; check the checksum, in case data got corrupted, or was altered by an outside force >:(
@@ -87,8 +89,6 @@ Init_SRAM:
 		SRAM_GetWord sram_checksum(a1),d0
 		cmp.w	d0,d1
 		beq.s	.end
-	;	move.w	(1).w,d0
-	;	rts
 		SRAM_SetWord d0,sram_checksum(a1)
 		bsr.s	SRAM_LoadBackup
 		bra.s	.end
@@ -98,16 +98,43 @@ Init_SRAM:
 SRAM_GetChecksum:
 		lea	(SRAM_Address+sram_inittext).l,a2
 		moveq	#0,d1
-		move.w	#(sram_padding-sram_inittext)-1,d2
+		move.w	#((sram_padding-sram_inittext)/(2*SRAM_RAMSize))-1,d2
 -
 	if AddressSRAM=0
-		move.w (a1)+,d0
+		add.w	(a2)+,d1
 	else
-		movep.w (a1),d0
-		addq.l	#4,a1
-	endif
+		movep.w	(a2),d0
+		addq.l	#2*SRAM_RAMSize,a2
 		add.w	d0,d1
+	endif
 		dbf	d2,-
+	;	move.l	#'HALP',d0
+	;	SRAM_SetLong d0,(a2)	; debug text, to see where it ends
+		rts
+
+SRAM_GetVersionFromChecksum:
+		lea	(SRAM_Address+sram_inittext).l,a2
+		SRAM_SetWord sram_checksum(a1),d1
+; handle the init text
+		moveq	#(((sram_version-sram_inittext)/2)/SRAM_RAMSize)-1,d2
+		bsr.s	.loop
+; handle the mystery byte after version
+		addq.l	#1*SRAM_RAMSize,a2	; skip version
+		moveq	#0,d0
+		move.b	(a2)+,d0
+		sub.w	d0,d1
+; handle everything else
+		move.w	#((sram_padding-sram_afterchecks)/(2*SRAM_RAMSize))-1,d2
+.loop
+	if AddressSRAM=0
+		sub.w	(a2)+,d1
+	else
+		movep.w	(a2),d0
+		addq.l	#2*SRAM_RAMSize,a2
+		sub.w	d0,d1
+	endif
+		dbf	d2,.loop
+.end
 		rts
 ; ---------------------------------------------------------------------------
 ; loads or saves the backup SRAM
@@ -131,26 +158,45 @@ SRAM_SaveBackup:
 ; ---------------------------------------------------------------------------
 ; convert older versions of the games SRAM into the newest format
 ; TODO: No older versions
-;SRAM_OlderVersionDetected:
+SRAM_OlderVersionDetected:
+	;	moveq	#0,d1
+	;	bsr.s	SRAM_GetVersionFromChecksum	; version in d1
+	;	cmp.w	#SRAM_GameVersion<<8,d1		; are they the same?
+	;	beq.s	+
+	;	move.w	#SRAM_GameVersion<<8,d0
+	;	SRAM_GetWord sram_checksum(a1),d3
+	;	moveq	#-1,d2
+	;	move.w	(1).w,d2
+;+
+	;	rts
+
 	;	moveq	#0,d0
 	;	move.b	sram_version(a1),d0
-	;	add.w	d0,d0
-	;	move.w	.index(pc,d0.w),d1
-	;	jmp	.index(pc,d1.w)
+		move.b	#SRAM_GameVersion,sram_version(a1)	; set old version to current one
+		add.w	d0,d0
+		move.w	.index(pc,d0.w),d1
+		jmp	.index(pc,d1.w)
 ; ---------------------------------------------------------------------------
-;.index	offsetTable
-;	offsetTableEntry.w .ver0
-;	offsetTableEntry.w .ver1
+.index	offsetTable
+	offsetTableEntry.w SRAM_OlderVersionDetected.ver0
+	offsetTableEntry.w SRAM_OlderVersionDetected.ver1
 ; ---------------------------------------------------------------------------
-;.ver0
-;.ver1
-;	rts
+.ver0
+.ver1
+	rts
+; ---------------------------------------------------------------------------
+; I think this should be handled on a game-by-game basis
+; my one sends you to an error screen, similar to those spooooooky fake piracy screens
+SRAM_LaterVersionDetected:
+		move.b	#id_ContinueScreen,(Game_mode).w	; WIP
+		disableSRAM
+		rts
 ; ===========================================================================
 ; Game specific
 LoadSRAMtoRAM:
 		lea	(Save_RAM).l,a1
 		movea.l	(Save_pointer).w,a2
-		move.w	#(sram_padding-sram_start)-1,d1
+		move.w	#((sram_padding-sram_start)/SRAM_RAMSize)-1,d1
 -		move.b	(a2)+,(a1)+
 	if AddressSRAM<>0
 		addq.l	#1,a2
@@ -161,7 +207,7 @@ LoadSRAMtoRAM:
 LoadRAMtoSRAM:
 		movea.l	(Save_pointer).w,a1
 		lea	(Save_RAM).l,a2
-		move.w	#(sram_padding-sram_start)-1,d1
+		move.w	#((sram_padding-sram_start)/SRAM_RAMSize)-1,d1
 -		move.b	(a2)+,(a1)+
 	if AddressSRAM<>0
 		addq.l	#1,a1
@@ -174,7 +220,7 @@ LoadRAMtoSRAM:
 SaveGame:
 	enableSRAM
 		bsr.s	LoadRAMtoSRAM		; save the RAM alterations to SRAM
-		bsr.s	SRAM_SaveBackup		; save the SRAM main to SRAM copy
+		bsr.w	SRAM_SaveBackup		; save the SRAM main to SRAM copy
 		bsr.w	SRAM_GetChecksum	; calculate the checksum
 	disableSRAM
 		rts
