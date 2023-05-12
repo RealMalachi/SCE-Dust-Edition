@@ -1,0 +1,38 @@
+SONIC CLEAN ENGINE: DUST EDITION
+
+SCED is an upgraded version of SCE, which, honestly, is going through a bit of a feature creep. For the sake of keeping track of all of this, I think it's best to document its features, especially the new ones
+
+
+
+
+
+; ---------------------------------------------------------------------------
+Controller types
+
+3-button controller
+- The standard, not much to say.
+
+6-button controller (optional)
+- code adjusts between 3pad and 6pad handling automatically
+- fixed bug with 3pad activating 6pad inputs when pressing up and down (notable example being SOR3)
+- ISSUE: Unlike other options, disabling 6pad still keeps its RAM space and code
+
+; ---------------------------------------------------------------------------
+SRAM (optional)
+- Contains a word-sized checksum, 8 letter string, byte-sized version number, and an additional byte which may see later use
+- If string isn't there, init SRAM
+- If checksum fails, it loads a backup onto the main SRAM
+- If version number is an older version, convert SRAM to new type. If a newer version, do... something.
+
+I highly advise that final versions of a game only revise SRAM when absolutely necessary
+Currently no debug versions of SRAM, 
+
+; ---------------------------------------------------------------------------
+Planned features
+
+Multitap (4WayPlay and/or Multitap, 4 player planned only)
+Keyboard controllers (XBand and/or Saturn Keyboard. Converts configurable inputs into 6pad controls, rather then true keyboard support)
+Wifi (MegaWifi and/or Retro.Link)
+
+
+

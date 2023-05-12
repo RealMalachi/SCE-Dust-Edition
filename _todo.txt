@@ -1,0 +1,38 @@
+TODO
+
+; ---------------------------------------------------------------------------
+Maintainance
+
+Make SRAM easier to work with
+Remove 6pad related code when 6pad is disabled (more macros yeah...)
+
+; ---------------------------------------------------------------------------
+Features
+
+Better PAL support
+- V30
+- 50Hz retiming to emulate 60Hz
+- Real PAL60 if possible
+
+
+MegaWifi and Retro.Link support
+https://gitlab.com/doragasu/mw
+https://github.com/b1tsh1ft3r/retro.link
+- If possible, cross-play between these different types
+- for bigger data, maybe make the game do compression?
+
+More controller support
+; https://drive.google.com/uc?id=1cVtJnv0XdEhLINv73P13DpBlyvhprZpw - Xband
+
+
+Console revision and Emulator checks, to lock or rework certain features that would have unintentional effects, or ease CPU when inaccurate emulation can benefit
+inaccurate MCD emulation could allow better looping, for instance
+https://github.com/DevsArchive/genesis-emulator-detector
+- BCD flag accuracy
+- TAS on RAM
+
+
+Piracy checks? I don't want to stop players playing the game though, just a disclaimer
+- If the game doesn't have SRAM and succeeds a write
+
+
