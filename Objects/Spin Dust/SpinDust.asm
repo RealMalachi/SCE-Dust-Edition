@@ -21,7 +21,7 @@ off_18B4C: offsetTable
 loc_18B54:
 		addq.b	#2,routine(a0)
 		move.l	#Map_DashDust,mappings(a0)
-		ori.b	#ren_camerapos|objflag_continue,render_flags(a0)
+		ori.w	#bytes_to_word(ren_camerapos,objflag_continue),render_flags(a0)
 		move.w	#make_priority(1),priority(a0)
 		move.w	#bytes_to_word(32/2,32/2),height_pixels(a1)
 		move.w	#ArtTile_DashDust,art_tile(a0)

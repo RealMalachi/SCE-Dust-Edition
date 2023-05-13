@@ -5,9 +5,19 @@ Maintainance
 
 Make SRAM easier to work with
 Remove 6pad related code when 6pad is disabled (more macros yeah...)
+Proper documentation on smaller engine changes
+- Merged object address and routine
+
+
 
 ; ---------------------------------------------------------------------------
 Features
+
+Improved Render_Sprites
+- If hardware can't render any more sprites but has objects to check are onscreen, use heavily simplified check
+- Better support for non-object sprite rendering, such as the rings and HUD
+- ren_wordframe: Word-sized mapping_frame option, at the cost of the render box (height_pixels) being limited to a square
+- ren_excessive: Ignores height_pixels check. Individual sprite bounds checked during rendering process, if out of bounds don't render. If any sprites render, set ren_onscreen
 
 Better PAL support
 - V30
@@ -18,8 +28,9 @@ Better PAL support
 MegaWifi and Retro.Link support
 https://gitlab.com/doragasu/mw
 https://github.com/b1tsh1ft3r/retro.link
+- Find a way to contact MegaWifi dev, to get asm version
 - If possible, cross-play between these different types
-- for bigger data, maybe make the game do compression?
+- for bigger data, maybe make the game compress its data? It's a long shot though
 
 More controller support
 ; https://drive.google.com/uc?id=1cVtJnv0XdEhLINv73P13DpBlyvhprZpw - Xband

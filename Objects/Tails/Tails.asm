@@ -62,7 +62,7 @@ Tails_Init:
 		move.w	#make_priority(2),priority(a0)
 		move.b	#$18,width_pixels(a0)
 		move.b	#$18,height_pixels(a0)
-		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
+		move.w	#bytes_to_word(ren_camerapos,objflag_continue),render_flags(a0)
 		move.b	#1,character_id(a0)
 		bsr.w	Player_SetSpeed
 		cmpi.w	#2,(Player_mode).w

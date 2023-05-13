@@ -18,7 +18,7 @@ Obj_GameOver:
 		move.l	#Map_GameOver,mappings(a0)
 		move.w	#make_art_tile(ArtTile_Shield,0,1),art_tile(a0)
 		move.w	#make_priority(0),priority(a0)
-		move.b	#ren_screenpos|objflag_continue,render_flags(a0)
+		move.w	#bytes_to_word(ren_screenpos,objflag_continue),render_flags(a0)
 		move.l	#loc_2D612,address(a0)
 
 loc_2D612:

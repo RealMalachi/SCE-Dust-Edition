@@ -93,7 +93,8 @@ Obj_LevelResultsCreate:
 -		move.l	(a2)+,address(a1)
 		move.w	(a2)+,$46(a1)
 		move.w	(a2)+,x_pos(a1)
-		spl	5(a1)
+		spl	routine(a1)		; set movement routine type based on x_pos
+		bclr	#7,routine(a1)		; clear highest bit due to object code looping
 		move.w	(a2)+,y_pos(a1)
 		move.b	(a2)+,mapping_frame(a1)
 		move.b	(a2)+,width_pixels(a1)
@@ -279,7 +280,7 @@ loc_2DE20:
 		cmp.b	$28(a0),d0		; Level element moving out. Test if value of parent queue matches given queue value
 		blo.s		locret_2DE4E
 		move.w	#-$20,d0		; If so, move out
-		tst.b	5(a0)
+		tst.b	routine(a0)
 		beq.s	loc_2DE32
 		neg.w	d0				; Change direction depending on where it came from
 

@@ -72,7 +72,7 @@ Sonic_Init:	; Routine 0
 		move.l	#Map_Sonic,mappings(a0)
 		move.w	#make_priority(2),priority(a0)
 		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)		; set height and width
-		move.b	#ren_camerapos|objflag_continue,render_flags(a0)
+		move.w	#bytes_to_word(ren_camerapos,objflag_continue),render_flags(a0)
 		clr.b	character_id(a0)
 		bsr.w	Player_SetSpeed
 		tst.b	(Last_star_post_hit).w
@@ -2388,17 +2388,19 @@ loc_12432:
 		moveq	#0,d0			; use Game Over frames
 +
 		clr.w	restart_timer(a0)	; don't restart with player object (use Game Over instead)
-		lea	(v_GameOver_Game).w,a1
+		lea	(v_GameOver_Game+address).w,a1
 		lea	v_GameOver_Over-v_GameOver_Game(a1),a2
-		move.l	#Obj_GameOver,address(a1)
-		move.l	#Obj_GameOver,address(a2)
-		move.b	#ren_screenpos|objflag_continue,render_flags(a1)
-		move.b	#ren_screenpos|objflag_continue,render_flags(a2)
-		move.b	d0,mapping_frame(a1)
+		move.l	#Obj_GameOver,d1
+		move.l	d1,(a1)+	; set first address, increment
+		move.l	d1,(a2)+
+		move.w	#bytes_to_word(ren_screenpos,objflag_continue),d1
+		move.w	d1,render_flags-4(a1)	; incremented to make render_flags code to be only word-sized
+		move.w	d1,render_flags-4(a2)
+		move.b	d0,mapping_frame-4(a1)
 		addq.w	#1,d0
-		move.b	d0,mapping_frame(a2)
+		move.b	d0,mapping_frame-4(a2)
 		clr.b	(Update_HUD_timer).w
-		music	mus_GameOver								; play the Game Over song
+		music	mus_GameOver					; play the Game Over song
 		lea	(ArtKosM_GameOver).l,a1
 		move.w	#tiles_to_bytes(ArtTile_Shield),d2
 		jmp	(Queue_Kos_Module).w

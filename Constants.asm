@@ -345,9 +345,11 @@ next_object =		object_size
 ; ---------------------------------------------------------------------------
 	phase 0
 ;id			; TODO: Doesn't apply to S3K.
-address			ds.l 1 ; long ; Direct ROM address to object code
-render_flags		ds.b 1 ; bitfield ; refer to SCHG for details
-routine			ds.b 1 ; byte
+routine		; byte ; determines the objects current routine. Can't be $80 or beyond, gets cleared when address is set
+; I really want to emphasize how much problems routine being $80 would cause. RunObjects uses it to determine when the ENTIRE routine should end.
+address			ds.l 1 ; long ; Direct 24-bit ROM address to object code. Refer to make_objaddr in Macros.asm
+render_flags		ds.b 1 ; bitfield ; flags used for sprite rendering
+object_flags		ds.b 1 ; bitfield ; flags used to determine certain traits of objects
 height_pixels		ds.b 1 ; byte
 width_pixels		ds.b 1 ; byte
 priority		ds.w 1 ; word ; in units of $80
@@ -749,10 +751,9 @@ renbit_xflip		= 0
 renbit_yflip		= 1
 renbit_camerapos	= 2	; if 0, base object position on the screen position. If 1, base on camera position
 renbit_screenpos	= renbit_camerapos
-; TODO, move out of render_flags when possible
-objflagbit_continue	= 3	; if 1, continue object routine when the player has died
+;renbit_wordframe	= 3	; if 1, inverts height/width_pixels and mapping_frame, giving you word-sized frames at the cost of a more limited render box
 ;renbit_excessive	= 4	; if 1, do a more exhaustive sprite rendering check
-renbit_static		= 5	; if 1, enable static rendering
+renbit_static		= 5	; if 1, enable 'static' single sprite rendering. Ignores ren_excessive
 renbit_multidraw	= 6	; if 1, enable multidraw
 renbit_onscreen		= 7	; if 1, object successfully rendered
 
@@ -760,10 +761,16 @@ ren_xflip		= 1<<renbit_xflip
 ren_yflip		= 1<<renbit_yflip
 ren_camerapos		= 1<<renbit_camerapos
 ren_screenpos		= 0<<renbit_screenpos
-objflag_continue	= 1<<objflagbit_continue
+;ren_wordframe		= 1<<renbit_wordframe
+;ren_byteframe		= 0<<renbit_wordframe
+;ren_excessive		= 1<<renbit_excessive
 ren_static		= 1<<renbit_static
 ren_multidraw		= 1<<renbit_multidraw
 ren_onscreen		= 1<<renbit_onscreen
+
+
+renbit_subsprite	= renbit_multidraw
+ren_subsprite		= ren_multidraw
 
 ; backwards compatibility
 rbCoord			= renbit_screenpos	; screen coordinates bit
@@ -771,10 +778,18 @@ rbStatic		= renbit_static		; static mappings bit
 rbMulti			= renbit_multidraw	; multi-draw bit
 rbOnscreen		= renbit_onscreen	; on-screen bit
 
-rfCoord			= ren_camerapos		; screen coordinates flag ($04)
-rfStatic		= ren_static		; static mappings flag ($20)
-rfMulti			= ren_multidraw		; multi-draw flag ($40)
-rfOnscreen		= ren_onscreen		; on-screen flag ($80)
+rfCoord			= ren_camerapos		; screen coordinates flag
+rfStatic		= ren_static		; static mappings flag
+rfMulti			= ren_multidraw		; multi-draw flag
+rfOnscreen		= ren_onscreen		; on-screen flag
+
+; ---------------------------------------------------------------------------
+; object_flags
+; ---------------------------------------------------------------------------
+objflagbit_continue	= 7	; if 1, object continues running code when ObjectFreezeFlag is set
+
+
+objflag_continue	= 1<<objflagbit_continue
 
 ; ---------------------------------------------------------------------------
 ; Animation flags

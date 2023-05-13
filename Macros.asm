@@ -628,6 +628,11 @@ jmi:		macro loc
 	    endm
 
 
+; Function to point to a ROM address for an object
+; Currently, should only be needed for RAM addresses
+make_objaddr function addr,(addr&$00FFFFFF)
+
+
 ; Function to determine an objects sprite rendering priority
 ; prid is boxed because priority constants would otherwise screw the assemblers math
 ;make_priority function prid,(prid*next_priority)

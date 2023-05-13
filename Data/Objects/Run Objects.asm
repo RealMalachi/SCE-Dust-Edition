@@ -13,8 +13,8 @@ RunSomeObjects:
 	move.l	address(a0),d0		; load address to d0
 	bmi.s	.rts			; if we've reached ObjectRAMMarker, end routine
 	beq.s	.frzskip		; if we don't have an address loaded, skip
-	btst	#objflagbit_continue,render_flags(a0)	; is the object set to continue its code?
-	bne.s	.frzburn				; if so, don't stop
+	tst.b	object_flags(a0)	; is the object set to continue its code?
+	bmi.s	.frzburn		; if so, don't stop
 	tst.b	render_flags(a0)	; is on-screen flag set?
 	bpl.s	.frznorndr		; if not, don't display
 	bsr.w	Draw_Sprite
@@ -55,7 +55,7 @@ RunObjects:
 ; a successful object takes 48 cycles + whatever code it runs
 ; the first objects per loop take an additional 8 cycles
 	move.l	address(a0),d0		; 12 ; load ROM address to d0 (if not used later, a tst.l will do fine)
-	bmi.s	RunSomeObjects.rts	; 8, 10 but ends routine ; if we've reached ObjectRAMMarker, end routine
+	bmi.s	RunSomeObjects.rts	; 8, 10 but ends routine ; if we've reached ObjectRAMMarker (or an illegal routine.), end routine
 	beq.s	+			; 8, 10 but skips...     ; if we don't have an address loaded, skip
 ;	movea.l	address(a0),a1		; 12 ; load ROM address to a1
 	movea.l	d0,a1			; 4  ; move that address to a1

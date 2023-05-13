@@ -120,12 +120,14 @@ loc_2D10A:
 		subq.w	#1,$36(a0)
 		bpl.s	loc_2D12E
 		movea.w	$3E(a0),a1
-		cmpi.l	#Obj_StarPost,address(a1)
-		bne.s	loc_2D128
+	;	cmpi.l	#Obj_StarPost,address(a1)
+		move.l	address(a1),d0
+		and.l	#$FFFFFF,d0
+		cmpi.l	#Obj_StarPost,d0
+		bne.s	+
 		move.b	#2,anim(a1)
 		clr.b	mapping_frame(a1)
-
-loc_2D128:
++
 		jmp	(Delete_Current_Sprite).w
 ; ---------------------------------------------------------------------------
 
