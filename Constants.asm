@@ -115,6 +115,7 @@ sram_inittext	sramaddr 4
 sram_inittext2	sramaddr 4
 sram_version	sramaddr 1
 	sramaddr 1	; just in case
+sram_afterchecks
 ; universal save data
 sram_settings	sramaddr 1
 	srampad
@@ -171,6 +172,7 @@ CdCommSub5 =				$A12028
 CdCommSub6 =				$A1202A
 CdCommSub7 =				$A1202C
 CdCommSub8 =				$A1202E
+
 ; ---------------------------------------------------------------------------
 ; Level Misc
 ; ---------------------------------------------------------------------------
@@ -234,81 +236,101 @@ id_DEZ:		ds.b 1	; 0, so on
 ; Input bit numbers
 ; NOTE: if using btst on something that isn't a data register, check the exact RAM location (Ctrl1_Hd_XYZ for example)
 	phase	0	;
-button_up:	ds.b 1
-button_down:	ds.b 1
-button_left:	ds.b 1
-button_right:	ds.b 1
-button_B:	ds.b 1
-button_C:	ds.b 1
-button_A:	ds.b 1
-button_start:	ds.b 1
+button_up	ds.b 1
+button_down	ds.b 1
+button_left	ds.b 1
+button_right	ds.b 1
+button_B	ds.b 1
+button_C	ds.b 1
+button_A	ds.b 1
+button_start	ds.b 1
 ; 6-button controllers
 ; when using these, you'll get a 'truncated' notice when btst is used on something that isn't a data register
-button_Z:	ds.b 1
-button_Y:	ds.b 1
-button_X:	ds.b 1
-button_mode:	ds.b 1
-; the extra four bits are used to figure out which controller type is plugged in
+button_Z	ds.b 1
+button_Y	ds.b 1
+button_X	ds.b 1
+button_mode	ds.b 1
+; the extra four bits are unused
 	dephase		; Reset the program counter
 ; if you REALLY don't want to deal with the truncatation notice, use these instead
-button6_Z:	= button_Z-8
-button6_Y:	= button_Y-8
-button6_X:	= button_X-8
-button6_mode:	= button_mode-8
+button6_Z =	button_Z-8
+button6_Y =	button_Y-8
+button6_X =	button_X-8
+button6_mode =	button_mode-8
 ; Input numbers (masks??). Essentially the byte number the bits represent
 ; these allow checking more then one button press at the same time (like jumping using A,B,C)
 ; 1 << x == pow(2, x)
-button_up_mask:		= 1<<button_up		;   $01
-button_down_mask:	= 1<<button_down	;   $02
-button_left_mask:	= 1<<button_left	;   $04
-button_right_mask:	= 1<<button_right	;   $08
-button_B_mask:		= 1<<button_B		;   $10
-button_C_mask:		= 1<<button_C		;   $20
-button_A_mask:		= 1<<button_A		;   $40
-button_start_mask:	= 1<<button_start	;   $80
-button_Z_mask:		= 1<<button_Z		; $0100
-button_Y_mask:		= 1<<button_Y		; $0200
-button_X_mask:		= 1<<button_X		; $0400
-button_mode_mask:	= 1<<button_mode	; $0800
+button_up_mask =	1<<button_up	;   $01
+button_down_mask =	1<<button_down	;   $02
+button_left_mask =	1<<button_left	;   $04
+button_right_mask =	1<<button_right	;   $08
+button_B_mask =		1<<button_B	;   $10
+button_C_mask =		1<<button_C	;   $20
+button_A_mask =		1<<button_A	;   $40
+button_start_mask =	1<<button_start	;   $80
+button_Z_mask =		1<<button_Z	; $0100
+button_Y_mask =		1<<button_Y	; $0200
+button_X_mask =		1<<button_X	; $0400
+button_mode_mask =	1<<button_mode	; $0800
 ; additional ones for ease of code
-button_directional_mask:	= button_up_mask+button_down_mask+button_left_mask+button_right_mask	; $F
-button_ABC_mask:		= button_B_mask+button_C_mask+button_A_mask	; $70
-button_XYZ_mask:		= button_Z_mask+button_Y_mask+button_X_mask	; $0700
+button_directional_mask =	button_up_mask|button_down_mask|button_left_mask|button_right_mask	; $F
+button_ABC_mask =		button_B_mask|button_C_mask|button_A_mask	; $70
+button_XYZ_mask =		button_Z_mask|button_Y_mask|button_X_mask	; $0700
 
-btnMode:	equ button_mode_mask			; Mode ($800)
-btnX:		equ button_X_mask			; X ($400)
-btnY:		equ button_Y_mask			; Y ($200)
-btnZ:		equ button_Z_mask			; Z ($100)
-btnR:		equ button_right_mask			; Right ($08)
-btnL:		equ button_left_mask			; Left ($04)
-btnUD:		equ button_up_mask|button_down_mask	; Up or Down ($03)
-btnDn:		equ button_down_mask			; Down ($02)
-btnUp:		equ button_up_mask			; Up ($01)
-btnLR:		equ button_left_mask|button_right_mask	; Left or Right ($0C)
-btnDir:		equ button_directional_mask		; Any direction ($0F)
-btnABCS:	equ button_ABC_mask|button_start_mask	; A, B, C or Start ($F0)
-btnStart:	equ button_start_mask			; Start button ($80)
-btnABC:		equ button_ABC_mask			; A, B or C ($70)
-btnAC:		equ button_A_mask|button_C_mask		; A or C ($60)
-btnAB:		equ button_A_mask|button_B_mask		; A or B ($50)
-btnA:		equ button_A_mask			; A ($40)
-btnBC:		equ button_C_mask|button_B_mask		; B or C ($30)
-btnC:		equ button_C_mask			; C ($20)
-btnB:		equ button_B_mask			; B ($10)
+; smaller variants
+btnM =		button_mode_mask			; Mode button
+btnX =		button_X_mask				; X
+btnY =		button_Y_mask				; Y
+btnZ =		button_Z_mask				; Z
+btnS =		button_start_mask			; Start button
+btnA =		button_A_mask				; A
+btnC =		button_C_mask				; C
+btnB =		button_B_mask				; B
+btnR =		button_right_mask			; Right
+btnL =		button_left_mask			; Left
+btnD =		button_down_mask			; Down
+btnU =		button_up_mask				; Up
+btnXYZM =	button_XYZ_mask|button_mode_mask	; X, Y, Z or Mode
+btnXYZ =	button_XYZ_mask				; X, Y, or Z
+btnXY =		button_X_mask|button_Y_mask		; X or Y
+btnXZ =		button_X_mask|button_Z_mask		; X or Z
+btnYZ =		button_Y_mask|button_Z_mask		; Y or Z
+btnABCS =	button_ABC_mask|button_start_mask	; A, B, C or Start
+btnABC =	button_ABC_mask				; A, B or C
+btnAB =		button_A_mask|button_B_mask		; A or B
+btnAC =		button_A_mask|button_C_mask		; A or C
+btnBC =		button_C_mask|button_B_mask		; B or C
+btnDir =	button_directional_mask			; Any direction
+btnLR =		button_left_mask|button_right_mask	; Left or Right
+btnUD =		button_up_mask|button_down_mask		; Up or Down
 
-bitMode:	equ button_mode
-bitX:		equ button_X
-bitY:		equ button_Y
-bitZ:		equ button_Z
-bitStart:	equ button_start
-bitA:		equ button_A
-bitC:		equ button_C
-bitB:		equ button_B
-bitR:		equ button_right
-bitL:		equ button_left
-bitDn:		equ button_down
-bitUp:		equ button_up
+bitM =		button_mode
+bitX =		button_X
+bitY =		button_Y
+bitZ =		button_Z
+bitS =		button_start
+bitA =		button_A
+bitC =		button_C
+bitB =		button_B
+bitR =		button_right
+bitL =		button_left
+bitD =		button_down
+bitU =		button_up
 
+
+btnMode =	btnM
+btnMo =		btnM
+btnStart =	btnS
+btnSt =		btnS
+btnDn =		btnD
+btnUp =		btnU
+
+bitMode =	bitM
+bitMo =		bitM
+bitStart =	bitS
+bitSt =		bitS
+bitDn =		bitD
+bitUp =		bitU
 
 ; ---------------------------------------------------------------------------
 ; property of all objects
