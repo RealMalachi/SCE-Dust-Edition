@@ -19,10 +19,11 @@ Improved Render_Sprites
 - ren_wordframe: Word-sized mapping_frame option, at the cost of the render box (height_pixels) being limited to a square
 - ren_excessive: Ignores height_pixels check. Individual sprite bounds checked during rendering process, if out of bounds don't render. If any sprites render, set ren_onscreen
 
+
 Better PAL support
-- V30
-- 50Hz retiming to emulate 60Hz
-- Real PAL60 if possible
+- V30 (allow V30 60Hz on emulation)
+- Figure out convenient method for 50Hz retiming to 60-ish speeds
+- PAL60 if possible
 
 
 MegaWifi and Retro.Link support
@@ -32,18 +33,29 @@ https://github.com/b1tsh1ft3r/retro.link
 - If possible, cross-play between these different types
 - for bigger data, maybe make the game compress its data? It's a long shot though
 
+
 More controller support
 ; https://drive.google.com/uc?id=1cVtJnv0XdEhLINv73P13DpBlyvhprZpw - Xband
 
 
-Console revision and Emulator checks, to lock or rework certain features that would have unintentional effects, or ease CPU when inaccurate emulation can benefit
-inaccurate MCD emulation could allow better looping, for instance
-https://github.com/DevsArchive/genesis-emulator-detector
-- BCD flag accuracy
-- TAS on RAM
+Console revision and emulator checks, to lock or rework certain features that would have unintentional effects, or ease CPU when inaccurate emulation can benefit
+https://github.com/DevsArchive/genesis-emulator-detector, BCD flags accuracy, TAS on RAM
+Requirements
+- Emulator/Clone check
+- Flashcart detection (Everdrive could be used for multi-threading)
+- Console speed check (S3Ks poorly named "Detect_PAL" is a good start)
+- Console revision check (at least enough to determine TAS)
+
+Advantages
+- load an error screen when you know the emulator doesn't support certain features, like mappers or wifi
+- better redbook audio looping
+- V30 60Hz by beloved
+- less Z80 pauses; higher quality PCM
+- CRAM dot inaccuracy speedups
 
 
 Piracy checks? I don't want to stop players playing the game though, just a disclaimer
 - If the game doesn't have SRAM and succeeds a write
+- If the ROM size is more then expected
 
-
+Expand on MCD Mode 1 support. Ideally should only be for enhancements, such as multi-threading 3D rendering
