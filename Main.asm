@@ -28,6 +28,7 @@ EnableSRAM:		= 1	; change to 1 to enable SRAM
 BackupSRAM:		= 0
 AddressSRAM:		= 3	; 0 = odd+even; 2 = even only; 3 = odd only
 EnableModem:		= 0	; change to 1 to enable modem support (not implemented)
+EnableWifi:		= 0	; change to 1 to enable 
 
 CompBlocks:		= 1	;
 CompLevel:		= 1	;
@@ -45,8 +46,7 @@ CompCollision:		= 0	;
 ; ---------------------------------------------------------------------------
 ; https://plutiedev.com/rom-header
 ; https://drive.google.com/uc?id=14WsmPYLmKawSQoSj0LPu2eZNVBgyfMwP	; header doc on pages 8-9, 41-42,46(cringe)-47
-; https://drive.google.com/uc?id=1cVtJnv0XdEhLINv73P13DpBlyvhprZpw	; Xband doc
-; https://gitlab.com/doragasu/mw					; MegaWifi doc
+
 
 StartOfROM:
 	if * <> 0
@@ -520,6 +520,11 @@ EndOfHeader:
 	include "Misc Data/Debugger/ErrorHandler/ErrorHandler.asm"
 
 ; end of 'ROM'
-EndOfROM:
+	if MOMPASS=1
+	message "$\{*} bytes, Pre-auto compression ROM size"
+	elseif MOMPASS=3
+	message "$\{*} bytes, Final ROM size"
+	endif
 
+EndOfROM:
 	END

@@ -14,21 +14,34 @@ vdpCommDelta function addr,((addr&$3FFF)<<16)|((addr&$C000)>>14)
 ; makes a VDP command
 vdpComm function addr,type,rwd,(((type&rwd)&3)<<30)|((addr&$3FFF)<<16)|(((type&rwd)&$FC)<<2)|((addr&$C000)>>14)
 
-; sign-extends a 32-bit integer to 64-bit
+; sign-extends a 24-bit integer to 64-bit
 ; all RAM addresses are run through this function to allow them to work in both 16-bit and 32-bit addressing modes
-ramaddr function x,(-(x&$80000000)<<1)|x
+;ramaddr function x,(-(x&$800000)<<1)|x
+ramaddr function x,(-(x&$80000000)<<1)|x	; 32-bit version
 
 ; function using these variables
 id function ptr,((ptr-offset)/ptrsize+idstart)
 
-; function to convert two separate nibble into a byte
+; converts two separate nibble into a byte
 nibble_to_byte function nibble1,nibble2,((nibble1)&$F0)|((nibble2)&$F)
 
-; function to convert two separate bytes into a word
+; converts two separate bytes into a word
 bytes_to_word function byte1,byte2,(((byte1)<<8)&$FF00)|((byte2)&$FF)
 
 ; function to convert two separate word into a long
 words_to_long function word1,word2,(((word1)<<16)&$FFFF0000)|((word2)&$FFFF)
+
+; converts four separate bytes into a long
+bytes_to_long function byte1,byte2,byte3,byte4,(((byte1)<<24)&$FF000000)|(((byte2)<<16)&$FF0000)|(((byte3)<<8)&$FF00)|((byte4)&$FF)
+
+; converts two bytes and a word into a long
+bytes_word_to_long function byte1,byte2,word,(((byte1)<<8)&$FF000000)|((byte2)&$FF0000)|(((word)<<16)&$FFFF)
+
+; converts a word and two bytes into a long
+word_bytes_to_long function word,byte1,byte2,(((word)<<16)&$FFFF0000)|(((byte1)<<8)&$FF00)|((byte2)&$FF)
+
+; converts a byte and a tri into a long
+byte_tri_to_long function byte,tri,(((byte)<<24)&$FF000000)|(tri)&$00FFFFFF
 
 ; values for the type argument
 VRAM = %100001

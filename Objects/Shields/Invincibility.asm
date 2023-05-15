@@ -35,8 +35,9 @@ Obj_Invincibility_Delete:
 
 Obj_Invincibility:
 	QueueStaticDMA ArtUnc_Invincibility,tiles_to_bytes(29),tiles_to_bytes(ArtTile_Shield)	; load art
-	move.w	#bytes_to_word(ren_camerapos|ren_onscreen,objflag_continue),render_flags(a0)
-	move.w	#bytes_to_word(32/2,32/2),height_pixels(a0)			; set height and width
+	move.l	#bytes_to_long(ren_camerapos,objflag_continue,32/2,32/2),render_flags(a0)
+;	move.w	#bytes_to_word(ren_camerapos|ren_onscreen,objflag_continue),render_flags(a0)
+;	move.w	#bytes_to_word(32/2,32/2),height_pixels(a0)			; set height and width
 	move.w	#make_priority(1),priority(a0)
 	move.w	#make_art_tile(ArtTile_Shield,0,1),art_tile(a0)
 	move.l	#Map_Invincibility,mappings(a0)
@@ -52,6 +53,8 @@ Obj_Invincibility:
 	lea	sub5_x_pos-sub3_x_pos(a5),a5
 	dbf	d1,-
 	move.w	#7,mainspr_childsprites(a0)	; set child sprite amount
+;	move.b	mapping_frame(a0),Invinc_sub3animbuffer(a0)	; not needed for now
+;	clr.b	mapping_frame(a0)
 	move.l	#.main,address(a0)
 .main:
 	movea.w	Shield_PlayerAddr(a0),a1

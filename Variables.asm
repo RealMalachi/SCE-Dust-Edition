@@ -3,6 +3,7 @@
 ; ===========================================================================
 
 ; RAM variables - General
+;	phase	ramaddr($00FF0000)	; Pretend we're in the RAM
 	phase	ramaddr($FFFF0000)	; Pretend we're in the RAM
 RAM_start:				= *
 Chunk_table:				ds.b $8000	; Chunk (128x128) definitions, $80 bytes per definition
@@ -590,6 +591,13 @@ V_int_jump:					ds.w 1			; contains an instruction to jump to the V-int handler
 V_int_addr:					ds.l 1
 H_int_jump:					ds.w 1			; contains an instruction to jump to the H-int handler
 H_int_addr:					ds.l 1
+;	if * > $1000000	; Don't declare more space than the RAM can contain!
+;		fatal "The RAM variable declarations are too large by $\{*} bytes."
+;	endif
+;	if MOMPASS=1
+;		message "The current RAM available $\{0-*} bytes."
+;	endif
+
 	if * > 0	; Don't declare more space than the RAM can contain!
 		fatal "The RAM variable declarations are too large by $\{*} bytes."
 	endif

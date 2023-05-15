@@ -536,6 +536,7 @@ loc_86AB0:
 	;	lsl.w	#3,d0
 		lea	Obj_Animal_Prop(pc),a2
 		move.l	(a2,d0.w),mappings(a0)
+	;	clr.b	mappings(a0)
 		lsl.w	#2,d1
 		move.w	d1,$2E(a0)
 		movea.w	$46(a0),a1

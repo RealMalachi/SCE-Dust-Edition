@@ -354,6 +354,7 @@ height_pixels		ds.b 1 ; byte
 width_pixels		ds.b 1 ; byte
 priority		ds.w 1 ; word ; in units of $80
 art_tile		ds.w 1 ; word ; PCCVHAAA AAAAAAAA ; P = priority, C = palette line, V = y-flip, H = x-flip, A = starting cell index of art
+; TODO: more tribyte abuse
 mappings		ds.l 1 ; long
 x_pixel			; word ; x-coordinate for objects using screen positioning
 x_pos			ds.w 1 ; word, long when extra precision is required

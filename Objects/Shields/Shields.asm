@@ -28,10 +28,8 @@ SetDPLC_Macro macro dplcadd,artadd,vrampos
 Obj_FireShield:
 		; init
 		move.l	#Map_FireShield,mappings(a0)
-		move.w	#bytes_to_word(ren_camerapos|ren_onscreen,objflag_continue),render_flags(a0)
-		move.w	#make_priority(1),priority(a0)
-		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)			; set height and width
-		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
+		move.l	#words_to_long(make_priority(1),make_art_tile(ArtTile_Shield,0,0)),priority(a0)
+		move.l	#bytes_to_long(ren_camerapos,objflag_continue,48/2,48/2),render_flags(a0)
 		SetDPLC_Macro DPLC_FireShield,ArtUnc_FireShield,ArtTile_Shield
 		btst	#7,(Player_1+art_tile).w
 		beq.s	.nothighpriority
@@ -108,10 +106,8 @@ Obj_LightningShield:
 
 		; init
 		move.l	#Map_LightningShield,mappings(a0)
-		move.w	#bytes_to_word(ren_camerapos|ren_onscreen,objflag_continue),render_flags(a0)
-		move.w	#make_priority(1),priority(a0)
-		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)			; set height and width
-		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
+		move.l	#words_to_long(make_priority(1),make_art_tile(ArtTile_Shield,0,0)),priority(a0)
+		move.l	#bytes_to_long(ren_camerapos,objflag_continue,48/2,48/2),render_flags(a0)
 		SetDPLC_Macro DPLC_LightningShield,ArtUnc_LightningShield,ArtTile_Shield
 		btst	#7,(Player_1+art_tile).w
 		beq.s	.nothighpriority
@@ -275,10 +271,8 @@ Obj_BubbleShield:
 
 		; init
 		move.l	#Map_BubbleShield,mappings(a0)
-		move.w	#bytes_to_word(ren_camerapos|ren_onscreen,objflag_continue),render_flags(a0)
-		move.w	#make_priority(1),priority(a0)
-		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)			; set height and width
-		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
+		move.l	#words_to_long(make_priority(1),make_art_tile(ArtTile_Shield,0,0)),priority(a0)
+		move.l	#bytes_to_long(ren_camerapos,objflag_continue,48/2,48/2),render_flags(a0)
 		SetDPLC_Macro DPLC_BubbleShield,ArtUnc_BubbleShield,ArtTile_Shield
 		btst	#7,(Player_1+art_tile).w
 		beq.s	.nothighpriority
@@ -336,10 +330,8 @@ Obj_InstaShield:
 
 		; init
 		move.l	#Map_InstaShield,mappings(a0)
-		move.w	#bytes_to_word(ren_camerapos|ren_onscreen,objflag_continue),render_flags(a0)
-		move.w	#make_priority(1),priority(a0)
-		move.w	#bytes_to_word(48/2,48/2),height_pixels(a0)			; set height and width
-		move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
+		move.l	#words_to_long(make_priority(1),make_art_tile(ArtTile_Shield,0,0)),priority(a0)
+		move.l	#bytes_to_long(ren_camerapos,objflag_continue,48/2,48/2),render_flags(a0)
 		SetDPLC_Macro DPLC_InstaShield,ArtUnc_InstaShield,ArtTile_Shield
 		btst	#7,(Player_1+art_tile).w
 		beq.s	.nothighpriority

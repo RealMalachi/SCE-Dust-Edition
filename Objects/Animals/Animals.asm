@@ -37,7 +37,7 @@ Rabbit:		animaldecl -$200,-$400,Map_Animals5,Obj_Animal_Walk
 Chicken:	animaldecl -$200,-$300,Map_Animals1,Obj_Animal_Fly
 Penguin:	animaldecl -$180,-$300,Map_Animals5,Obj_Animal_Walk
 Seal:		animaldecl -$140,-$180,Map_Animals4,Obj_Animal_Walk
-Pig:		animaldecl -$1C0,-$300,Map_Animals3,Obj_Animal_Walk
+;Pig:		animaldecl -$1C0,-$300,Map_Animals3,Obj_Animal_Walk
 Flicky:		animaldecl -$300,-$400,Map_Animals1,Obj_Animal_Fly
 Squirrel:	animaldecl -$280,-$380,Map_Animals2,Obj_Animal_Walk
 ;Eagle:		animaldecl -$280,-$300,Map_Animals1,Obj_Animal_Fly
@@ -64,13 +64,12 @@ Obj_Animal:
 		lea	Obj_Animal_Prop(pc),a1
 		adda.w	d0,a1
 		move.l	(a1)+,mappings(a0)
+	;	clr.b	mappings(a0)		; if that byte gets used
 		move.l	(a1)+,animal_savedxvel(a0)
 		move.l	(a1)+,animal_savedaddr(a0)
 		move.b	#24/2,y_radius(a0)
-		move.b	#4,render_flags(a0)
-		bset	#0,render_flags(a0)
 		move.w	#make_priority(6),priority(a0)
-		move.w	#bytes_to_word(24/2,16/2),height_pixels(a0)
+		move.l	#bytes_to_long(ren_camerapos|ren_xflip,0,24/2,16/2),render_flags(a0)
 		move.b	#7,anim_frame_timer(a0)
 		move.b	#2,mapping_frame(a0)
 		move.w	#-$400,y_vel(a0)
