@@ -347,7 +347,7 @@ next_object =		object_size
 ;id			; TODO: Doesn't apply to S3K.
 routine		; byte ; determines the objects current routine. Can't be $80 or beyond, gets cleared when address is set
 ; I really want to emphasize how much problems routine being $80 would cause. RunObjects uses it to determine when the ENTIRE routine should end.
-address			ds.l 1 ; long ; Direct 24-bit ROM address to object code. Refer to make_objaddr in Macros.asm
+address			ds.l 1 ; tri, long ; Direct 24-bit ROM address to object code. Refer to make_objaddr in Macros.asm
 render_flags		ds.b 1 ; bitfield ; flags used for sprite rendering
 object_flags		ds.b 1 ; bitfield ; flags used to determine certain traits of objects
 height_pixels		ds.b 1 ; byte

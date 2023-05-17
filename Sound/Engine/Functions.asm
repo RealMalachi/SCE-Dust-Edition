@@ -10,9 +10,9 @@ SMPS_LoadDACDriver:
 	lea	(MegaPCM).l,a0		; source
 	lea	(SMPS_z80_ram).l,a1	; destination
 	bsr.w	KosDec
-;;	movem.l	d0/d2/d4-d7/a5,-(sp)	; shouldn't need these
+;	movem.l	d0/d2/d4-d7/a5,-(sp)
 ;	bsr.w	KosPlusDec
-;;	movem.l	(sp)+,d0/d2/d4-d7/a5
+;	movem.l	(sp)+,d0/d2/d4-d7/a5
 
 	moveq	#0,d1
 	move.w	d1,(SMPS_z80_reset).l

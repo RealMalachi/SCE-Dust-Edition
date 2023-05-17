@@ -111,31 +111,6 @@ SRAM_GetChecksum:
 	;	move.l	#'HALP',d0
 	;	SRAM_SetLong d0,(a2)	; debug text, to see where it ends
 		rts
-
-SRAM_GetVersionFromChecksum:
-		lea	(SRAM_Address+sram_inittext).l,a2
-		SRAM_SetWord sram_checksum(a1),d1
-; handle the init text
-		moveq	#(((sram_version-sram_inittext)/2)/SRAM_RAMSize)-1,d2
-		bsr.s	.loop
-; handle the mystery byte after version
-		addq.l	#1*SRAM_RAMSize,a2	; skip version
-		moveq	#0,d0
-		move.b	(a2)+,d0
-		sub.w	d0,d1
-; handle everything else
-		move.w	#((sram_padding-sram_afterchecks)/(2*SRAM_RAMSize))-1,d2
-.loop
-	if AddressSRAM=0
-		sub.w	(a2)+,d1
-	else
-		movep.w	(a2),d0
-		addq.l	#2*SRAM_RAMSize,a2
-		sub.w	d0,d1
-	endif
-		dbf	d2,.loop
-.end
-		rts
 ; ---------------------------------------------------------------------------
 ; loads or saves the backup SRAM
 ; TODO: Speed up loading process
@@ -159,17 +134,6 @@ SRAM_SaveBackup:
 ; convert older versions of the games SRAM into the newest format
 ; TODO: No older versions
 SRAM_OlderVersionDetected:
-	;	moveq	#0,d1
-	;	bsr.s	SRAM_GetVersionFromChecksum	; version in d1
-	;	cmp.w	#SRAM_GameVersion<<8,d1		; are they the same?
-	;	beq.s	+
-	;	move.w	#SRAM_GameVersion<<8,d0
-	;	SRAM_GetWord sram_checksum(a1),d3
-	;	moveq	#-1,d2
-	;	move.w	(1).w,d2
-;+
-	;	rts
-
 	;	moveq	#0,d0
 	;	move.b	sram_version(a1),d0
 		move.b	#SRAM_GameVersion,sram_version(a1)	; set old version to current one
@@ -188,6 +152,7 @@ SRAM_OlderVersionDetected:
 ; I think this should be handled on a game-by-game basis
 ; my one sends you to an error screen, similar to those spooooooky fake piracy screens
 SRAM_LaterVersionDetected:
+; we've exhausted all of our options.
 		move.b	#id_ContinueScreen,(Game_mode).w	; WIP
 		disableSRAM
 		rts

@@ -140,9 +140,9 @@ __LABEL__ label *
     endm
 
 ; macro to define debug list object data
-dbglistobj macro   obj, mapaddr, subtype, frame, vram
-	dc.l frame<<24|obj
-	dc.l subtype<<24|mapaddr
+dbglistobj macro   obj,mapaddr,subtype,frame,vram
+	dc.l byte_tri_to_long(subtype,obj)	; object placement data
+	dc.l byte_tri_to_long(frame,mapaddr)	; object selection data
 	dc.w vram
     endm
 

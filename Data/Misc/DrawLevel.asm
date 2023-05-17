@@ -1034,12 +1034,23 @@ LoadLevelLoadBlock2:
 		movem.l	d0/d2/d4-d7/a2/a5,-(sp)
 		jsr	(KosPlusDec).w	; load chunks
 		movem.l	(sp)+,d0/d2/d4-d7/a2/a5
+	;	movea.l	(a2)+,a1
+	;	movem.l	d0/a2,-(sp)
+	;	lea	(Block_table).l,a2
+	;	jsr	(Queue_KosPlus).w
+	;	movem.l	(sp)+,d0/a2
 	endif
 		movea.l	(a2)+,a0
 		lea	(Chunk_table).l,a1
 		movem.l	d0/d2/d4-d7/a5,-(sp)
 		jsr	(KosPlusDec).w	; load chunks
 		movem.l	(sp)+,d0/d2/d4-d7/a5
+	;	movea.l	(a2)+,a1
+	;	movem.l	d0/a2,-(sp)
+	;	lea	(Chunk_table).l,a2
+	;	jsr	(Queue_KosPlus).w
+	;	movem.l	(sp)+,d0/a2
+
 		jsr	(LoadPLC_KosM).w
 		movea.l	(sp)+,a2
 		moveq	#0,d0
@@ -1065,6 +1076,9 @@ Load_Level2:
 	else
 		lea	(Level_layout).l,a1
 		jmp	(KosPlusDec).w	; load level
+	;	lea	(a0),a1
+	;	lea	(Level_layout).l,a2
+	;	jmp	(Queue_Kos).w
 	endif
 
 ; =============== S U B R O U T I N E =======================================
@@ -1112,4 +1126,8 @@ Load_Solids2:
 		lea	(Collision_table).l,a1
 		move.l	a1,(Collision_addr).w
 		jmp	(KosPlusDec).w	; load level
+	;	lea	a0,(a1)
+	;	lea	(Collision_table).l,a2
+	;	move.l	a2,(Collision_addr).w
+	;	jmp	(Queue_KosPlus).w
 	endif
