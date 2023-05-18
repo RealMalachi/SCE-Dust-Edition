@@ -313,6 +313,7 @@ loc_185A4:
 		jsr	(Create_New_Sprite).w
 		bne.s	locret_1858E
 		move.l	address(a0),address(a1)
+		clr.b	routine(a1)
 		move.w	x_pos(a2),x_pos(a1)
 		moveq	#6,d0
 		btst	#Status_Facing,status(a2)

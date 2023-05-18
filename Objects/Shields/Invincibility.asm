@@ -35,7 +35,7 @@ Obj_Invincibility_Delete:
 
 Obj_Invincibility:
 	QueueStaticDMA ArtUnc_Invincibility,tiles_to_bytes(29),tiles_to_bytes(ArtTile_Shield)	; load art
-	move.l	#bytes_to_long(ren_camerapos,objflag_continue,32/2,32/2),render_flags(a0)
+	move.l	#bytes_to_long(ren_camerapos|ren_multidraw,objflag_continue,32/2,32/2),render_flags(a0)
 ;	move.w	#bytes_to_word(ren_camerapos|ren_onscreen,objflag_continue),render_flags(a0)
 ;	move.w	#bytes_to_word(32/2,32/2),height_pixels(a0)			; set height and width
 	move.w	#make_priority(1),priority(a0)

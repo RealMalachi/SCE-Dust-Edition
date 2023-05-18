@@ -134,6 +134,7 @@ loc_2FABA:
 		jsr	(Create_New_Sprite).w
 		bne.s	loc_2FB34
 		move.l	address(a0),address(a1)
+		clr.b	routine(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		jsr	(Random_Number).w
 		andi.w	#$F,d0

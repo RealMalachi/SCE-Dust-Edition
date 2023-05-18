@@ -108,7 +108,7 @@ loc_18C60:
 
 loc_18C84:
 		cmpi.b	#12,air_left(a2)
-		blo.s		loc_18CAA
+		blo.s	loc_18CAA
 		btst	#6,status(a0)
 		bne.s	loc_18CAA
 
@@ -165,7 +165,7 @@ loc_18CE4:
 +		add.w	d1,y_pos(a1)
 		clr.b	status(a1)
 		move.b	#id_Roll2,anim(a1)
-		addq.b	#2,routine(a1)
+		move.b	#2,routine(a1)
 		move.l	mappings(a0),mappings(a1)
 		move.b	render_flags(a0),render_flags(a1)
 		move.w	#make_priority(1),priority(a1)
