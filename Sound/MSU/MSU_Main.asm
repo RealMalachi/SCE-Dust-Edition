@@ -20,14 +20,18 @@ _MCD_SetVolume		= $15			; Set cdda volume. Volume 0-255
 _MCD_NoSeek		= $16			; Seek time emulation switch. 0-enulation on(default state), 1-emultion off(no seek delays)
 _MCD_PlayTrack_Loop	= $1A			; #1 = decimal number of track (1-99). #2 = offset in sectors from the start of the track to apply when looping
 ; ---------------------------------------------------------------------------
-
-Init_MSU_Driver:	
-	moveq	#1,d0
-	btst	#5,(HW_Version)			; check if the MegaCD is attached
-	beq.s	+				; if it is, continue
-	cmpi.l	#"SEGA",(CdBootRom_SEGA)	; check for 'SEGA' in CD bios (for flashcarts like the Everdrive, which can't set bit 5)
-	bne.s	.end				; if not, end routine
-+
+; INPUT
+; a0 - KosPlus compressed PRG-RAM program
+Init_MSU_Driver:
+Load_PRGRAM:
+	btst	#addon_mcd,(Addons_flags).w	; does the system have any form of MegaCD support?
+	beq.s	.end				; if not, branch
+;	moveq	#1,d0
+;	btst	#5,(HW_Version)			; check if the MegaCD is attached
+;	beq.s	+				; if it is, continue
+;	cmpi.l	#"SEGA",(CdBootRom_SEGA)	; check for 'SEGA' in CD bios (for flashcarts like the Everdrive, which can't set bit 5)
+;	bne.s	.end				; if not, end routine
+;+
 	lea     (CdSubCtrl+1),a2
 	move.b	#2,(CdSubCtrl+1)-(CdSubCtrl+1)(a2)	;
 	btst	#1,(CdSubCtrl+1)-(CdSubCtrl+1)(a2)	;
@@ -43,7 +47,7 @@ Init_MSU_Driver:
 	andi.b	#1,d0			; wait until the MCD responds (this can take a while)
 	beq.s	-
 	move.b	#0,(CdMemCtrl)-(CdSubCtrl+1)(a2)
-	moveq	#0,d0
+;	moveq	#0,d0
 .end
 	rts
 ; ---------------------------------------------------------------------------

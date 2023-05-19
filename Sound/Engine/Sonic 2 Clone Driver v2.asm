@@ -589,7 +589,7 @@ CycleSoundQueue:
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
 Sound_PlayCDA:
-	tst.b	(SegaCD_Mode).w
+	btst	#addon_mcd,(Addons_flags).w
 	beq.w	Sound_PlayBGM
 
 	bclr	#0,SMPS_RAM.variables.v_cda_ignore(a6)
@@ -1531,7 +1531,7 @@ FadeOutMusic:
 	move.b	#$28,SMPS_RAM.variables.v_fadeout_counter(a6)	; Set fadeout counter
 
 	; Fade out CD track
-	tst.b	(SegaCD_Mode).w
+	btst	#addon_mcd,(Addons_flags).w
 	beq.s	.skip
 	MCDSend	#_MCD_PauseTrack, #$28		; flag, timer
 

@@ -7,8 +7,8 @@ Make SRAM easier to work with
 Remove 6pad related code when 6pad is disabled (more macros yeah...)
 Proper documentation on smaller engine changes
 - Merged object address and routine
-
-
+Emulator enhancements spreadsheet
+Emulator speedups
 
 ; ---------------------------------------------------------------------------
 Features

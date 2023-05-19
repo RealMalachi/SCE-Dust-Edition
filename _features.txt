@@ -1,6 +1,16 @@
 SONIC CLEAN ENGINE: DUST EDITION
 
-SCED is an upgraded version of SCE, which, honestly, is going through a bit of a feature creep. For the sake of keeping track of all of this, I think it's best to document its features, especially the new ones
+I think it's best to document the engine features, especially the changes
+
+; ---------------------------------------------------------------------------
+Basics
+SCED is an upgraded version of SCE. It brings together a variety of code and techniques from Sonic hackers and general megadrive enthusiasts, to bring peak performance out of this ancient system
+
+The engine targets the following in order of priority
+- Real SEGA Megadrive/Genesis hardware
+- RetroArch cores; BlastEm, Genesis Plus GX, Picodrive
+- Kega Fusion 3.64 (not running Mode 1)
+- a variety of emulators, for much smaller checks
 
 
 
@@ -14,7 +24,7 @@ Controller types
 
 6-button controller (optional)
 - code adjusts between 3pad and 6pad handling automatically
-- fixed bug with 3pad activating 6pad inputs when pressing up and down (notable example being SOR3)
+- fixed bug where 3pad activates 6pad inputs when pressing up and down (notable example being SOR3)
 - ISSUE: Unlike other options, disabling 6pad still keeps its RAM space and code
 
 ; ---------------------------------------------------------------------------
@@ -28,6 +38,12 @@ I highly advise that final versions of a game only revise SRAM when absolutely n
 Currently no debug versions of SRAM, 
 
 ; ---------------------------------------------------------------------------
+Misc
+
+Emulation detection, to account for inaccuracies
+Addon detection, to enhance the systems capabilities
+
+; ---------------------------------------------------------------------------
 Planned features
 
 Multitap (4WayPlay and/or Multitap, 4 player planned only)
@@ -35,4 +51,6 @@ Keyboard controllers (XBand and/or Saturn Keyboard. Converts configurable inputs
 Wifi (MegaWifi and/or Retro.Link)
 
 
-
+; ---------------------------------------------------------------------------
+Conclusion
+It doesn't support C code, 0/10 completely unworkable

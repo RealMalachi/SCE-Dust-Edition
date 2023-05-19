@@ -172,6 +172,32 @@ CdCommSub5 =				$A12028
 CdCommSub6 =				$A1202A
 CdCommSub7 =				$A1202C
 CdCommSub8 =				$A1202E
+; ---------------------------------------------------------------------------
+; 32x addresses
+; ---------------------------------------------------------------------------
+S32x_Signature =		$A130EC		; reads 'MARS' if 32x is attached
+S32x_Reg0 =			$A15180
+S32x_PWM_Comm =			$A15128		; as used in Clonedriver
+
+; ---------------------------------------------------------------------------
+; Wifi Hardware addresses
+; ---------------------------------------------------------------------------
+	if EnableWifi=1
+; MegaWifi
+
+; RetroLink
+UART_RHR =			$A130C1		; Receive holding register
+UART_THR =			UART_RHR	; Transmit holding register
+UART_IER =			$A130C3		; Interrupt enable register
+UART_FCR =			$A130C5		; FIFO control register
+UART_LCR =			$A130C7		; Line control register
+UART_MCR =			$A130C9		; Modem control register
+UART_LSR =			$A130CB		; Line status register
+UART_DLL =			UART_RHR	; Div latch low byte
+UART_DLM =			UART_IER	; Div latch high byte
+UART_DVID =			UART_IER	; Device ID
+; D, F, and even numbers are unused, probably reserved for MegaWifi
+	endif
 
 ; ---------------------------------------------------------------------------
 ; Level Misc
@@ -185,6 +211,28 @@ ObjectTable_Count:			= 768	; The maximum objects on the level. Even addresses on
 ; ---------------------------------------------------------------------------
 
 PLCKosM_Count:				= 20		; The greater the queues, the more RAM is used for the buffer
+
+; ---------------------------------------------------------------------------
+; Resolution
+; ---------------------------------------------------------------------------
+
+; The hardware supports two horizontal screen size modes; 32 tiles and 40 tiles
+; H32 is the default for SMS compatability, and got stretched by the TVs at the time to odd rectangles. A lot of consoles had this as the only option
+; H40 usually displays as square pixels, which is much easier to work with in our modern displays, and generally adds more detail to art
+; An interesting thing about this, is that it basically just adds an extra 8 rows of tiles. The same is true for widescreen, ironically enough
+ScreenSize_H64	= 512 ; 64 tiles*8 ;
+ScreenSize_H40	= 320 ; 40 tiles*8
+ScreenSize_H32	= 256 ; 32 tiles*8
+;ScreenSize_H40	= 384 ; 48 tiles*8	; 8:5 aspect ratio
+;ScreenSize_H32	= 320 ; 40 tiles*8
+
+; the hardware also supports two vertical screen modes, but the displayed width depends on either emulation or the consoles Hz rate
+; If 60Hz, 224 lines are visible
+; If 50Hz, 240 lines are visible
+; Most emulators support V30 60Hz, while some don't support V30 at all. Make sure to account for this.
+ScreenSize_V28	= 224 ; 28 tiles
+ScreenSize_V30	= 240 ; 30 tiles
+ScreenSize_LineCount 	= ScreenSize_V30 ; for simplicity, most code uses PAL sizes
 
 ; ---------------------------------------------------------------------------
 ; Game modes

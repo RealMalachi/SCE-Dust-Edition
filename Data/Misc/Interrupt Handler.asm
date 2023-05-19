@@ -6,6 +6,14 @@ UpdatePaletteVint macro
 +	dma68kToVDP Normal_palette,$0000,$80,CRAM
 +
 	endm
+
+PALAdjustVint macro
+;	btst	#6,(Graphics_flags).w
+;	beq.s	+								; branch if it's not a PAL system
+;	move.w	#$700,d0
+;	dbf	d0,*										; otherwise, waste a bit of time here
+;+
+	endm
 ; ---------------------------------------------------------------------------
 ; Vertical interrupt handler
 ; ---------------------------------------------------------------------------
@@ -25,11 +33,8 @@ VInt:
 
 		move.l	#vdpComm($0000,VSRAM,WRITE),VDP_control_port-VDP_control_port(a5)
 		move.l	(V_scroll_value).w,VDP_data_port-VDP_data_port(a6) ; send screen ypos to VSRAM
-	;	btst	#6,(Graphics_flags).w
-	;	beq.s	.notpal								; branch if it's not a PAL system
-	;	move.w	#$700,d0
-	;	dbf	d0,*										; otherwise, waste a bit of time here
-.notpal
+	PALAdjustVint
+
 		st	(H_int_flag).w		; allow Horizontal Interrupt code to run
 		st	(V_int_flag).w		; set that Vsync was successful
 		movea.l	(V_int_routine).w,a0	; load address to the gamemodes Vint routine
@@ -71,12 +76,7 @@ VInt_Lag_Level:
 		tst.b	(Water_flag).w
 		beq.w	VInt_Lag_NoWater
 		move.w	VDP_control_port-VDP_control_port(a5),d0
-	;	btst	#6,(Graphics_flags).w
-	;	beq.s	.notpal								; branch if it isn't a PAL system
-	;	move.w	#$700,d0
-	;	dbf	d0,*										; otherwise waste a bit of time here
-
-.notpal
+	PALAdjustVint
 		st	(H_int_flag).w							; set HInt flag
 		stopZ80
 	UpdatePaletteVint
@@ -87,12 +87,7 @@ VInt_Lag_Level:
 
 VInt_Lag_NoWater:
 		move.w	VDP_control_port-VDP_control_port(a5),d0
-	;	btst	#6,(Graphics_flags).w
-	;	beq.s	.notpal	; branch if it isn't a PAL system
-	;	move.w	#$700,d0
-	;	dbf	d0,*		; otherwise, waste a bit of time here
-
-.notpal
+	PALAdjustVint
 		st	(H_int_flag).w
 		move.w	(H_int_counter_command).w,VDP_control_port-VDP_control_port(a5)
 
@@ -286,15 +281,13 @@ HInt:
 		tst.b	(H_int_flag).w
 		beq.w	HInt_Done
 		clr.b	(H_int_flag).w
-		movem.l	a0-a1,-(sp)
-		lea	(VDP_data_port).l,a1
-		move.w	#$8A00+223,VDP_control_port-VDP_data_port(a1)
-		lea	(Water_palette).w,a0
-		move.l	#vdpComm($0000,CRAM,WRITE),VDP_control_port-VDP_data_port(a1)
-	rept 64/2
-		move.l	(a0)+,VDP_data_port-VDP_data_port(a1)
-	endr
-		movem.l	(sp)+,a0-a1
+
+		move.l	a5,-(sp)
+		lea	(VDP_control_port).l,a5
+		move.w	#$8A00+223,VDP_control_port-VDP_control_port(a5)
+		dma68kToVDP Water_palette,$0000,$80,CRAM
+		move.l	(sp)+,a5
+
 		tst.b	(Do_Updates_in_H_int).w
 		beq.s	HInt_Done
 		clr.b	(Do_Updates_in_H_int).w

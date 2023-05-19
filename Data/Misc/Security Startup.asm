@@ -71,7 +71,7 @@ Init_InputPSG:
 		move.b	(a5)+,PSG_input-VDP_data_port(a3) ; reset the PSG
 		dbf	d5,Init_InputPSG
 		move.w	d0,(a2)
-		movem.l	(a6),d0-a6	; clear all registers
+		movem.l	(a6),d0-a6	; clear all registers (TODO: we're gonna be destroying them soon anyway. Confirm usefulness.)
 		disableInts		; set the sr
 
 Init_SkipPowerOn:
@@ -191,27 +191,27 @@ Game_Program:
 		beq.s	.init						; if yes, branch
 
 .skip
-		move.b	(HW_Version).l,d6
-		andi.b	#$C0,d6
-		move.b	d6,(Graphics_flags).w				; get region setting
 		move.l	#Ref_Checksum_String,(Checksum_string).w	; set flag so checksum won't run again
 
 .init
+
+; first, set flags about the system for later use, such as emulation and addon detection, console region, and detected hardware bugs
+		bsr.w	Init_HardwareDetect
+
 		move.b	#1<<7,(ObjectRamMarker).w			; set marker for object RAM
 		move.b	#id_LevelSelectScreen,(Game_mode).w		; set Game Mode (some inits set the game mode for failsafe screens)
-		jsr	(Init_MSU_Driver).l
-		seq	(SegaCD_Mode).w
+
 		bsr.w	Init_DMA_Queue
 		bsr.s	Init_VDP
 		bsr.w	SoundDriverLoad
+		jsr	(Init_MSU_Driver).l
+	;	seq	(SegaCD_Mode).w
 		bsr.w	Init_Controllers
 	if EnableSRAM=1
 		bsr.w	Init_SRAM
 	endif
-
-
 .loop
-		move.b	(Game_mode).w,d0						; load Game Mode
+		move.b	(Game_mode).w,d0				; load Game Mode
 		andi.w	#$7C,d0
 		movea.l	Game_Modes(pc,d0.w),a0
 		jsr	(a0)

@@ -277,22 +277,41 @@ Ctrl_2_held_logical:		= Ctrl2_Player_Hd_ABC
 Ctrl_2_pressed_logical:		= Ctrl2_Player_Pr_ABC
 ; ---------------------------------------------------------------------------
 ; VDP
-v_vdp_buffer1:					= *
-VDP_reg_1_command:				ds.w 1		; AND the lower byte by $BF and write to VDP control port to disable display, OR by $40 to enable
-Demo_timer:					= *
-v_demolength:					ds.w 1			; The time left for a demo to start/run
-V_scroll_value:					= *			; Both foreground and background
-v_scrposy_dup:					= *
-V_scroll_value_FG:				ds.w 1
-V_scroll_value_BG:				ds.w 1
-H_scroll_value:					= *
-v_scrposx_dup:					= *
-H_scroll_value_FG:				ds.w 1
-H_scroll_value_BG:				ds.w 1
-v_hbla_hreg:					= *
-H_int_counter_command:				ds.b 1			; Contains a command to write to VDP register $0A (line interrupt counter)
-v_hbla_line:					= *
-H_int_counter:					ds.b 1			; Just the counter part of the command
+v_vdp_buffer1:			= *
+VDP_reg_1_command:		ds.w 1		; AND the lower byte by $BF and write to VDP control port to disable display, OR by $40 to enable
+Demo_timer:			= *
+v_demolength:			ds.w 1		; The time left for a demo to start/run
+V_scroll_value:			= *		; Both foreground and background
+v_scrposy_dup:			= *
+V_scroll_value_FG:		ds.w 1
+V_scroll_value_BG:		ds.w 1
+H_scroll_value:			= *
+v_scrposx_dup:			= *
+H_scroll_value_FG:		ds.w 1
+H_scroll_value_BG:		ds.w 1
+v_hbla_hreg:			= *
+H_int_counter_command:		ds.b 1		; Contains a command to write to VDP register $0A (line interrupt counter)
+v_hbla_line:			= *
+H_int_counter:			ds.b 1		; Just the counter part of the command
+
+; hardware flags
+; basically, test PAL_flag if you just want to test if it's a PAL machine
+Graphics_flags:		= *	; Bit 7 set = English system, bit 6 set = PAL system
+Region_flags:			ds.b 1	; contains a copy of the region data at HW_Version. JP50 is illegal, PAL test on this is slower then PAL_flag
+PAL_flag:			ds.b 1	; 0 = not PAL at all, 3 (bit 1 set, bit 7 not) = slow PAL, -3 (bit 1 not, bit 7 set) = PAL with hardware speedup
+V_blank_cycles:			ds.w 1	; amount of cycles from the start of a frame until a Vblank, divided by 30 cycles
+
+Emulator_ID:			ds.b 1	; refer to hardware detector/main.asm
+Hardware_flags:			ds.b 1	; bitfield
+;SegaCD_Mode:	; byte
+Addons_flags:			ds.b 1	; bitfield
+
+
+ScreenSize_V_Flag:		ds.b 1	; if -1, increase vertical screen size. 0 means never allow it to be set, 1 = allow it
+; these are used for determining screen sizes. Make sure to adjust these when using alternate screen modes
+ScreenSize_Horz:		ds.w 1	; 256 or 320 -1 (320 or 384 in Widescreen)
+ScreenSize_Vert:		ds.w 1	; 224 or 240 -1
+
 
 v_random:					= *
 RNG_seed:					ds.l 1			; Used by the random number generator
@@ -422,12 +441,11 @@ Water_full_screen_flag:				ds.b 1			; Set if water covers the entire screen (i.e
 Water_flag:					ds.b 1
 
 Next_extra_life_score:				ds.l 1
-Graphics_flags:					ds.b 1			; Bit 7 set = English system, bit 6 set = PAL system
+
 Last_star_post_hit:				= *
 Last_star_pole_hit:				ds.b 1
-Palette_fade_timer:				ds.w 1			; The palette gets faded in until this timer expires
-SegaCD_Mode:					ds.b 1
 Respawn_table_keep:				ds.b 1			; If set, respawn table is not reset during level load
+Palette_fade_timer:				ds.w 1			; The palette gets faded in until this timer expires
 
 	if CompBlocks=0
 Block_table_addr_ROM:				ds.l 1			; Block table pointer(Block (16x16) definitions, 8 bytes per definition)

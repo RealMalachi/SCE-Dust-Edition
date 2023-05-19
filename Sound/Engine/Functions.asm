@@ -22,7 +22,7 @@ SMPS_LoadDACDriver:
 	nop
 	SMPS_resetZ80
 	move.w	d1,(SMPS_z80_bus_request).l	; start the Z80
-	tst.b	(SegaCD_Mode).w
+	btst	#addon_mcd,(Addons_flags).w
 	beq.s	+
 	MCDSend	#_MCD_SetVolume, #255
 	MCDSend	#_MCD_NoSeek, #1

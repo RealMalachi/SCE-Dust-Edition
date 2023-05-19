@@ -28,7 +28,7 @@ EnableSRAM:		= 1	; change to 1 to enable SRAM
 BackupSRAM:		= 0
 AddressSRAM:		= 3	; 0 = odd+even; 2 = even only; 3 = odd only
 EnableModem:		= 0	; change to 1 to enable modem support (not implemented)
-EnableWifi:		= 0	; change to 1 to enable 
+EnableWifi:		= 0	; change to 1 to enable wifi support
 
 CompBlocks:		= 1	;
 CompLevel:		= 1	;
@@ -124,6 +124,8 @@ EndOfHeader:
 
 	include "Data/Misc/VDP.asm"
 
+	include "Data/Hardware Detection/Main.asm"
+
 ; ---------------------------------------------------------------------------
 ; Controllers Subroutine
 ; ---------------------------------------------------------------------------
@@ -188,6 +190,14 @@ EndOfHeader:
 ; ---------------------------------------------------------------------------
 
 	include "Data/Misc/SRAM.asm"
+
+	endif
+	if EnableWifi=1
+; ---------------------------------------------------------------------------
+; Wifi Subroutines
+; ---------------------------------------------------------------------------
+
+	include "Data/Misc/Wifi.asm"
 
 	endif
 ; ---------------------------------------------------------------------------
