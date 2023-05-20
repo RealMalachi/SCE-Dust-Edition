@@ -50,7 +50,7 @@ Init_HardwareDetect:
 ;		rts
 
 ; counts how many cycles it waits until it Vblanks again, divided by around 30 cycles
-; it should be noted that it only gives an approximate number
+; it should be noted that it only gives an approximate number. There is certainly room for error
 DetectVblankSpeed:
 		lea	(VDP_control_port).l,a5
 		move.w	#$8174,(a5)	; VDP Command $8174 - Display on, VInt on, DMA on, PAL off
@@ -110,7 +110,7 @@ DetectAddon:
 		cmp.l	#"MARS",d1		; we're basically doing that in reverse
 		bne.s	+
 		bset	d6,d0
-+		subq.w	#1,d6
++		addq.w	#1,d6
 -	;	nop2
 	;	bra.s	-
 ; Mega CD hardware
