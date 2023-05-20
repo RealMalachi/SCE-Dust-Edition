@@ -224,7 +224,7 @@ LevelSelect_LoadSampleNumber:
 		beq.s	LevelSelect_LoadCharacterNumber.return
 		move.w	d3,d0
 		addi.w	#dac__First,d0
-		jmp	(SMPS_PlayDACSample).w	; play sample
+		sample ,1	; play sample
 
 ; ---------------------------------------------------------------------------
 ; Control (Up/Down)
