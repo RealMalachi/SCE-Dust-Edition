@@ -33,18 +33,16 @@ Handle_Onscreen_Water_Height:
 
 .set
 		st	(Water_full_screen_flag).w
-		st	(H_int_counter).w	; set 256-1
-		rts
+		bra.s	.setcounter
 ; ---------------------------------------------------------------------------
 
 .check
-		cmpi.w	#224-1,d0
-		blo.s		.counter
-		move.w	#256-1,d0
-
+		cmp.w	(ScreenSize_Vert).w,d0	; 224-1, 240-1
+		blo.s	.counter
+.setcounter
+		moveq	#signextendB(256-1),d0
 .counter
 		move.b	d0,(H_int_counter).w
-
 .return
 		rts
 

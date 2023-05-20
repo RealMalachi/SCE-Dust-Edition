@@ -181,6 +181,10 @@ MoveCameraY:
 		moveq	#0,d1
 		move.w	y_pos(a0),d0
 		sub.w	(a1),d0
+		tst.b	(ScreenSize_V_Flag).w	; is 240p screen size set?
+		beq.s	.v28			; if not, branch
+		subq.w	#(ScreenSize_V30-ScreenSize_V28)/2,d0	; adjust screen a little
+.v28
 		cmpi.w	#-$100,(Camera_min_Y_pos).w
 		bne.s	.notwrap
 		and.w	(Screen_Y_wrap_value).w,d0

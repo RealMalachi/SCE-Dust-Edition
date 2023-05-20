@@ -17,6 +17,10 @@ Render_HUD:
 .init
 		move.w	#$10,HUD_RAM.Xpos-HUD_RAM(a1)
 		move.w	#$108,HUD_RAM.Ypos-HUD_RAM(a1)
+		tst.b	(ScreenSize_V_Flag).w	; is 240p screen size set?
+		beq.s	.v28			; if not, branch
+		addq.w	#(ScreenSize_V30-ScreenSize_V28)/2,HUD_RAM.Ypos-HUD_RAM(a1)
+.v28
 		addq.b	#1,HUD_RAM.status-HUD_RAM(a1)		; set 2
 
 .right
