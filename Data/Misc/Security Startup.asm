@@ -199,7 +199,7 @@ Game_Program:
 		bsr.w	Init_HardwareDetect
 
 		move.b	#1<<7,(ObjectRamMarker).w			; set marker for object RAM
-		move.b	#id_LevelSelectScreen,(Game_mode).w		; set Game Mode (some inits set the game mode for failsafe screens)
+		move.b	#id_Detection,(Game_mode).w		; set Game Mode (some inits set the game mode for failsafe screens)
 
 		bsr.w	Init_DMA_Queue
 		bsr.s	Init_VDP
@@ -222,5 +222,8 @@ Game_Program:
 
 Game_Modes:
 ptr_LevelSelect:	dc.l LevelSelect_Screen		; Level Select ($00)
-ptr_Level:		dc.l Level_Screen			; Level ($04)
-ptr_Continue:	dc.l Continue_Screen		; Continue ($08)
+ptr_Level:		dc.l Level_Screen		; Level ($04)
+ptr_Continue:		dc.l Continue_Screen		; Continue ($08)
+	if GameDebug
+ptr_Detection:		dc.l DetectionScreen
+	endif

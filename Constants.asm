@@ -245,6 +245,9 @@ idstart :=	0
 id_LevelSelectScreen =			id(ptr_LevelSelect)		; 0
 id_LevelScreen =			id(ptr_Level)			; 4
 id_ContinueScreen =			id(ptr_Continue)		; 8
+	if GameDebug
+id_Detection =				id(ptr_Detection)
+	endif
 
 GameModeFlag_TitleCard =		7				; flag bit
 GameModeID_TitleCard =			1<<GameModeFlag_TitleCard	; flag mask
