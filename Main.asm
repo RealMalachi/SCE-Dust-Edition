@@ -404,6 +404,14 @@ EndOfHeader:
 
 	include "Data/Screens/Continue/Continue.asm"
 
+	if GameDebug
+; ---------------------------------------------------------------------------
+; Hardware Detection Debug Screen Subroutine
+; ---------------------------------------------------------------------------
+
+	include "Data/Screens/Detection Screen/Main.asm"
+
+	endif
 ; ---------------------------------------------------------------------------
 ; Pattern Load Cues pointers
 ; ---------------------------------------------------------------------------
