@@ -149,7 +149,7 @@ Poll_Controllers:
   if HardwareSafety=1
 .handle6berror
 ; if no ability to figure out if it was a 6pad, just use 3pad
-    if Joypad_StateSupport<>1	; this creates a pseudo-6pad mode
+    if Joypad_StateSupport=1	; this creates a pseudo-6pad mode
 ;	move.b	#-1,(a2)+		; set CtrlXState to 6pad, increment to next controller
 ;	addq.w	#1,a2			; don't set CtrlXState, increment to next controller
 	tst.b	(a2)+			; use previous frames CtrlXState to determine if the controller was a 3pad or not
