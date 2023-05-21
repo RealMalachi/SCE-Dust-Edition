@@ -1,46 +1,54 @@
-DPLC_BubbleShield:
-		dc.w word_1A090-DPLC_BubbleShield
-		dc.w word_1A094-DPLC_BubbleShield
-		dc.w word_1A098-DPLC_BubbleShield
-		dc.w word_1A09C-DPLC_BubbleShield
-		dc.w word_1A0A0-DPLC_BubbleShield
-		dc.w word_1A0A4-DPLC_BubbleShield
-		dc.w word_1A0A8-DPLC_BubbleShield
-		dc.w word_1A0AC-DPLC_BubbleShield
-		dc.w word_1A0B0-DPLC_BubbleShield
-		dc.w word_1A0B4-DPLC_BubbleShield
-		dc.w word_1A0BA-DPLC_BubbleShield
-		dc.w word_1A0C0-DPLC_BubbleShield
-		dc.w word_1A0C8-DPLC_BubbleShield
-word_1A090:	dc.w 1
-		dc.w $3000
-word_1A094:	dc.w 1
-		dc.w $5004
-word_1A098:	dc.w 1
-		dc.w $800A
-word_1A09C:	dc.w 1
-		dc.w $8013
-word_1A0A0:	dc.w 1
-		dc.w $B01C
-word_1A0A4:	dc.w 1
-		dc.w $8013
-word_1A0A8:	dc.w 1
-		dc.w $800A
-word_1A0AC:	dc.w 1
-		dc.w $5004
-word_1A0B0:	dc.w 1
-		dc.w $1000
-word_1A0B4:	dc.w 2
-		dc.w $8028
-		dc.w $8031
-word_1A0BA:	dc.w 2
-		dc.w $803A
-		dc.w $8043
-word_1A0C0:	dc.w 3
-		dc.w $704C
-		dc.w $5054
-		dc.w $B05A
-word_1A0C8:	dc.w 3
-		dc.w $F066
-		dc.w $3076
-		dc.w $F07A
+DPLC_05c7:
+DPLC_05c7_0: 	dc.w DPLC_05c7_1A-DPLC_05c7
+DPLC_05c7_2: 	dc.w DPLC_05c7_1E-DPLC_05c7
+DPLC_05c7_4: 	dc.w DPLC_05c7_22-DPLC_05c7
+DPLC_05c7_6: 	dc.w DPLC_05c7_26-DPLC_05c7
+DPLC_05c7_8: 	dc.w DPLC_05c7_2A-DPLC_05c7
+DPLC_05c7_A: 	dc.w DPLC_05c7_2E-DPLC_05c7
+DPLC_05c7_C: 	dc.w DPLC_05c7_32-DPLC_05c7
+DPLC_05c7_E: 	dc.w DPLC_05c7_36-DPLC_05c7
+DPLC_05c7_10: 	dc.w DPLC_05c7_3A-DPLC_05c7
+DPLC_05c7_12: 	dc.w DPLC_05c7_3E-DPLC_05c7
+DPLC_05c7_14: 	dc.w DPLC_05c7_42-DPLC_05c7
+DPLC_05c7_16: 	dc.w DPLC_05c7_46-DPLC_05c7
+DPLC_05c7_18: 	dc.w DPLC_05c7_4C-DPLC_05c7
+
+DPLC_05c7_1A:
+DPLC_05c7_1E:
+DPLC_05c7_36:
+DPLC_05c7_3A:
+ 	dc.b $0, $1
+	dc.b $70, $0
+
+DPLC_05c7_22:
+DPLC_05c7_32:
+ 	dc.b $0, $1
+	dc.b $80, $8
+
+DPLC_05c7_26:
+DPLC_05c7_2E:
+ 	dc.b $0, $1
+	dc.b $80, $11
+
+DPLC_05c7_2A:
+ 	dc.b $0, $1
+	dc.b $B0, $1A
+
+DPLC_05c7_3E:
+ 	dc.b $0, $1
+	dc.b $C0, $26
+
+DPLC_05c7_42:
+ 	dc.b $0, $1
+	dc.b $C0, $33
+
+DPLC_05c7_46:
+ 	dc.b $0, $2
+	dc.b $F0, $40
+	dc.b $10, $50
+
+DPLC_05c7_4C:
+ 	dc.b $0, $2
+	dc.b $F0, $52
+	dc.b $20, $62
+	even

@@ -38,7 +38,7 @@ HScroll_Deform:
 VScroll_Deform:
 		lea	(VDP_data_port).l,a6
 		move.l	#vdpComm($0000,VSRAM,WRITE),VDP_control_port-VDP_data_port(a6)
-		moveq	#bytesToXcnt((320*2),16),d6
+		moveq	#bytesToXcnt((ScreenSize_H40*2),16),d6
 
 .loop
 		move.w	(a2)+,d2
@@ -62,7 +62,7 @@ PlainDeformation:
 		swap	d0
 		move.w	(Camera_X_pos_BG_copy).w,d0
 		neg.w	d0
-		moveq	#bytesToXcnt(224,8),d1
+		moveq	#bytesToXcnt(ScreenSize_LineCount,8),d1
 
 .loop
 	rept 8
@@ -84,7 +84,7 @@ PlainDeformation_Flipped:
 		swap	d0
 		move.w	(Camera_X_pos_copy).w,d0
 		neg.w	d0
-		moveq	#bytesToXcnt(224,8),d1
+		moveq	#bytesToXcnt(ScreenSize_LineCount,8),d1
 
 .loop
 	rept 8
@@ -135,7 +135,7 @@ FGScroll_Deformation:
 		move.w	(a1),d0	; HScroll_Shift+2
 		neg.w	d0
 		lea	(H_scroll_buffer).w,a1
-		moveq	#bytesToXcnt(224,8),d1
+		moveq	#bytesToXcnt(ScreenSize_LineCount,8),d1
 
 .loop
 
@@ -152,7 +152,7 @@ FGScroll_Deformation:
 ; =============== S U B R O U T I N E =======================================
 
 ApplyDeformation:
-		move.w	#224-1,d1
+		move.w	#ScreenSize_LineCount-1,d1
 
 ApplyDeformation3:
 		lea	(H_scroll_buffer).w,a1
@@ -253,7 +253,7 @@ locret_4F158:
 ; =============== S U B R O U T I N E =======================================
 
 ApplyFGDeformation:
-		move.w	#224-1,d1
+		move.w	#ScreenSize_LineCount-1,d1
 
 ApplyFGDeformation3:
 		lea	(H_scroll_buffer).w,a1

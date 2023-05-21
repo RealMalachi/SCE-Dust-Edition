@@ -425,17 +425,16 @@ PLCLoad_Shields:
 ;		include "Objects/Shields/Super Stars.asm"
 ; ---------------------------------------------------------------------------
 
-Map_Invincibility:
-		include "Objects/Shields/Object Data/Map - Invincibility.asm"
+Map_Invincibility:	include "Objects/Shields/Object Data/Map - Invincibility.asm"
 		include "Objects/Shields/Object Data/Anim - Fire Shield.asm"
 		include "Objects/Shields/Object Data/Map - Fire Shield.asm"
 		include "Objects/Shields/Object Data/DPLC - Fire Shield.asm"
 		include "Objects/Shields/Object Data/Anim - Lightning Shield.asm"
-		include "Objects/Shields/Object Data/Map - Lightning Shield.asm"
+Map_LightningShield:	include "Objects/Shields/Object Data/Map - Lightning Shield.asm"
 		include "Objects/Shields/Object Data/DPLC - Lightning Shield.asm"
 		include "Objects/Shields/Object Data/Anim - Bubble Shield.asm"
-		include "Objects/Shields/Object Data/Map - Bubble Shield.asm"
-		include "Objects/Shields/Object Data/DPLC - Bubble Shield.asm"
+Map_BubbleShield:	include "Objects/Shields/Object Data/Map - Bubble Shield.asm"
+DPLC_BubbleShield:	include "Objects/Shields/Object Data/DPLC - Bubble Shield.asm"
 		include "Objects/Shields/Object Data/Anim - Insta-Shield.asm"
 		include "Objects/Shields/Object Data/Map - Insta-Shield.asm"
 		include "Objects/Shields/Object Data/DPLC - Insta-Shield.asm"

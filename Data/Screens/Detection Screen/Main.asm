@@ -63,11 +63,20 @@ DetectionScreen_LoadText:
 		lea	(a0,d0.w),a0
 		bsr	.loadtext
 
-	;	locVRAM	(vram_fg+(2*$80)),VDP_control_port-VDP_control_port(a5)
 		moveq	#0,d0
 		move.b	(Graphics_flags).w,d0
 		lsr.b	#6-1,d0
 		lea	Region-Emulators(a4),a0
+		move.w	(a0,d0.w),d0
+		lea	(a0,d0.w),a0
+		bsr	.loadtext
+
+		move.b	(Hardware_flags).w,d0
+		andi.w	#1<<hard_v3050|1<<hard_v3060,d0
+	if hard_v3050<>1
+		lsr.b	#hard_v3050-1,d0
+	endif
+		lea	V30Test-Emulators(a4),a0
 		move.w	(a0,d0.w),d0
 		lea	(a0,d0.w),a0
 		bsr	.loadtext
@@ -185,6 +194,17 @@ Region_JP:	levselstr " - JP"
 Region_JP50:	levselstr " - JP50"
 Region_US:	levselstr " - USA"
 Region_PAL:	levselstr " - PAL"
+	even
+
+V30Test:	offsetTable
+	offsetTableEntry.w V30Test_28
+	offsetTableEntry.w V30Test_30Viable
+	offsetTableEntry.w V30Test_WTF
+	offsetTableEntry.w V30Test_30
+V30Test_28:		levselstr " - V28 only"
+V30Test_30Viable:	levselstr " - V30 50"
+V30Test_WTF:		levselstr " - V30 error"	; hardware supports V30 60, but not 50...?
+V30Test_30:		levselstr " - V30 60"
 	even
 
 TASbroke:	offsetTable

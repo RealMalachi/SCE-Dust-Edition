@@ -148,7 +148,7 @@ Do_ControllerPal:
 		startZ802
 	UpdatePaletteVint
 		dma68kToVDP Sprite_table_buffer,vram_sprites,$280,VRAM
-		dma68kToVDP H_scroll_buffer,vram_hscroll,(224<<2),VRAM
+		dma68kToVDP H_scroll_buffer,vram_hscroll,(ScreenSize_LineCount<<2),VRAM
 		if OptimiseStopZ80=0
 		jsr	(Process_DMA_Queue).w
 		startZ80
@@ -236,7 +236,7 @@ VInt_Level_NoNegativeFlash:
 		move.w	(H_int_counter_command).w,VDP_control_port-VDP_control_port(a5)
 
 VInt_Level_Cont:
-		dma68kToVDP H_scroll_buffer,vram_hscroll,(224<<2),VRAM
+		dma68kToVDP H_scroll_buffer,vram_hscroll,(ScreenSize_LineCount<<2),VRAM
 		dma68kToVDP Sprite_table_buffer,vram_sprites,80*8,VRAM
 		jsr	(Process_DMA_Queue).w
 		jsr	(VInt_DrawLevel).w

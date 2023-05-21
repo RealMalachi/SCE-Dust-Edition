@@ -4,6 +4,8 @@
 ; A bunch of flags to approximately determine which machine revision you own, separately from determining if you have hardware at all
 	phase 0		; Hard on
 hard_tasmanian		ds.b 1		; TAS memory error flag
+hard_v3050		ds.b 1		; note: set if hardware support V30 at all
+hard_v3060		ds.b 1
 	dephase
 ; Addons bitfield
 ; I feel like there are gonna be more in the future. So, the code is built to be safely extended into a long
@@ -39,11 +41,11 @@ EMU_GENECYST		ds.b 1		; Genecyst
 ; ---------------------------------------------------------------------------
 
 Init_HardwareDetect:
-		bsr.w	DetectEmulator		; figure out if we're running on a certain list of emulators
+		bsr	DetectEmulator		; figure out if we're running on a certain list of emulators
 		move.b	d0,(Emulator_ID).w
-		bsr.s	DetectHardware
+		bsr	DetectHardware
 		move.b	d0,(Hardware_flags).w
-		bsr.s	DetectAddon		; detect optional console or cartridge addons
+		bsr	DetectAddon		; detect optional console or cartridge addons
 		move.b	d0,(Addons_flags).w
 		enableInts
 ;		bsr.s	DetectVblankSpeed
@@ -99,7 +101,39 @@ DetectHardware:
 		rol.b	#1,d0			; put bit 7 into bit 0
 		move.b	d1,(a0)			; restore RAM
 
+; last, set two bits for V30
+; check systems that'll support V30 on either
+		moveq	#signextendB(1<<hard_v3050|1<<hard_v3060),d4
+		move.b	(Emulator_ID).w,d3	; get emulator id
+		moveq	#(VDP_V30_emu.end-VDP_V30_emu)-1,d1
+		lea	VDP_V30_emu(pc),a1
+-		move.b	(a1)+,d2
+		cmp.b	d3,d2			; is the detected emulator in the list?
+		beq.s	.end			; if so, branch
+		dbf	d1,-
+; check systems that don't support V30 at all
+		moveq	#signextendB(0),d4
+		moveq	#(VDP_V28_emu.end-VDP_V28_emu)-1,d1
+		lea	VDP_V28_emu(pc),a1
+-		move.b	(a1)+,d2
+		cmp.b	d3,d2			; is the detected emulator in the list?
+		beq.s	.end			; if so, branch
+		dbf	d1,-
+; from this point, systems are assumed to only support V30 50Hz
+		moveq	#signextendB(1<<hard_v3050),d4
+.end
+		or.b	d4,d0
 		rts
+
+; list of all the emulators that support V30 60Hz...
+VDP_V30_emu:
+	dc.b EMU_BLASTEM_OLD,EMU_REGEN
+.end
+; ...or don't support V30 at all
+VDP_V28_emu:
+	dc.b EMU_GENECYST	; TODO: Verify Genecyst
+.end
+	even
 ; ---------------------------------------------------------------------------
 ; detects and initiates certain hardware addons
 DetectAddon:
