@@ -197,6 +197,9 @@ Game_Program:
 
 ; first, set flags about the system for later use, such as emulation and addon detection, console region, and detected hardware bugs
 		bsr.w	Init_HardwareDetect
+; init any additional hardware before the main one begins
+		jsr	(Init_MSU_Driver).l
+	;	seq	(SegaCD_Mode).w
 
 		move.b	#1<<7,(ObjectRamMarker).w			; set marker for object RAM
 		move.b	#id_Detection,(Game_mode).w		; set Game Mode (some inits set the game mode for failsafe screens)
@@ -204,8 +207,6 @@ Game_Program:
 		bsr.w	Init_DMA_Queue
 		bsr.s	Init_VDP
 		bsr.w	SoundDriverLoad
-		jsr	(Init_MSU_Driver).l
-	;	seq	(SegaCD_Mode).w
 		bsr.w	Init_Controllers
 	if EnableSRAM=1
 		bsr.w	Init_SRAM

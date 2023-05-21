@@ -93,40 +93,34 @@ DetectHardware:
 		move.b	(a0),d1			; save RAM
 		moveq	#0,d0
 		move.b	d0,(a0)		; clear
-		tas	(a0)			; use TAS only for its set, in a scenario where it wouldn't work on older machines
+		tas.b	(a0)			; use TAS only for its set, in a scenario where it wouldn't work on older machines
 		move.b	(a0),d0
-		lsl.b	#1,d0			; put bit 7 into bit 0
+	;	tas.b	d0
+		rol.b	#1,d0			; put bit 7 into bit 0
 		move.b	d1,(a0)			; restore RAM
-		
+
 		rts
 ; ---------------------------------------------------------------------------
 ; detects and initiates certain hardware addons
 DetectAddon:
 		moveq	#0,d0
 		moveq	#0,d6
-		move.b	(Emulator_ID).w,d7	; ignore certain checks if certain emulators would create certain bugs
+	;	move.b	(Emulator_ID).w,d7	; ignore certain checks if certain emulators would create certain bugs
 ; 32x
-		move.l	(S32x_Signature),d1	; for 32x games, this helps make sure they don't boot without a 32x attached
-		cmp.l	#"MARS",d1		; we're basically doing that in reverse
-		bne.s	+
+		cmp.l	#"MARS",(S32x_Signature)	; for 32x games, this helps make sure they don't boot without a 32x attached
+		bne.s	+				; we're basically doing that in reverse
 		bset	d6,d0
 +		addq.w	#1,d6
--	;	nop2
-	;	bra.s	-
 ; Mega CD hardware
-		cmp.b	#EMU_KEGA,d7		; prevent Fusion from loading Mode 1 (DMA bug)
-		beq.s	.skipFusion
-		btst	#5,(HW_Version)
-		bne.s	+
+		btst	#5,(HW_Version)		; is the MCD plugged in?
+		bne.s	+			; if not, branch (0 = yes)
 		bset	d6,d0
 +		addq.w	#1,d6
 ; Mega CD capability
 		cmpi.l	#"SEGA",(CdBootRom_SEGA)	; check for 'SEGA' in CD bios (for flashcarts like the Everdrive, which physically can't set bit 5)
 		bne.s	+
-		bset	d6,d0
+		bset	d6,d0		; TODO: fix whatever is softlocking the game
 +		addq.w	#1,d6
-
-.skipFusion
 ; Everdrive Pro
 		addq.w	#1,d6
 ; MegaSD

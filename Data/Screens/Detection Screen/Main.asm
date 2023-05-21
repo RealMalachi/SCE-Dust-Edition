@@ -73,7 +73,7 @@ DetectionScreen_LoadText:
 		bsr	.loadtext
 
 		locVRAM	(vram_fg+(2*$80)),VDP_control_port-VDP_control_port(a5)
-		move.b	(Hardware_flags).W,d0
+		move.b	(Hardware_flags).w,d0
 		andi.w	#1<<hard_tasmanian,d0
 		add.w	d0,d0
 		lea	TASbroke-Emulators(a4),a0
@@ -82,7 +82,7 @@ DetectionScreen_LoadText:
 		bsr	.loadtext
 
 		locVRAM	(vram_fg+(3*$80)),VDP_control_port-VDP_control_port(a5)
-		moveq	#0,d0
+		moveq	#0,d7
 		move.b	(Addons_flags).w,d7
 		move.w	d7,d0
 		andi.w	#1<<addon_32x|1<<addon_cdhardware,d0
@@ -95,7 +95,7 @@ DetectionScreen_LoadText:
 		locVRAM	(vram_fg+(4*$80)),VDP_control_port-VDP_control_port(a5)
 		move.w	d7,d0
 		andi.w	#1<<addon_mcd,d0
-		lsl.b	#addon_mcd-1,d0
+		lsr.w	#addon_mcd-1,d0
 		lea	MCDlike-Emulators(a4),a0
 		move.w	(a0,d0.w),d0
 		lea	(a0,d0.w),a0
@@ -104,8 +104,8 @@ DetectionScreen_LoadText:
 		locVRAM	(vram_fg+(5*$80)),VDP_control_port-VDP_control_port(a5)
 		move.w	d7,d0
 		andi.w	#1<<addon_everdrive,d0
-		lsl.b	#addon_everdrive-1,d0
-		lea	Everdrive-Emulators(a4),a0
+		lsr.w	#addon_everdrive-1,d0
+		lea	EverdriveTest-Emulators(a4),a0
 		move.w	(a0,d0.w),d0
 		lea	(a0,d0.w),a0
 		bsr	.loadtext
@@ -113,8 +113,8 @@ DetectionScreen_LoadText:
 		locVRAM	(vram_fg+(6*$80)),VDP_control_port-VDP_control_port(a5)
 		move.w	d7,d0
 		andi.w	#1<<addon_megasd,d0
-		lsl.b	#addon_megasd-1,d0
-		lea	MegaSD-Emulators(a4),a0
+		lsr.w	#addon_megasd-1,d0
+		lea	MegaSDTest-Emulators(a4),a0
 		move.w	(a0,d0.w),d0
 		lea	(a0,d0.w),a0
 		bsr	.loadtext
@@ -122,7 +122,7 @@ DetectionScreen_LoadText:
 		locVRAM	(vram_fg+(7*$80)),VDP_control_port-VDP_control_port(a5)
 		move.w	d7,d0
 		andi.w	#1<<addon_wifi,d0
-		lsl.b	#addon_wifi-1,d0
+		lsr.w	#addon_wifi-1,d0
 		lea	WifiDetect-Emulators(a4),a0
 		move.w	(a0,d0.w),d0
 		lea	(a0,d0.w),a0
@@ -132,7 +132,7 @@ DetectionScreen_LoadText:
 	;	locVRAM	(vram_fg+(8*$80)),VDP_control_port-VDP_control_port(a5)
 		move.w	d7,d0
 		andi.w	#1<<addon_retrolink|1<<addon_megawifi,d0
-		lsl.b	#addon_retrolink-1,d0
+		lsr.w	#addon_retrolink-1,d0
 		lea	FoundWifi-Emulators(a4),a0
 		move.w	(a0,d0.w),d0
 		lea	(a0,d0.w),a0
@@ -161,44 +161,19 @@ Emulators:	offsetTable
 	offsetTableEntry.w Emulators_Flashback
 	offsetTableEntry.w Emulators_Firecore
 	offsetTableEntry.w Emulators_Genecyst
-Emulators_Hardware:
-	levselstr	"HARDWARE"
-	even
-Emulators_GPGX:
-	levselstr	"GENESIS PLUS GX"
-	even
-Emulators_Regen:
-	levselstr	"REGEN"
-	even
-Emulators_Kega:
-	levselstr	"KEGA FUSION"
-	even
-Emulators_Gens:
-	levselstr	"GENS"
-	even
-Emulators_BlastEm:
-	levselstr	"BLASTEM"
-	even
-Emulators_Exodus:
-	levselstr	"EXODUS"
-	even
-Emulators_MegaSg:
-	levselstr	"MEGA SG"
-	even
-Emulators_Steam:
-	levselstr	"STEAM"
-	even
-Emulators_Picodrive:
-	levselstr	"PICODRIVE"
-	even
-Emulators_Flashback:
-	levselstr	"ATGAMES FLASHBACK"
-	even
-Emulators_Firecore:
-	levselstr	"ATGAMES FIRECORE"
-	even
-Emulators_Genecyst:
-	levselstr	"GENECYST"
+Emulators_Hardware:	levselstr "HARDWARE"
+Emulators_GPGX:		levselstr "GENESIS PLUS GX"
+Emulators_Regen:	levselstr "REGEN"
+Emulators_Kega:		levselstr "KEGA FUSION"
+Emulators_Gens:		levselstr "GENS"
+Emulators_BlastEm:	levselstr "BLASTEM"
+Emulators_Exodus:	levselstr "EXODUS"
+Emulators_MegaSg:	levselstr "MEGA SG"
+Emulators_Steam:	levselstr "STEAM"
+Emulators_Picodrive:	levselstr "PICODRIVE"
+Emulators_Flashback:	levselstr "ATGAMES FLASHBACK"
+Emulators_Firecore:	levselstr "ATGAMES FIRECORE"
+Emulators_Genecyst:	levselstr "GENECYST"
 	even
 
 Region:	offsetTable
@@ -206,21 +181,17 @@ Region:	offsetTable
 	offsetTableEntry.w Region_JP50
 	offsetTableEntry.w Region_US
 	offsetTableEntry.w Region_PAL
-Region_JP:	levselstr	" - JP"
-	even
-Region_JP50:	levselstr	" - JP50"
-	even
-Region_US:	levselstr	" - USA"
-	even
-Region_PAL:	levselstr	" - PAL"
+Region_JP:	levselstr " - JP"
+Region_JP50:	levselstr " - JP50"
+Region_US:	levselstr " - USA"
+Region_PAL:	levselstr " - PAL"
 	even
 
 TASbroke:	offsetTable
 	offsetTableEntry.w TASbroke_Old
 	offsetTableEntry.w TASbroke_New
-TASbroke_Old:	levselstr	"TAS BROKEN"
-	even
-TASbroke_New:	levselstr	"TAS WORKING"
+TASbroke_Old:	levselstr "TAS BROKEN"
+TASbroke_New:	levselstr "TAS WORKING"
 	even
 
 Tower:	offsetTable
@@ -228,45 +199,38 @@ Tower:	offsetTable
 	offsetTableEntry.w Tower_32x
 	offsetTableEntry.w Tower_MCD
 	offsetTableEntry.w Tower_Power
-Tower_MD:	levselstr	"NO ADDONS FOUND"
-	even
-Tower_32x:	levselstr	"32X FOUND"
-	even
-Tower_MCD:	levselstr	"MEGACD FOUND"
-	even
-Tower_Power:	levselstr	"TOWER OF POWER FOUND"
+Tower_MD:	levselstr "NO ADDONS FOUND"
+Tower_32x:	levselstr "32X FOUND"
+Tower_MCD:	levselstr "MEGA CD FOUND"
+Tower_Power:	levselstr "TOWER OF POWER FOUND"
 	even
 
 MCDlike:	offsetTable
 	offsetTableEntry.w MCDlike_No
 	offsetTableEntry.w MCDlike_Ya
-MCDlike_No:	levselstr	"MEGA CD NOT SUPPORTED"
-	even
-MCDlike_Ya:	levselstr	"MEGA CD SUPPORT"
+MCDlike_No:	levselstr "MEGA CD NOT SUPPORTED"
+MCDlike_Ya:	levselstr "MEGA CD SUPPORT"
 	even
 
-Everdrive:	offsetTable
+EverdriveTest:	offsetTable
 	offsetTableEntry.w Everdrive_No
 	offsetTableEntry.w Everdrive_Ya
-Everdrive_No:	levselstr	"EVERDRIVE NOT FOUND"
-	even
-Everdrive_Ya:	levselstr	"EVERDRIVE FOUND"
+Everdrive_No:	levselstr "EVERDRIVE NOT FOUND"
+Everdrive_Ya:	levselstr "EVERDRIVE FOUND"
 	even
 
-MegaSD:	offsetTable
+MegaSDTest:	offsetTable
 	offsetTableEntry.w MegaSD_No
 	offsetTableEntry.w MegaSD_Ya
-MegaSD_No:	levselstr	"MEGASD NOT FOUND"
-	even
-MegaSD_Ya:	levselstr	"MEGASD FOUND"
+MegaSD_No:	levselstr "MEGASD NOT FOUND"
+MegaSD_Ya:	levselstr "MEGASD FOUND"
 	even
 
 WifiDetect:	offsetTable
 	offsetTableEntry.w Wifi_No
 	offsetTableEntry.w Wifi_Ya
-Wifi_No:	levselstr	"WIFI NOT FOUND - "
-	even
-Wifi_Ya:	levselstr	"WIFI FOUND - "
+Wifi_No:	levselstr "WIFI NOT FOUND - "
+Wifi_Ya:	levselstr "WIFI FOUND - "
 	even
 
 FoundWifi:	offsetTable
@@ -274,12 +238,8 @@ FoundWifi:	offsetTable
 	offsetTableEntry.w FoundWifi_RetroLink
 	offsetTableEntry.w FoundWifi_MegaWifi
 	offsetTableEntry.w FoundWifi_Both
-FoundWifi_No:	levselstr	"NONE????"
+FoundWifi_No:		levselstr "NONE"
+FoundWifi_RetroLink:	levselstr "RETROLINK"
+FoundWifi_MegaWifi:	levselstr "MEGAWIFI"
+FoundWifi_Both:		levselstr "BOTH"
 	even
-FoundWifi_RetroLink:	levselstr	"RETROLINK"
-	even
-FoundWifi_MegaWifi:	levselstr	"MEGAWIFI"
-	even
-FoundWifi_Both:	levselstr	"BOTH"
-	even
-
