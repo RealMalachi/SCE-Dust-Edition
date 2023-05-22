@@ -153,12 +153,22 @@ DetectAddon:
 ; Mega CD capability
 		cmpi.l	#"SEGA",(CdBootRom_SEGA)	; check for 'SEGA' in CD bios (for flashcarts like the Everdrive, which physically can't set bit 5)
 		bne.s	+
-		bset	d6,d0		; TODO: fix whatever is softlocking the game
+		bset	d6,d0
 +		addq.w	#1,d6
 ; Everdrive Pro
 		addq.w	#1,d6
 ; MegaSD
-		addq.w	#1,d6
+		move.w	#MSD_OverlayValue,(MSD_OverlayPort)
+		move.w	(MSD_OverlaySignature),d1
+		lsl.l	#8,d1
+		lsl.l	#8,d1
+		move.w	(MSD_OverlaySignature+2),d1
+		cmp.l	#'BATE',d1	; $42415445... but the docs said it was RATE
+	;	cmp.l	#'BATE',(MSD_OverlaySignature)	; oh if only
+		bne.s	+
+		bset	d6,d0
++		addq.w	#1,d6
+		move.w	d1,(MSD_OverlayPort)	; disable for now
 ; RetroLink
 ; https://github.com/b1tsh1ft3r/retro.link/blob/main/sega_genesis/asm_example/example.asm
 	if EnableWifi=1

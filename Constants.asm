@@ -180,6 +180,19 @@ S32x_Reg0 =			$A15180
 S32x_PWM_Comm =			$A15128		; as used in Clonedriver
 
 ; ---------------------------------------------------------------------------
+; Flashcart addresses
+; ---------------------------------------------------------------------------
+; MegaSD: 3F7F6h-3FFFFh, can seemingly only read and write in words
+; Functions similar to SRAM, so code you intend to run shouldn't overlap with MSD addresses
+MSD_OverlaySignature =		$03F7F6		; 'RATE' if overlay port was successful
+MSD_OverlayPort =		$03F7FA		; write $CD54 to enable MegaSD control
+MSD_ResultPort =		$03F7FC
+MSD_CommandPort =		$03F7FE
+MSD_ParameterData =		$03F800		; data from the ARM cpu
+
+MSD_OverlayValue =		$CD54
+
+; ---------------------------------------------------------------------------
 ; Wifi Hardware addresses
 ; ---------------------------------------------------------------------------
 	if EnableWifi=1
