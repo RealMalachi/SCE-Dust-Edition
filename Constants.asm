@@ -875,3 +875,5 @@ arfBack			= $F8	; go back (specified number) bytes
 arfJump			= $F4	; jump from $34(a0) address
 
 	!org	0		; Reset the program counter
+
+	include "Data/Hardware Detection/Constants.asm"
