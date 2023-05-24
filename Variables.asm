@@ -202,11 +202,11 @@ v_snddriver_ram_end:
 Current_music:					ds.w 1		; music id to play back when a jingle ends
 	evenram
 ; ---------------------------------------------------------------------------
-v_gamemode:					= *
-Game_mode:					ds.b 1
-V_int_flag:					ds.b 1		; If 0, game hasn't reached Vsync, lag. If 1, waiting for Vsync. If -1, Vsync has occurred
-V_int_routine:					= *
-v_vbla_routine:					ds.l 1		; address to routine that V-int will run if not lagging
+v_gamemode:				= *
+Game_mode:				ds.b 1
+V_int_flag:				ds.b 1		; If 0, game hasn't reached Vsync, lag. If 1, waiting for Vsync. If -1, Vsync has occurred
+V_int_routine:				= *
+v_vbla_routine:				ds.l 1		; address to routine that V-int will run if not lagging
 ; ---------------------------------------------------------------------------
 ; joypad control
 Ctrl1:			; longword
@@ -224,20 +224,21 @@ Ctrl2_Pr:		; word
 Ctrl2_Pr_XYZ:		ds.b 1
 Ctrl2_Pr_ABC:		ds.b 1
 ; TODO: Merge logical with player variables
-Ctrl1_Player:		; longword
-Ctrl1_Player_Hd:	; word
-Ctrl1_Player_Hd_XYZ:	ds.b 1
-Ctrl1_Player_Hd_ABC:	ds.b 1
-Ctrl1_Player_Pr:	; word
-Ctrl1_Player_Pr_XYZ:	ds.b 1
-Ctrl1_Player_Pr_ABC:	ds.b 1
-Ctrl2_Player:		; longword
-Ctrl2_Player_Hd:	; word
-Ctrl2_Player_Hd_XYZ:	ds.b 1
-Ctrl2_Player_Hd_ABC:	ds.b 1
-Ctrl2_Player_Pr:	; word
-Ctrl2_Player_Pr_XYZ:	ds.b 1
-Ctrl2_Player_Pr_ABC:	ds.b 1
+Ctrl1_Player =		Player_1+playctrl	; longword
+Ctrl1_Player_Hd =	Player_1+playctrl_hd	; word
+Ctrl1_Player_Hd_XYZ =	Player_1+playctrl_hd_xyz
+Ctrl1_Player_Hd_ABC =	Player_1+playctrl_hd_abc
+Ctrl1_Player_Pr =	Player_1+playctrl_hd	; word
+Ctrl1_Player_Pr_XYZ =	Player_1+playctrl_pr_xyz
+Ctrl1_Player_Pr_ABC =	Player_1+playctrl_pr_abc
+
+Ctrl2_Player =		Player_2+playctrl	; longword
+Ctrl2_Player_Hd =	Player_2+playctrl_hd	; word
+Ctrl2_Player_Hd_XYZ =	Player_2+playctrl_hd_xyz
+Ctrl2_Player_Hd_ABC =	Player_2+playctrl_hd_abc
+Ctrl2_Player_Pr =	Player_2+playctrl_hd	; word
+Ctrl2_Player_Pr_XYZ =	Player_2+playctrl_pr_xyz
+Ctrl2_Player_Pr_ABC =	Player_2+playctrl_pr_abc
 
 	if Joypad_StateSupport=1
 Ctrl1State:		ds.b 1		; controller type (0 = 3 button, -1 = 6 button)
@@ -305,7 +306,6 @@ Emulator_ID:			ds.b 1	; refer to hardware detector/main.asm
 Hardware_flags:			ds.b 1	; bitfield
 ;SegaCD_Mode:	; byte
 Addons_flags:			ds.b 1	; bitfield
-
 
 ScreenSize_V_Flag:		ds.b 1	; if -1, increase vertical screen size. 0 means never allow it to be set, 1 = allow it
 ; these are used for determining screen sizes. Make sure to adjust these when using alternate screen modes

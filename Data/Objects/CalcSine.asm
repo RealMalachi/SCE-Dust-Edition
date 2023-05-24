@@ -32,7 +32,7 @@ SineTable:	binclude "Misc Data/Sine.bin"
 ; if 2, get cosine in d1
 ; if 3, get cosine in d0
 calcsine_macro macro reg,calc,unsafe
-	if ("calc"="0") || ("calc"="")
+	if ("calc"="0") || ("calc"="") || ("calc"="sincos")
 	    if ("unsafe"="0") || ("unsafe"="")
 		clr.w	d1
 	    endif
@@ -42,12 +42,14 @@ calcsine_macro macro reg,calc,unsafe
 		add.w	d1,reg				; add angle to sine table
 		move.w	(reg),d0			; sin
 		move.w	$40*2(reg),d1			; cos ; $40 = 90 degrees, sin(x+90) = cos(x)
-	elseif calc=1
+	elseif ("calc"="1") || ("calc"="sine")
+	    if ("unsafe"="0") || ("unsafe"="")
 		andi.w	#$FF,d0
+	    endif
 		add.w	d0,d0				; double because we're handling words
 		lea	(SineTable).w,reg
 		move.w	(reg,d0.w),d0			; sin
-	elseif calc=2
+	elseif ("calc"="2") || ("calc"="cosine") || ("calc"="cosined1")
 	    if ("unsafe"="0") || ("unsafe"="")
 		clr.w	d1
 	    endif
@@ -55,8 +57,10 @@ calcsine_macro macro reg,calc,unsafe
 		add.w	d1,d1				; double because we're handling words
 		lea	(SineTable+($40*2)).w,reg	; $40 = 90 degrees, sin(x+90) = cos(x)
 		move.w	(reg,d1.w),d1			; cos
-	elseif calc=3
+	elseif ("calc"="3") || ("calc"="cosined0")
+	    if ("unsafe"="0") || ("unsafe"="")
 		andi.w	#$FF,d0
+	    endif
 		add.w	d0,d0				; double because we're handling words
 		lea	(SineTable+($40*2)).w,reg	; $40 = 90 degrees, sin(x+90) = cos(x)
 		move.w	(reg,d0.w),d0			; cos
