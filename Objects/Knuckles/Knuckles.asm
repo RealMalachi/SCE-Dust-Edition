@@ -2,8 +2,8 @@
 ; =============== S U B R O U T I N E =======================================
 
 Obj_Knuckles:
-		lea	(Max_speed).w,a4
-		lea	(Distance_from_top).w,a5
+		movea.w	playadd_addr(a0),a4
+		lea	screen_distance(a4),a5
 		lea	(v_Dust).w,a6
 
 		tst.w	(Debug_placement_mode).w
@@ -48,17 +48,14 @@ Knuckles_Index:
 
 Knuckles_Init:
 		addq.b	#2,routine(a0)
-		move.b	#$13,y_radius(a0)
-		move.b	#9,x_radius(a0)
-		move.b	#$13,default_y_radius(a0)
-		move.b	#9,default_x_radius(a0)
-		move.l	#Map_Knuckles,mappings(a0)
-		move.w	#make_priority(2),priority(a0)
-		move.b	#$18,width_pixels(a0)
-		move.b	#$18,height_pixels(a0)
-		move.w	#bytes_to_word(ren_camerapos,objflag_continue),render_flags(a0)
 		move.b	#2,character_id(a0)
+		move.w	#bytes_to_word(ren_camerapos,objflag_continue),render_flags(a0)
+		move.w	#bytes_to_word($18,$18),height_pixels(a0)
+		move.w	#make_priority(2),priority(a0)
+		move.l	#Map_Knuckles,mappings(a0)
 		bsr.w	Player_SetSpeed
+		bsr.w	Player_SetRadius
+		move.w	y_radius(a0),default_y_radius(a0)	; set default_y_radius and default_x_radius
 		tst.b	(Last_star_post_hit).w
 		bne.s	Knuckles_Init_Continued
 
@@ -81,6 +78,8 @@ Knuckles_Init_Continued:
 		jsr	(Reset_Player_Position_Array).l
 		addi.w	#$20,x_pos(a0)
 		subi.w	#4,y_pos(a0)
+		loadnullplayerobj
+		move.w	#Pos_table,pos_table(a4)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -106,11 +105,9 @@ locret_165A0:
 
 loc_165A2:
 		tst.b	(Ctrl_1_locked).w
-		bne.s	loc_165AE
-		move.l	(Ctrl1).w,(Ctrl1_Player).w
-
-loc_165AE:
-		btst	#0,$2E(a0)
+		bne.s	+
+		move.l	(Ctrl1).w,playctrl(a4)		; copy new buttons, to enable joypad control
++		btst	#0,object_control(a0)
 		beq.s	loc_165BE
 		move.b	#0,double_jump_flag(a0)
 		bra.s	loc_165D8
@@ -132,11 +129,11 @@ loc_165D8:
 		and.w	d0,y_pos(a0)
 
 loc_165E8:
-		bsr.s	Knuckles_Display
+		bsr.w	Knuckles_Display
 		bsr.w	Sonic_RecordPos
 		bsr.w	Knuckles_Water
-		move.b	(Primary_Angle).w,$3A(a0)
-		move.b	(Secondary_Angle).w,$3B(a0)
+		move.b	(Primary_Angle).w,next_tilt(a0)
+		move.b	(Secondary_Angle).w,tilt(a0)
 		tst.b	(WindTunnel_flag).w
 		beq.s	loc_16614
 		tst.b	anim(a0)
@@ -144,7 +141,7 @@ loc_165E8:
 		move.b	$21(a0),anim(a0)
 
 loc_16614:
-		btst	#1,$2E(a0)
+		btst	#1,object_control(a0)
 		bne.s	loc_16630
 		bsr.w	Animate_Knuckles
 		tst.b	(Reverse_gravity_flag).w
@@ -155,7 +152,7 @@ loc_1662C:
 		bsr.w	Knuckles_Load_PLC
 
 loc_16630:
-		move.b	$2E(a0),d0
+		move.b	object_control(a0),d0
 		andi.b	#-$60,d0
 		bne.s	locret_16640
 		jsr	(TouchResponse).l
@@ -171,115 +168,8 @@ Knux_Modes:	dc.w Knux_Stand_Path-Knux_Modes
 ; =============== S U B R O U T I N E =======================================
 
 
-Knuckles_Display:
-		move.b	$34(a0),d0
-		beq.s	loc_16658
-		subq.b	#1,$34(a0)
-		lsr.b	#3,d0
-		bcc.s	loc_1665E
-
-loc_16658:
-		DrawSpriteUnsafe_macro		; it's the first thing to render
-
-loc_1665E:
-		btst	#1,$2B(a0)
-		beq.s	loc_1669A
-		tst.b	$35(a0)
-		beq.s	loc_1669A
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#7,d0
-		bne.s	loc_1669A
-		subq.b	#1,$35(a0)
-		bne.s	loc_1669A
-		tst.b	(Level_end_flag).w						; don't change music if level is end
-		bne.s	loc_16694
-		tst.b	(Boss_flag).w
-		bne.s	loc_16694
-		cmpi.b	#$C,air_left(a0)
-		blo.s		loc_16694
-		move.w	(Current_music).w,d0
-		music					; stop playing invincibility theme and resume normal level music
-
-loc_16694:
-		bclr	#1,$2B(a0)
-
-loc_1669A:
-		btst	#2,$2B(a0)
-		beq.s	locret_166EC
-		tst.b	$36(a0)
-		beq.s	locret_166EC
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#7,d0
-		bne.s	locret_166EC
-		subq.b	#1,$36(a0)
-		bne.s	locret_166EC
-		bclr	#2,$2B(a0)
-		music	mus_Slowdown						; run music at normal speed
-		bra.w	Player_SetSpeed
-locret_166EC:
-		rts
-
-; =============== S U B R O U T I N E =======================================
-
-Knuckles_Water:
-		tst.b	(Water_flag).w
-		bne.s	loc_166F6
-
-locret_166F4:
-		rts
-; ---------------------------------------------------------------------------
-
-loc_166F6:
-		move.w	(Water_level).w,d0
-		cmp.w	y_pos(a0),d0
-		bge.s	loc_1676E
-		bset	#Status_Underwater,status(a0)
-		bne.s	locret_166F4
-		addq.b	#1,(Water_entered_counter).w
-		movea.w	a0,a1
-		bsr.w	Player_ResetAirTimer
-		move.l	#Obj_AirCountdown,(v_Breathing_bubbles).w
-		move.b	#$81,(v_Breathing_bubbles+subtype).w
-		move.w	a0,(v_Breathing_bubbles+parent).w
-		bsr.w	Player_SetSpeed
-		tst.b	object_control(a0)
-		bne.s	locret_166F4
-		asr	x_vel(a0)
-		asr	y_vel(a0)
-		asr	y_vel(a0)
-		beq.s	locret_166F4
-		move.w	#$100,anim(a6)
-		sfx	sfx_Splash,1				; splash sound
-; ---------------------------------------------------------------------------
-
-loc_1676E:
-		bclr	#Status_Underwater,status(a0)
-		beq.w	locret_166F4
-		addq.b	#1,(Water_entered_counter).w
-		movea.w	a0,a1
-		bsr.w	Player_ResetAirTimer
-		bsr.w	Player_SetSpeed
-		cmpi.b	#4,routine(a0)
-		beq.s	loc_167C4
-		tst.b	object_control(a0)
-		bne.s	loc_167C4
-		move.w	y_vel(a0),d0
-		cmpi.w	#-$400,d0
-		blt.s	loc_167C4
-		asl	y_vel(a0)
-
-loc_167C4:
-		cmpi.b	#$1C,anim(a0)
-		beq.w	locret_166F4
-		tst.w	y_vel(a0)
-		beq.w	locret_166F4
-		move.w	#$100,anim(a6)
-		cmpi.w	#-$1000,y_vel(a0)
-		bgt.s	loc_167EA
-		move.w	#-$1000,y_vel(a0)
-
-loc_167EA:
-		sfx	sfx_Splash,1				; splash sound
+Knuckles_Display = Player_Display
+Knuckles_Water = Player_Water
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -338,7 +228,9 @@ Knuckles_Glide:
 		beq.w	Knuckles_Climb_Ledge
 
 		; This function updates 'Gliding_collision_flags'.
+		move.l	a4,-(sp)
 		bsr.w	Knux_DoLevelCollision_CheckRet
+		move.l	(sp)+,a4
 
 		btst	#Status_InAir,(Gliding_collision_flags).w
 		beq.s	Knux_Gliding_HitFloor
@@ -346,8 +238,8 @@ Knuckles_Glide:
 		btst	#Status_Push,(Gliding_collision_flags).w
 		bne.w	Knuckles_Gliding_HitWall
 
-		move.b	(Ctrl_1_logical).w,d0
-		andi.b	#button_A_mask|button_B_mask|button_C_mask,d0
+		move.w	playctrl_hd(a4),d0
+		andi.w	#btnABC,d0
 		bne.s	.continueGliding
 
 		; The player has let go of the jump button, so exit the gliding state
@@ -365,7 +257,6 @@ Knuckles_Glide:
 		asr.w	x_vel(a0)
 
 		move.w	default_y_radius(a0),y_radius(a0)
-;		move.b	default_x_radius(a0),x_radius(a0)
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_1690A:
@@ -387,7 +278,7 @@ Knux_Gliding_HitFloor:
 		move.w	ground_vel(a0),x_vel(a0)
 		move.w	#0,y_vel(a0)
 
-		bra.w	Knux_TouchFloor
+		bra.w	Knux_TouchFloor.ignoreroll
 ; ---------------------------------------------------------------------------
 
 loc_1693E:
@@ -507,8 +398,7 @@ Knuckles_Gliding_HitWall:
 .fail:
 		move.b	#2,double_jump_flag(a0)
 		move.b	#$21,anim(a0)
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
+		move.w	default_y_radius(a0),y_radius(a0)
 		bset	#Status_InAir,(Gliding_collision_flags).w
 		rts
 ; ---------------------------------------------------------------------------
@@ -526,34 +416,25 @@ Knuckles_Fall_From_Glide:
 
 .skip1:
 		; This function updates 'Gliding_collision_flags'.
+		move.l	a4,-(sp)
 		bsr.w	Knux_DoLevelCollision_CheckRet
+		move.l	(sp)+,a4
 
 		btst	#Status_InAir,(Gliding_collision_flags).w
 		bne.s	.return
 
 		; Knuckles has touched the ground.
 		move.w	#0,ground_vel(a0)
-		move.w	#0,x_vel(a0)
-		move.w	#0,y_vel(a0)
+		move.l	#0,x_vel(a0)
 
-		move.b	y_radius(a0),d0
-		sub.b	default_y_radius(a0),d0
-		ext.w	d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	.skip2
-		neg.w	d0
-
-.skip2:
-		add.w	d0,y_pos(a0)
 		sfx	sfx_GlideLand
 		move.b	angle(a0),d0
 		addi.b	#$20,d0
 		andi.b	#$C0,d0
 		beq.s	.skip3
-		bra.w	Knux_TouchFloor
-
+		bra.w	Knux_TouchFloor.ignoreroll
 .skip3:
-		bsr.w	Knux_TouchFloor
+		bsr.w	Knux_TouchFloor.ignoreroll
 		move.w	#$F,move_lock(a0)
 		move.b	#$23,anim(a0)
 ; locret_16B04:
@@ -562,8 +443,8 @@ Knuckles_Fall_From_Glide:
 ; ---------------------------------------------------------------------------
 
 Knuckles_Sliding:
-		move.b	(Ctrl_1_logical).w,d0
-		andi.b	#button_A_mask|button_B_mask|button_C_mask,d0
+		move.w	playctrl_hd(a4),d0
+		andi.w	#btnABC,d0
 		beq.s	.getUp
 
 		tst.w	x_vel(a0)
@@ -585,33 +466,22 @@ Knuckles_Sliding:
 		bpl.s	.continueSliding
 ; loc_16B2A:
 .getUp:
-		move.w	#0,ground_vel(a0)
-		move.w	#0,x_vel(a0)
-		move.w	#0,y_vel(a0)
-
-		move.b	y_radius(a0),d0
-		sub.b	default_y_radius(a0),d0
-		ext.w	d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	.skip1
-		neg.w	d0
-
-.skip1:
-		add.w	d0,y_pos(a0)
-
-		bsr.w	Knux_TouchFloor
-
+		moveq	#0,d0
+		move.l	d0,x_vel(a0)
+		move.w	d0,ground_vel(a0)
+		bsr.w	Knux_TouchFloor.ignoreroll
 		move.w	#$F,move_lock(a0)
-		move.b	#$22,anim(a0)
-
+		move.b	#$22,anim(a0)		; getting up
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_16B64:
 .continueSliding:
+		move.l	a4,-(sp)
 		bsr.w	Knux_DoLevelCollision_CheckRet
 
 		; Get distance from floor in 'd1', and angle of floor in 'd3'.
 		bsr.w	sub_11FD6
+		move.l	(sp)+,a4
 
 		; If the distance from the floor is suddenly really high, then
 		; Knuckles must have slid off a ledge, so make him enter his falling
@@ -641,8 +511,7 @@ Knuckles_Sliding:
 		move.b	#2,double_jump_flag(a0)
 		move.b	#$21,anim(a0)
 
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
+		move.w	default_y_radius(a0),y_radius(a0)
 
 		bset	#Status_InAir,(Gliding_collision_flags).w
 		rts
@@ -666,8 +535,7 @@ Knuckles_Wall_Climb:
 		bne.w	Knuckles_LetGoOfWall
 
 		move.w	#0,ground_vel(a0)
-		move.w	#0,x_vel(a0)
-		move.w	#0,y_vel(a0)
+		move.l	#0,x_vel(a0)
 
 		SetCollAddrPlane_lrb_macro
 
@@ -675,7 +543,7 @@ Knuckles_Wall_Climb:
 
 		moveq	#0,d1	; Climbing animation delta: make the animation pause.
 
-		btst	#button_up,(Ctrl_1_logical).w
+		btst	#button_up,playctrl_hd_abc(a4)
 		beq.w	.notClimbingUp
 
 ;.climbingUp:
@@ -685,7 +553,9 @@ Knuckles_Wall_Climb:
 		; Get Knuckles' distance from the wall in 'd1'.
 		move.w	y_pos(a0),d2
 		subi.w	#11,d2
+		move.l	a4,-(sp)
 		bsr.w	GetDistanceFromWall
+		move.l	(sp)+,a4
 
 		; If the wall is far away from Knuckles, then we must have reached a
 		; ledge, so make Knuckles climb up onto it.
@@ -702,7 +572,9 @@ Knuckles_Wall_Climb:
 		move.w	y_pos(a0),d2
 		subq.w	#8,d2
 		move.w	x_pos(a0),d3
+		move.l	a4,-(sp)
 		bsr.w	CheckCeilingDist_WithRadius
+		move.l	(sp)+,a4
 
 		; Check if Knuckles has room above him.
 		tst.w	d1
@@ -755,7 +627,9 @@ Knuckles_Wall_Climb:
 		; Get Knuckles' distance from the wall in 'd1'.
 		move.w	y_pos(a0),d2
 		subi.w	#11,d2
+		move.l	a4,-(sp)
 		bsr.w	GetDistanceFromWall
+		move.l	(sp)+,a4
 
 		; If Knuckles is no longer against the wall (he has climbed off the
 		; bottom of it) then make him let go.
@@ -767,7 +641,9 @@ Knuckles_Wall_Climb:
 		move.w	y_pos(a0),d2
 		subi.w	#9,d2
 		move.w	x_pos(a0),d3
+		move.l	a4,-(sp)
 		bsr.w	CheckCeilingDist_WithRadius
+		move.l	(sp)+,a4
 
 		; Check if Knuckles has room below him.
 		tst.w	d1
@@ -782,10 +658,9 @@ Knuckles_Wall_Climb:
 		move.b	d0,angle(a0)
 
 		move.w	#0,ground_vel(a0)
-		move.w	#0,x_vel(a0)
-		move.w	#0,y_vel(a0)
+		move.l	#0,x_vel(a0)
 
-		bsr.w	Knux_TouchFloor
+		bsr.w	Knux_TouchFloor.ignoreroll
 
 		move.b	#5,anim(a0)
 
@@ -800,7 +675,7 @@ Knuckles_Wall_Climb:
 ; ---------------------------------------------------------------------------
 ; loc_16D10:
 .notClimbingUp:
-		btst	#button_down,(Ctrl_1_logical).w
+		btst	#button_down,playctrl_hd_abc(a4)
 		beq.w	.finishMoving
 
 ;.climbingDown:
@@ -821,7 +696,9 @@ Knuckles_Wall_Climb:
 		; Get Knuckles' distance from the wall in 'd1'.
 		move.w	y_pos(a0),d2
 		addi.w	#11,d2
+		move.l	a4,-(sp)
 		bsr.w	GetDistanceFromWall
+		move.l	(sp)+,a4
 
 		; If Knuckles is no longer against the wall (he has climbed off the
 		; bottom of it) then make him let go.
@@ -833,7 +710,9 @@ Knuckles_Wall_Climb:
 		move.w	y_pos(a0),d2
 		addi.w	#9,d2
 		move.w	x_pos(a0),d3
+		move.l	a4,-(sp)
 		bsr.w	sub_F828
+		move.l	(sp)+,a4
 
 		; Check if Knuckles has room below him.
 		tst.w	d1
@@ -845,10 +724,9 @@ Knuckles_Wall_Climb:
 		move.b	(Primary_Angle).w,angle(a0)
 
 		move.w	#0,ground_vel(a0)
-		move.w	#0,x_vel(a0)
-		move.w	#0,y_vel(a0)
+		move.l	#0,x_vel(a0)
 
-		bsr.w	Knux_TouchFloor
+		bsr.w	Knux_TouchFloor.ignoreroll
 
 		move.b	#5,anim(a0)
 
@@ -866,7 +744,9 @@ Knuckles_Wall_Climb:
 		; Get Knuckles' distance from the wall in 'd1'.
 		move.w	y_pos(a0),d2
 		addi.w	#11,d2
+		move.l	a4,-(sp)
 		bsr.w	GetDistanceFromWall
+		move.l	(sp)+,a4
 
 		; If the wall is far away from Knuckles, then we must have reached a
 		; ledge, so make Knuckles climb up onto it.
@@ -883,7 +763,9 @@ Knuckles_Wall_Climb:
 		move.w	y_pos(a0),d2
 		addq.w	#8,d2
 		move.w	x_pos(a0),d3
+		move.l	a4,-(sp)
 		bsr.w	sub_F828
+		move.l	(sp)+,a4
 
 		; Check if Knuckles has room above him.
 		tst.w	d1
@@ -918,40 +800,6 @@ Knuckles_Wall_Climb:
 		move.w	d0,y_pos(a0)
 ; loc_16E10:
 .finishMoving:
-	; TODO: Port fix from S3UE
-		; This block of code was not here in KiS2.
-		; This code detaches Knuckles from the wall if there is
-		; ground directly below him. Note that this code specifically
-		; does not run if the player is holding up or down: this is
-		; because similar code already runs if either of those
-		; buttons are being held. Presumably, this check was added so
-		; that Knuckles would properly detach from the wall if a
-		; rising floor (think Marble Garden Zone Act 2) came up from
-		; under him. With that said, KiS2 lacks this logic, and yet
-		; Knuckles seems to detach from the wall in Hill Top Zone's
-		; rising wall section just fine, so I'm not sure whether this
-		; code was ever actually needed in the first place.
-		move.b	(Ctrl_1_held_logical).w,d0
-		andi.b	#button_up_mask|button_down_mask,d0
-		bne.s	.isMovingUpOrDown
-
-		; Get Knuckles' distance from the floor in 'd1'.
-		move.b	top_solid_bit(a0),d5
-		move.w	y_pos(a0),d2
-		addi.w	#9,d2
-		move.w	x_pos(a0),d3
-		bsr.w	sub_F828
-
-		; Check if Knuckles has room below him.
-		tst.w	d1
-		bmi.w	.reachedFloor
-
-		; Bug! 'd1' has been overwritten by 'sub_F828', but the code
-		; after this needs it for updating Knuckles' animation. This
-		; bug is the reason why Knuckles resets to his first climbing
-		; frame when the player is not holding up or down.
-
-.isMovingUpOrDown:
 		; If Knuckles has not moved, skip this.
 		tst.w	d1
 		beq.s	.notMoving
@@ -961,77 +809,58 @@ Knuckles_Wall_Climb:
 		bpl.s	.notMoving
 		move.b	#3,double_jump_property(a0)
 
-		; Add delta to animation frame.
+	; Add delta to animation frame.
 		add.b	mapping_frame(a0),d1
 
 	; Make the animation loop.
 		cmpi.b	#$B7,d1
-		bhs.s	.noLoop1
-		move.b	#$BC,d1
-
-.noLoop1:
-		cmpi.b	#$BC,d1
-		bls.s	.noLoop2
-		move.b	#$B7,d1
-
-.noLoop2:
-		; Apply the frame.
-		move.b	d1,mapping_frame(a0)
+		bhs.s	+
+		moveq	#signextendB($BC),d1
++		cmpi.b	#$BC,d1
+		bls.s	+
+		moveq	#signextendB($B7),d1
++		move.b	d1,mapping_frame(a0)		; Apply the frame.
 ; loc_16E60:
 .notMoving:
 		move.b	#$20,anim_frame_timer(a0)
 		move.b	#0,anim_frame(a0)
 
-		move.b	(Ctrl_1_pressed_logical).w,d0
-		andi.w	#button_A_mask|button_B_mask|button_C_mask,d0
+		move.w	playctrl_pr(a4),d0
+		andi.w	#btnABC,d0
 		beq.s	.hasNotJumped
 
 		; Knuckles has jumped off the wall.
 		move.w	#-$380,y_vel(a0)
 		move.w	#$400,x_vel(a0)
-
 		bchg	#Status_Facing,status(a0)
-		bne.s	.goingRight
+		bne.s	+
 		neg.w	x_vel(a0)
-
-.goingRight:
-		bset	#Status_InAir,status(a0)
-		move.b	#1,jumping(a0)
-
-		move.b	#$E,y_radius(a0)
-		move.b	#7,x_radius(a0)
-
-		move.b	#2,anim(a0)
++		bset	#Status_InAir,status(a0)
 		bset	#Status_Roll,status(a0)
+		move.b	#2,anim(a0)
+		move.b	#1,jumping(a0)
 		move.b	#0,double_jump_flag(a0)
+		bra.w	Player_SetRadius
 ; locret_16EB8:
 .hasNotJumped:
-		rts
+-		rts
 ; ---------------------------------------------------------------------------
 ; loc_16EBA:
 Knuckles_ClimbUp:
 		move.b	#5,double_jump_flag(a0)
-
 		cmpi.b	#$BD,mapping_frame(a0)
-		beq.s	+
-
+		beq.s	-
 		move.b	#0,double_jump_property(a0)
-		bsr.s	Knuckles_DoLedgeClimbingAnimation
-+
-		rts
+		bra.s	Knuckles_DoLedgeClimbingAnimation
 ; ---------------------------------------------------------------------------
 ; loc_16ED2:
 Knuckles_LetGoOfWall:
 		move.b	#2,double_jump_flag(a0)
-
 		move.w	#$2121,anim(a0)
 		move.b	#$CB,mapping_frame(a0)
 		move.b	#7,anim_frame_timer(a0)
 		move.b	#1,anim_frame(a0)
-
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
-
+		move.w	default_y_radius(a0),y_radius(a0)
 		rts
 
 ; =============== S U B R O U T I N E =======================================
@@ -1045,19 +874,17 @@ Knuckles_DoLedgeClimbingAnimation:
 		move.b	(a1)+,mapping_frame(a0)
 
 		move.b	(a1)+,d0
-		ext.w	d0
 		btst	#Status_Facing,status(a0)
 		beq.s	+
-		neg.w	d0
-+
+		neg.b	d0
++		ext.w	d0
 		add.w	d0,x_pos(a0)
 
 		move.b	(a1)+,d1
-		ext.w	d1
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	+
-		neg.w	d1
-+
+		neg.b	d1
++		ext.w	d1
 		add.w	d1,y_pos(a0)
 
 		move.b	(a1)+,anim_frame_timer(a0)
@@ -1108,14 +935,13 @@ Knuckles_Climb_Ledge:
 
 		; Yes.
 		move.w	#0,ground_vel(a0)
-		move.w	#0,x_vel(a0)
-		move.w	#0,y_vel(a0)
+		move.l	#0,x_vel(a0)
 
 		btst	#Status_Facing,status(a0)
 		beq.s	+
 		subq.w	#1,x_pos(a0)
-+
-		bsr.w	Knux_TouchFloor
++		fixplayerposition a0,jump	; either I fixed a bug or created one, but now without this the player is raised into the air a little when they climb up
+		bsr.w	Knux_TouchFloor	; we just need the angle from Knux_TouchFloor
 		move.b	#5,anim(a0)
 
 locret_16FA6:
@@ -1141,8 +967,7 @@ Knuckles_Set_Gliding_Animation:
 		bne.s	+
 		bset	#Status_Facing,status(a0)
 		move.b	#$C0,mapping_frame(a0)
-+
-		rts
++		rts
 ; ---------------------------------------------------------------------------
 
 RawAni_Knuckles_GlideTurn:
@@ -1189,7 +1014,7 @@ Knuckles_Move_Glide:
 		move.w	d0,ground_vel(a0)
 
 		move.b	double_jump_property(a0),d0
-		btst	#button_left,(Ctrl_1_logical).w
+		btst	#button_left,playctrl_hd_abc(a4)
 		beq.s	.notHoldingLeft
 
 ;.holdingLeft:
@@ -1206,7 +1031,7 @@ Knuckles_Move_Glide:
 ; ---------------------------------------------------------------------------
 ; loc_17048:
 .notHoldingLeft:
-		btst	#button_right,(Ctrl_1_logical).w
+		btst	#button_right,playctrl_hd_abc(a4)
 		beq.s	.notHoldingRight
 
 ;.holdingRight:
@@ -1230,8 +1055,9 @@ Knuckles_Move_Glide:
 .setNewTurningValue:
 		move.b	d0,double_jump_property(a0)
 
-		move.b	double_jump_property(a0),d0
-		jsr	(GetSineCosine).w
+	;	move.b	double_jump_property(a0),d0	; ???
+		moveq	#0,d1
+	calcsine_macro a1,cosined1,unsafe	; get cosine
 		muls.w	ground_vel(a0),d1
 		asr.l	#8,d1
 		move.w	d1,x_vel(a0)
@@ -1297,19 +1123,21 @@ loc_17138:
 ; =============== S U B R O U T I N E =======================================
 
 Knux_InputAcceleration_Path:
-		move.w	Max_speed-Max_speed(a4),d6
-		move.w	Acceleration-Max_speed(a4),d5
-		move.w	Deceleration-Max_speed(a4),d4
-		tst.b	$2B(a0)
+		move.w	max_speed(a4),d6
+		move.w	acceleration(a4),d5
+		move.w	deceleration(a4),d4
+		tst.b	status_secondary(a0)
 		bmi.w	loc_17364
-		tst.w	$32(a0)
+		tst.w	move_lock(a0)
 		bne.w	loc_1731C
-		btst	#2,(Ctrl_1_logical).w
+		btst	#button_left,playctrl_hd_abc(a4)
 		beq.s	loc_17168
+		btst	#button_right,playctrl_hd_abc(a4)
+		bne.s	loc_17174
 		bsr.w	sub_17428
 
 loc_17168:
-		btst	#3,(Ctrl_1_logical).w
+		btst	#button_right,playctrl_hd_abc(a4)
 		beq.s	loc_17174
 		bsr.w	sub_174B4
 
@@ -1328,7 +1156,7 @@ loc_17174:
 		tst.b	status(a1)
 		bmi.w	loc_172A8
 		moveq	#0,d1
-		move.b	7(a1),d1
+		move.b	width_pixels(a1),d1
 		move.w	d1,d2
 		add.w	d2,d2
 		subq.w	#2,d2
@@ -1350,8 +1178,8 @@ loc_171D0:
 
 loc_171E2:
 		bclr	#Status_Facing,status(a0)
-		move.b	#0,$24(a0)
-		move.b	#4,$23(a0)
+		move.b	#0,anim_frame_timer(a0)
+		move.b	#4,anim_frame(a0)
 		move.w	#$606,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
@@ -1365,18 +1193,20 @@ loc_171FE:
 
 loc_17210:
 		bset	#Status_Facing,status(a0)
-		move.b	#0,$24(a0)
-		move.b	#4,$23(a0)
+		move.b	#0,anim_frame_timer(a0)
+		move.b	#4,anim_frame(a0)
 		move.w	#$606,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_1722C:
 		move.w	x_pos(a0),d3
+		move.l	a4,-(sp)	; save a4 (ChooseChkFloorEdge uses it)
 		bsr.w	ChooseChkFloorEdge
+		move.l	(sp)+,a4
 		cmpi.w	#$C,d1
 		blt.w	loc_172A8
-		cmpi.b	#3,$3A(a0)
+		cmpi.b	#3,next_tilt(a0)
 		bne.s	loc_17272
 		btst	#Status_Facing,status(a0)
 		bne.s	loc_17256
@@ -1386,14 +1216,14 @@ loc_1722C:
 
 loc_17256:
 		bclr	#Status_Facing,status(a0)
-		move.b	#0,$24(a0)
-		move.b	#4,$23(a0)
+		move.b	#0,anim_frame_timer(a0)
+		move.b	#4,anim_frame(a0)
 		move.w	#$606,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_17272:
-		cmpi.b	#3,$3B(a0)
+		cmpi.b	#3,tilt(a0)
 		bne.s	loc_172A8
 		btst	#Status_Facing,status(a0)
 		beq.s	loc_1728C
@@ -1403,14 +1233,14 @@ loc_17272:
 
 loc_1728C:
 		bset	#Status_Facing,status(a0)
-		move.b	#0,$24(a0)
-		move.b	#4,$23(a0)
+		move.b	#0,anim_frame_timer(a0)
+		move.b	#4,anim_frame(a0)
 		move.w	#$606,anim(a0)
 		bra.w	loc_1731C
 ; ---------------------------------------------------------------------------
 
 loc_172A8:
-		btst	#1,(Ctrl_1_logical).w
+		btst	#button_down,playctrl_hd_abc(a4)
 		beq.s	loc_172E2
 		move.b	#8,anim(a0)
 		addq.b	#1,scroll_delay_counter(a0)
@@ -1418,14 +1248,12 @@ loc_172A8:
 		blo.s	loc_17322
 		move.b	#$78,scroll_delay_counter(a0)
 		tst.b	(Reverse_gravity_flag).w
-		bne.s	loc_172D8
+		bne.s	+
 		cmpi.w	#8,(a5)
 		beq.s	loc_1732E
 		subq.w	#2,(a5)
 		bra.s	loc_1732E
-; ---------------------------------------------------------------------------
-
-loc_172D8:
++
 		cmpi.w	#$D8,(a5)
 		beq.s	loc_1732E
 		addq.w	#2,(a5)
@@ -1433,7 +1261,7 @@ loc_172D8:
 ; ---------------------------------------------------------------------------
 
 loc_172E2:
-		btst	#0,(Ctrl_1_logical).w
+		btst	#button_up,playctrl_hd_abc(a4)
 		beq.s	loc_1731C
 		move.b	#7,anim(a0)
 		addq.b	#1,scroll_delay_counter(a0)
@@ -1441,14 +1269,12 @@ loc_172E2:
 		blo.s	loc_17322
 		move.b	#$78,scroll_delay_counter(a0)
 		tst.b	(Reverse_gravity_flag).w
-		bne.s	loc_17312
+		bne.s	+
 		cmpi.w	#$C8,(a5)
 		beq.s	loc_1732E
 		addq.w	#2,(a5)
 		bra.s	loc_1732E
-; ---------------------------------------------------------------------------
-
-loc_17312:
++
 		cmpi.w	#$18,(a5)
 		beq.s	loc_1732E
 		subq.w	#2,(a5)
@@ -1462,8 +1288,8 @@ loc_17322:
 	resetlookcamerapos (a5)
 
 loc_1732E:
-		move.b	(Ctrl_1_logical).w,d0
-		andi.b	#$C,d0
+		move.w	playctrl_hd(a4),d0
+		andi.w	#btnLR,d0
 		bne.s	loc_17364
 		move.w	ground_vel(a0),d0
 		beq.s	loc_17364
@@ -1496,7 +1322,7 @@ loc_17364:
 		move.w	d0,y_vel(a0)
 
 loc_17382:
-		btst	#6,$2E(a0)
+		btst	#6,object_control(a0)
 		bne.w	locret_17426
 		move.b	angle(a0),d0
 		andi.b	#$3F,d0
@@ -1515,14 +1341,14 @@ loc_173A2:
 loc_173B0:
 		move.b	angle(a0),d0
 		add.b	d1,d0
-		move.w	d0,-(sp)
-		bsr.w	sub_F61C
-		move.w	(sp)+,d0
+		movem.l	d0/a4,-(sp)
+		bsr.w	CalcRoomInFront
+		movem.l	(sp)+,d0/a4
 		tst.w	d1
 		bpl.s	locret_17426
 		asl.w	#8,d1
-		cmpi.b	#8,(Current_zone).w
-		bne.s	loc_173D2
+	;	cmpi.b	#8,(Current_zone).w
+	;	bne.s	loc_173D2
 		tst.b	d0
 		bpl.s	loc_173D2
 		subq.b	#1,d0
@@ -1674,278 +1500,10 @@ locret_17538:
 
 ; =============== S U B R O U T I N E =======================================
 
-Knux_RollSpeed:
-		move.w	Max_speed-Max_speed(a4),d6
-		asl.w	#1,d6
-		move.w	Acceleration-Max_speed(a4),d5
-		asr.w	#1,d5
-		move.w	#$20,d4
-		tst.b	spin_dash_flag(a0)
-		bmi.w	loc_175F8
-		tst.b	$2B(a0)
-		bmi.w	loc_175F8
-		tst.w	$32(a0)
-		bne.s	loc_17580
-		btst	#2,(Ctrl_1_logical).w
-		beq.s	loc_17574
-		bsr.w	sub_1763A
+Knux_RollSpeed = Sonic_RollSpeed
+Knux_ChgJumpDir = Sonic_ChgJumpDir	; sub_17680:
+Knux_Jump = Sonic_Jump
 
-loc_17574:
-		btst	#3,(Ctrl_1_logical).w
-		beq.s	loc_17580
-		bsr.w	sub_1765E
-
-loc_17580:
-		move.w	ground_vel(a0),d0
-		beq.s	loc_175A2
-		bmi.s	loc_17596
-		sub.w	d5,d0
-		bcc.s	loc_17590
-		move.w	#0,d0
-
-loc_17590:
-		move.w	d0,ground_vel(a0)
-		bra.s	loc_175A2
-; ---------------------------------------------------------------------------
-
-loc_17596:
-		add.w	d5,d0
-		bcc.s	loc_1759E
-		move.w	#0,d0
-
-loc_1759E:
-		move.w	d0,ground_vel(a0)
-
-loc_175A2:
-		move.w	ground_vel(a0),d0
-		bpl.s	loc_175AA
-		neg.w	d0
-
-loc_175AA:
-		cmpi.w	#$80,d0
-		bhs.s	loc_175F8
-		tst.b	spin_dash_flag(a0)
-		bne.s	loc_175E6
-		bclr	#Status_Roll,status(a0)
-		move.b	y_radius(a0),d0
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
-		move.b	#5,anim(a0)
-		sub.b	default_y_radius(a0),d0
-		ext.w	d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_175E0
-		neg.w	d0
-
-loc_175E0:
-		add.w	d0,y_pos(a0)
-		bra.s	loc_175F8
-; ---------------------------------------------------------------------------
-
-loc_175E6:
-		move.w	#$400,ground_vel(a0)
-		btst	#Status_Facing,status(a0)
-		beq.s	loc_175F8
-		neg.w	ground_vel(a0)
-
-loc_175F8:
-	resetlookcamerapos (a5)
-
-loc_17604:
-		move.b	angle(a0),d0
-		jsr	(GetSineCosine).w
-		muls.w	ground_vel(a0),d0
-		asr.l	#8,d0
-		move.w	d0,y_vel(a0)
-		muls.w	ground_vel(a0),d1
-		asr.l	#8,d1
-		cmpi.w	#$1000,d1
-		ble.s	loc_17628
-		move.w	#$1000,d1
-
-loc_17628:
-		cmpi.w	#-$1000,d1
-		bge.s	loc_17632
-		move.w	#-$1000,d1
-
-loc_17632:
-		move.w	d1,x_vel(a0)
-		bra.w	loc_17382
-
-; =============== S U B R O U T I N E =======================================
-
-sub_1763A:
-		move.w	ground_vel(a0),d0
-		beq.s	loc_17642
-		bpl.s	loc_17650
-
-loc_17642:
-		bset	#Status_Facing,status(a0)
-		move.b	#2,anim(a0)
-		rts
-; ---------------------------------------------------------------------------
-
-loc_17650:
-		sub.w	d4,d0
-		bcc.s	loc_17658
-		move.w	#-$80,d0
-
-loc_17658:
-		move.w	d0,ground_vel(a0)
-		rts
-
-; =============== S U B R O U T I N E =======================================
-
-sub_1765E:
-		move.w	ground_vel(a0),d0
-		bmi.s	loc_17672
-		bclr	#Status_Facing,status(a0)
-		move.b	#2,anim(a0)
-		rts
-; ---------------------------------------------------------------------------
-
-loc_17672:
-		add.w	d4,d0
-		bcc.s	loc_1767A
-		move.w	#$80,d0
-
-loc_1767A:
-		move.w	d0,ground_vel(a0)
-		rts
-
-; =============== S U B R O U T I N E =======================================
-
-; sub_17680:
-Knux_ChgJumpDir:
-		move.w	Max_speed-Max_speed(a4),d6
-		move.w	Acceleration-Max_speed(a4),d5
-		asl.w	#1,d5
-		btst	#Status_RollJump,status(a0)
-		bne.s	loc_176D4
-		move.w	x_vel(a0),d0
-		btst	#2,(Ctrl_1_logical).w
-		beq.s	loc_176B4
-		bset	#Status_Facing,status(a0)
-		sub.w	d5,d0
-		move.w	d6,d1
-		neg.w	d1
-		cmp.w	d1,d0
-		bgt.s	loc_176B4
-		add.w	d5,d0
-		cmp.w	d1,d0
-		ble.s	loc_176B4
-		move.w	d1,d0
-
-loc_176B4:
-		btst	#3,(Ctrl_1_logical).w
-		beq.s	loc_176D0
-		bclr	#Status_Facing,status(a0)
-		add.w	d5,d0
-		cmp.w	d6,d0
-		blt.s	loc_176D0
-		sub.w	d5,d0
-		cmp.w	d6,d0
-		bge.s	loc_176D0
-		move.w	d6,d0
-
-loc_176D0:
-		move.w	d0,x_vel(a0)
-
-loc_176D4:
-	resetlookcamerapos (a5)
-
-loc_176E0:
-		cmpi.w	#-$400,y_vel(a0)
-		blo.s	locret_1770E
-		move.w	x_vel(a0),d0
-		move.w	d0,d1
-		asr.w	#5,d1
-		beq.s	locret_1770E
-		bmi.s	loc_17702
-		sub.w	d1,d0
-		bcc.s	loc_176FC
-		move.w	#0,d0
-
-loc_176FC:
-		move.w	d0,x_vel(a0)
-		rts
-; ---------------------------------------------------------------------------
-
-loc_17702:
-		sub.w	d1,d0
-		bcs.s	loc_1770A
-		move.w	#0,d0
-
-loc_1770A:
-		move.w	d0,x_vel(a0)
-
-locret_1770E:
-		rts
-
-; =============== S U B R O U T I N E =======================================
-
-Knux_Jump:
-		move.b	(Ctrl_1_pressed_logical).w,d0
-		andi.b	#$70,d0
-		beq.w	locret_177E0
-		moveq	#0,d0
-		move.b	angle(a0),d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_17732
-		addi.b	#$40,d0
-		neg.b	d0
-		subi.b	#$40,d0
-
-loc_17732:
-		addi.b	#-$80,d0
-		movem.l	a4-a6,-(sp)
-		jsr	(CalcRoomOverHead).l
-		movem.l	(sp)+,a4-a6
-		cmpi.w	#6,d1
-		blt.w	locret_177E0
-
-		moveq	#0,d0
-		move.b	angle(a0),d0
-		subi.b	#$40,d0
-		jsr	(GetSineCosine).w
-		move.w	Jump_height-Max_speed(a4),d2
-		muls.w	d2,d1
-		asr.l	#8,d1
-		add.w	d1,x_vel(a0)
-		muls.w	d2,d0
-		asr.l	#8,d0
-		add.w	d0,y_vel(a0)
-		bset	#Status_InAir,status(a0)
-		bclr	#Status_Push,status(a0)
-		addq.l	#4,sp
-		move.b	#1,jumping(a0)
-		clr.b	$3C(a0)
-		sfx	sfx_Jump
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
-		btst	#Status_Roll,status(a0)
-		bne.s	loc_177E2
-		move.b	#$E,y_radius(a0)
-		move.b	#7,x_radius(a0)
-		move.b	#2,anim(a0)
-		bset	#Status_Roll,status(a0)
-		move.b	y_radius(a0),d0
-		sub.b	default_y_radius(a0),d0
-		ext.w	d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_177DC
-		neg.w	d0
-
-loc_177DC:
-		sub.w	d0,y_pos(a0)
-
-locret_177E0:
-		rts
-; ---------------------------------------------------------------------------
-
-loc_177E2:
-		bset	#Status_RollJump,status(a0)
-		rts
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -1960,70 +1518,60 @@ Knux_JumpHeight:
 loc_17800:
 		cmp.w	y_vel(a0),d1
 		ble.w	Knux_Test_For_Glide
-		move.b	(Ctrl_1_logical).w,d0
-		andi.b	#$70,d0
-		bne.s	locret_17816
+		move.b	playctrl_hd_abc(a4),d0
+		andi.b	#btnABC,d0
+		bne.s	+
 		move.w	d1,y_vel(a0)
-
-locret_17816:
-		rts
++		rts
 ; ---------------------------------------------------------------------------
 
 loc_17818:
 		tst.b	spin_dash_flag(a0)
-		bne.s	locret_1782C
+		bne.s	+
 		cmpi.w	#-$FC0,y_vel(a0)
-		bge.s	locret_1782C
+		bge.s	+
 		move.w	#-$FC0,y_vel(a0)
-locret_1782C:
 locret_178CC:
-		rts
++		rts
 ; ---------------------------------------------------------------------------
 
 Knux_Test_For_Glide:
 		tst.b	double_jump_flag(a0)
 		bne.s	locret_178CC
-		move.b	(Ctrl_1_pressed_logical).w,d0
-		andi.b	#$70,d0
+		move.w	playctrl_pr(a4),d0
+		andi.w	#btnABC,d0
 		beq.s	locret_178CC
 
 		bclr	#Status_Roll,status(a0)
-		move.b	#$A,y_radius(a0)
-		move.b	#$A,x_radius(a0)
+		move.w	#bytes_to_word($A,$A),y_radius(a0)
 		bclr	#Status_RollJump,status(a0)
 		move.b	#1,double_jump_flag(a0)
 		addi.w	#$200,y_vel(a0)
 		bpl.s	+
 		move.w	#0,y_vel(a0)
-+
-		move.w	#$400,d1
++		move.w	#$400,d1
 		move.w	#$800,d2
 		btst	#Status_Underwater,status(a0)	; are you underwater?
 		beq.s	+		; if not, branch
 		move.w	#$280,d1
 		move.w	#$580,d2
-+
-		move.w	x_vel(a0),d0	; get absolute value of x_vel
++		move.w	x_vel(a0),d0	; get absolute value of x_vel
 		bpl.s	+
 		neg.w	d0
-+
-		cmp.w	d2,d0		; is it more then the cap?
++		cmp.w	d2,d0		; is it more then the cap?
 		ble.s	+		; if not, branch
 		move.w	d2,d0
 		bra.s	++
-+
-		cmp.w	d1,d0		; is it less then the cap?
++		cmp.w	d1,d0		; is it less then the cap?
 		bhs.s	+		; if so, branch
 		move.w	d1,d0
-+
-		move.w	d0,ground_vel(a0)
++		move.w	d0,ground_vel(a0)
 		moveq	#0,d1
 		btst	#Status_Facing,status(a0)	; are you facing left?
 		beq.s	+		; if not, branch
 		neg.w	d0
 		moveq	#-$80,d1
-+
-		move.w	d0,x_vel(a0)
++		move.w	d0,x_vel(a0)
 		move.b	d1,double_jump_property(a0)
 		move.w	#0,angle(a0)
 		move.b	#0,(Gliding_collision_flags).w
@@ -2034,7 +1582,7 @@ Knux_Test_For_Glide:
 
 Knux_DoLevelCollision_CheckRet:
 		SetCollAddrPlane_macro
-		move.b	$47(a0),d5
+		move.b	lrb_solid_bit(a0),d5
 		move.w	x_vel(a0),d1
 		move.w	y_vel(a0),d2
 		jsr	(GetArcTan).w
@@ -2062,7 +1610,9 @@ loc_1799C:
 		bset	#Status_Push,(Gliding_collision_flags).w
 
 loc_179B4:
+		move.l	a4,-(sp)
 		bsr.w	sub_11FD6
+		move.l	(sp)+,a4
 		tst.w	d1
 		bpl.s	locret_179D8
 		tst.b	(Reverse_gravity_flag).w
@@ -2123,7 +1673,9 @@ locret_17A34:
 loc_17A36:
 		tst.w	y_vel(a0)
 		bmi.s	locret_17A60
+		move.l	a4,-(sp)
 		bsr.w	sub_11FD6
+		move.l	(sp)+,a4
 		tst.w	d1
 		bpl.s	locret_17A60
 		tst.b	(Reverse_gravity_flag).w
@@ -2201,7 +1753,9 @@ locret_17AEA:
 loc_17AEC:
 		tst.w	y_vel(a0)
 		bmi.s	locret_17B16
+		move.l	a4,-(sp)
 		bsr.w	sub_11FD6
+		move.l	(sp)+,a4
 		tst.w	d1
 		bpl.s	locret_17B16
 		tst.b	(Reverse_gravity_flag).w
@@ -2220,31 +1774,15 @@ locret_17B16:
 ; =============== S U B R O U T I N E =======================================
 
 Knux_TouchFloor:
-		move.b	y_radius(a0),d0
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
-		btst	#Status_Roll,status(a0)
-		beq.s	loc_17B6A
 		bclr	#Status_Roll,status(a0)
-		move.b	#0,anim(a0)
-		sub.b	default_y_radius(a0),d0
-		ext.w	d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_17B56
-		neg.w	d0
+		beq.s	.alreadyclear
+		clr.b	anim(a0)	; id_Walk
+.ignoreroll
+.alreadyclear
+		move.w	d1,-(sp)
+	fixplayerposition a0,land,1
+		move.w	(sp)+,d1
 
-loc_17B56:
-		move.w	d0,-(sp)
-		move.b	angle(a0),d0
-		addi.b	#$40,d0
-		bpl.s	loc_17B64
-		neg.w	(sp)
-
-loc_17B64:
-		move.w	(sp)+,d0
-		add.w	d0,y_pos(a0)
-
-loc_17B6A:
 		bclr	#Status_InAir,status(a0)
 		bclr	#Status_Push,status(a0)
 		bclr	#Status_RollJump,status(a0)
@@ -2325,7 +1863,7 @@ loc_17C3C:
 		move.w	d0,y_vel(a0)
 		move.w	d0,x_vel(a0)
 		move.w	d0,ground_vel(a0)
-		move.b	d0,$2E(a0)
+		move.b	d0,object_control(a0)
 		move.b	#0,anim(a0)
 		move.w	#make_priority(2),priority(a0)
 		move.b	#2,routine(a0)
@@ -2418,8 +1956,8 @@ Animate_Knuckles:
 		cmp.b	$21(a0),d0
 		beq.s	loc_17D58
 		move.b	d0,$21(a0)
-		move.b	#0,$23(a0)
-		move.b	#0,$24(a0)
+		move.b	#0,anim_frame(a0)
+		move.b	#0,anim_frame_timer(a0)
 		bclr	#Status_Push,status(a0)
 
 loc_17D58:
@@ -2431,20 +1969,20 @@ loc_17D58:
 		andi.b	#1,d1
 		andi.b	#-4,render_flags(a0)
 		or.b	d1,render_flags(a0)
-		subq.b	#1,$24(a0)
+		subq.b	#1,anim_frame_timer(a0)
 		bpl.s	locret_17D96
-		move.b	d0,$24(a0)
+		move.b	d0,anim_frame_timer(a0)
 
 loc_17D7E:
 		moveq	#0,d1
-		move.b	$23(a0),d1
+		move.b	anim_frame(a0),d1
 		move.b	1(a1,d1.w),d0
 		cmpi.b	#-4,d0
 		bhs.s	loc_17D98
 
 loc_17D8E:
 		move.b	d0,mapping_frame(a0)
-		addq.b	#1,$23(a0)
+		addq.b	#1,anim_frame(a0)
 
 locret_17D96:
 		rts
@@ -2453,7 +1991,7 @@ locret_17D96:
 loc_17D98:
 		addq.b	#1,d0
 		bne.s	loc_17DA8
-		move.b	#0,$23(a0)
+		move.b	#0,anim_frame(a0)
 		move.b	1(a1),d0
 		bra.s	loc_17D8E
 ; ---------------------------------------------------------------------------
@@ -2462,7 +2000,7 @@ loc_17DA8:
 		addq.b	#1,d0
 		bne.s	loc_17DBC
 		move.b	2(a1,d1.w),d0
-		sub.b	d0,$23(a0)
+		sub.b	d0,anim_frame(a0)
 		sub.b	d0,d1
 		move.b	1(a1,d1.w),d0
 		bra.s	loc_17D8E
@@ -2530,17 +2068,17 @@ loc_17E42:
 		add.b	d0,d0
 		move.b	d0,d3
 		moveq	#0,d1
-		move.b	$23(a0),d1
+		move.b	anim_frame(a0),d1
 		move.b	1(a1,d1.w),d0
 		cmpi.b	#-1,d0
 		bne.s	loc_17E60
-		move.b	#0,$23(a0)
+		move.b	#0,anim_frame(a0)
 		move.b	1(a1),d0
 
 loc_17E60:
+		add.b	d3,d0
 		move.b	d0,mapping_frame(a0)
-		add.b	d3,mapping_frame(a0)
-		subq.b	#1,$24(a0)
+		subq.b	#1,anim_frame_timer(a0)
 		bpl.s	locret_17E82
 		neg.w	d2
 		addi.w	#$800,d2
@@ -2549,8 +2087,8 @@ loc_17E60:
 
 loc_17E78:
 		lsr.w	#8,d2
-		move.b	d2,$24(a0)
-		addq.b	#1,$23(a0)
+		move.b	d2,anim_frame_timer(a0)
+		addq.b	#1,anim_frame(a0)
 
 locret_17E82:
 		rts
@@ -2561,7 +2099,7 @@ loc_17E84:
 		andi.b	#1,d1
 		andi.b	#-4,render_flags(a0)
 		or.b	d1,render_flags(a0)
-		subq.b	#1,$24(a0)
+		subq.b	#1,anim_frame_timer(a0)
 		bpl.w	locret_17D96
 		move.w	ground_vel(a0),d2
 		bpl.s	loc_17EA6
@@ -2581,12 +2119,12 @@ loc_17EB8:
 
 loc_17EC2:
 		lsr.w	#8,d2
-		move.b	d2,$24(a0)
+		move.b	d2,anim_frame_timer(a0)
 		bra.w	loc_17D7E
 ; ---------------------------------------------------------------------------
 
 loc_17ECC:
-		subq.b	#1,$24(a0)
+		subq.b	#1,anim_frame_timer(a0)
 		bpl.w	locret_17D96
 		move.w	ground_vel(a0),d2
 		bmi.s	loc_17EDC
@@ -2599,7 +2137,7 @@ loc_17EDC:
 
 loc_17EE4:
 		lsr.w	#8,d2
-		move.b	d2,$24(a0)
+		move.b	d2,anim_frame_timer(a0)
 		lea	(byte_17F66).l,a1
 		bra.w	loc_17D7E
 

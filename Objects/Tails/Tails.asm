@@ -2,15 +2,13 @@
 ; =============== S U B R O U T I N E =======================================
 
 Obj_Tails:
-		lea	(Max_speed_P2).w,a4
-		lea	(Distance_from_top_P2).w,a5
+		movea.w	playadd_addr(a0),a4
+		lea	screen_distance(a4),a5
 		lea	(v_Dust_P2).w,a6
 
 		cmpi.w	#2,(Player_mode).w
 		bne.s	Tails_Normal
-	;	lea	(Max_speed_P2).w,a4
-		lea	(Distance_from_top).w,a5
-	;	lea	(v_Dust_P2).w,a6
+	;	lea	(v_Dust).w,a6
 
 		tst.w	(Debug_placement_mode).w
 		beq.s	Tails_Normal
@@ -54,17 +52,16 @@ Tails_Index:
 
 Tails_Init:
 		addq.b	#2,routine(a0)
-		move.b	#$F,y_radius(a0)
-		move.b	#9,x_radius(a0)
-		move.b	#$F,default_y_radius(a0)
-		move.b	#9,default_x_radius(a0)
-		move.l	#Map_Tails,mappings(a0)
-		move.w	#make_priority(2),priority(a0)
-		move.b	#$18,width_pixels(a0)
-		move.b	#$18,height_pixels(a0)
-		move.w	#bytes_to_word(ren_camerapos,objflag_continue),render_flags(a0)
 		move.b	#1,character_id(a0)
+		move.w	#bytes_to_word($F,9),y_radius(a0)
+		move.w	y_radius(a0),default_y_radius(a0)
+		move.w	#bytes_to_word(ren_camerapos,objflag_continue),render_flags(a0)
+		move.w	#bytes_to_word($18,$18),height_pixels(a0)
+		move.w	#make_priority(2),priority(a0)
+		move.l	#Map_Tails,mappings(a0)
 		bsr.w	Player_SetSpeed
+		bsr.w	Player_SetRadius
+		move.w	y_radius(a0),default_y_radius(a0)	; set default_y_radius and default_x_radius
 		cmpi.w	#2,(Player_mode).w
 		bne.s	loc_1375E
 		tst.b	(Last_star_post_hit).w
@@ -102,11 +99,19 @@ Tails_Init_Continued:
 loc_137A4:
 		move.w	#0,(Tails_CPU_idle_timer).w
 		move.w	#0,(Tails_CPU_flight_timer).w
-		lea	(v_Tails_tails).w,a1		; load tails' tails object
-		move.l	#Obj_Tails_Tail,address(a1)
-		move.w	a0,playeradd_parent(a1)
-		move.b	#1,playerchild_renderflag(a1)	; tails renders for it
 		move.b	(Last_star_post_hit).w,(Tails_CPU_star_post_flag).w
+
+		lea	(v_Tails_tails).w,a4		; load tails' tails object
+		move.w	#Pos_table,d1
+		cmpa.w	#Player_1,a0
+		beq.s	+
+		lea	(v_Tails_tails_2P).w,a4		; load tails' tails object
+		move.w	#Pos_table_P2,d1
++		move.w	d1,pos_table(a4)
+		move.w	a4,playadd_addr(a0)
+		move.l	#byte_tri_to_long(2,Obj_Tails_Tail),address(a4)
+		move.w	a0,playadd_parent(a4)
+		move.b	#1,playadd_renderflag(a4)	; tails renders for it
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -116,11 +121,9 @@ Tails_Control:
 		tst.b	(Debug_mode_flag).w
 		beq.s	loc_13808
 		bclr	#6,(Ctrl_1_pressed).w
-		beq.s	loc_137E0
+		beq.s	+
 		eori.b	#1,(Reverse_gravity_flag).w
-
-loc_137E0:
-		btst	#4,(Ctrl_1_pressed).w
++		btst	#4,(Ctrl_1_pressed).w
 		beq.s	loc_13808
 		move.w	#1,(Debug_placement_mode).w
 		clr.b	(Ctrl_1_locked).w
@@ -136,11 +139,11 @@ locret_13806:
 loc_13808:
 		cmpa.w	#Player_1,a0
 		bne.s	loc_13830
-		move.l	(Ctrl1_Player).w,(Ctrl2_Player).w
+	;	move.l	(Ctrl1_Player).w,playctrl(a4)
 		tst.b	(Ctrl_1_locked).w
 		bne.s	loc_1384A
-		move.l	(Ctrl1).w,(Ctrl2_Player).w
-		move.l	(Ctrl1).w,(Ctrl1_Player).w
+		move.l	(Ctrl1).w,playctrl(a4)
+	;	move.l	(Ctrl1).w,(Ctrl1_Player).w
 		cmpi.w	#$1A,(Tails_CPU_routine).w
 		bhs.s	loc_13840
 		bra.s	loc_1384A
@@ -154,7 +157,7 @@ loc_13830:
 ; ---------------------------------------------------------------------------
 
 loc_1383A:
-		move.l	(Ctrl2).w,(Ctrl2_Player).w
+		move.l	(Ctrl2).w,playctrl(a4)		; copy new buttons, to enable joypad control
 
 loc_13840:
 		bsr.w	Tails_CPU_Control
@@ -188,7 +191,7 @@ loc_1388C:
 		and.w	d0,y_pos(a0)
 
 loc_1389C:
-		bsr.s	Tails_Display
+		bsr.w	Tails_Display
 		bsr.w	Sonic_RecordPos
 		bsr.w	Tails_Water
 		move.b	(Primary_Angle).w,next_tilt(a0)
@@ -225,61 +228,13 @@ Tails_Modes:	dc.w Tails_Stand_Path-Tails_Modes
 		dc.w Tails_Spin_Freespace-Tails_Modes
 ; ---------------------------------------------------------------------------
 
-Tails_Display:
-		move.b	invulnerability_timer(a0),d0
-		beq.s	loc_1390C
-		subq.b	#1,invulnerability_timer(a0)
-		lsr.b	#3,d0
-		bcc.s	loc_13912
-
-loc_1390C:
-		DrawSpriteUnsafe_macro		; it's either the first thing to render or the second
-		lea	(v_Tails_tails).w,a1
-		DrawOtherSpriteUnsafe_macro	; render Tails' tails directly after the main body to fix rendering bugs
-
-loc_13912:
-		btst	#1,status_secondary(a0)
-		beq.s	loc_1394E
-		tst.b	invincibility_timer(a0)
-		beq.s	loc_1394E
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#7,d0
-		bne.s	loc_1394E
-		subq.b	#1,invincibility_timer(a0)
-		bne.s	loc_1394E
-		tst.b	(Level_end_flag).w						; don't change music if level is end
-		bne.s	loc_13948
-		tst.b	(Boss_flag).w
-		bne.s	loc_13948
-		cmpi.b	#$C,air_left(a0)
-		blo.s	loc_13948
-		move.w	(Current_music).w,d0
-		music					; stop playing invincibility theme and resume normal level music
-
-loc_13948:
-		bclr	#1,status_secondary(a0)
-
-loc_1394E:
-		btst	#2,status_secondary(a0)
-		beq.s	locret_139A6
-		tst.b	speed_shoes_timer(a0)
-		beq.s	locret_139A6
-		move.b	(Level_frame_counter+1).w,d0
-		andi.b	#7,d0
-		bne.s	locret_139A6
-		subq.b	#1,speed_shoes_timer(a0)
-		bne.s	locret_139A6
-		bclr	#2,status_secondary(a0)
-		music	mus_Slowdown						; run music at normal speed
-		bra.w	Player_SetSpeed
-locret_139A6:
-		rts
+Tails_Display = Player_Display
 
 ; =============== S U B R O U T I N E =======================================
 
 Tails_CPU_Control:
-		move.b	(Ctrl_2_logical).w,d0
-		andi.b	#$7F,d0
+		move.w	playctrl_pr(a4),d0
+		andi.w	#$7F,d0
 		beq.s	loc_139DC
 		move.w	#600,(Tails_CPU_idle_timer).w
 
@@ -334,8 +289,8 @@ loc_13B18:
 ; ---------------------------------------------------------------------------
 
 Tails_Catch_Up_Flying:
-		move.b	(Ctrl_2_logical).w,d0
-		andi.b	#$F0,d0
+		move.w	playctrl_pr(a4),d0
+		andi.w	#$F0,d0
 		bne.s	loc_13B50
 		move.w	(Level_frame_counter).w,d0
 		andi.w	#$3F,d0
@@ -355,11 +310,9 @@ loc_13B50:
 		move.w	d0,(Tails_CPU_target_Y).w
 		subi.w	#$C0,d0
 		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_13B78
-		addi.w	#$180,d0
-
-loc_13B78:
-		move.w	d0,y_pos(a0)
+		beq.s	+
+		addi.w	#$C0*2,d0
++		move.w	d0,y_pos(a0)
 		ori.w	#$8000,art_tile(a0)
 		move.w	#make_priority(2),priority(a0)
 		moveq	#0,d0
@@ -420,7 +373,8 @@ loc_13C50:
 		move.w	#$10,d2
 		lsl.b	#2,d2
 		addq.b	#4,d2
-		move.w	(Pos_table_index).w,d3
+		clr.w	d3
+		move.b	(Pos_table_index).w,d3
 		sub.b	d2,d3
 		move.w	(a2,d3.w),(Tails_CPU_target_X).w
 		move.w	2(a2,d3.w),(Tails_CPU_target_Y).w
@@ -543,7 +497,8 @@ loc_13D78:
 		move.w	#$10,d1
 		lsl.b	#2,d1
 		addq.b	#4,d1
-		move.w	(Pos_table_index).w,d0
+		clr.w	d0
+		move.b	(Pos_table_index).w,d0
 		sub.b	d1,d0
 		move.w	(a2,d0.w),d2
 		btst	#Status_OnObj,status(a1)
@@ -637,9 +592,9 @@ loc_13E9C:
 
 loc_13EB8:
 ; HHHHHHHH PPPPPPP
-		move.b	d1,(Ctrl_2_pressed_logical).w
+		move.b	d1,playctrl_pr_abc(a4)
 		lsr.w	#8,d1
-		move.b	d1,(Ctrl_2_held_logical).w
+		move.b	d1,playctrl_hd_abc(a4)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -719,8 +674,7 @@ loc_13F40:
 		cmpi.b	#8,anim(a0)
 		bne.s	+
 		move.l	#(button_ABC_mask+button_down_mask)<<16|button_ABC_mask+button_down_mask,d0
-+
-		move.l	d0,(Ctrl2_Player).w
++		move.l	d0,playctrl(a4)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -733,7 +687,7 @@ loc_13F94:
 loc_13FA4:
 		move.w	#6,(Tails_CPU_routine).w
 		moveq	#0,d0
-		move.l	d0,(Ctrl2_Player).w
+		move.l	d0,playctrl(a4)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -741,8 +695,7 @@ loc_13FB2:
 		andi.b	#$1F,d1
 		bne.s	+
 		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,d0
-+
-		move.l	d0,(Ctrl2_Player).w
++		move.l	d0,playctrl(a4)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -761,13 +714,11 @@ loc_13FC2:
 loc_13FFA:
 		moveq	#0,d0
 		move.w	d0,(Tails_CPU_idle_timer).w
-	;	move.l	d0,(Ctrl2_Player).w	;
 		move.b	(Level_frame_counter+1).w,d1
 		andi.b	#$1F,d1
 		bne.s	+
 		move.l	#(button_right_mask<<16)+button_right_mask,d0
-+
-		move.l	d0,(Ctrl2_Player).w
++		move.l	d0,playctrl(a4)
 		lea	(Flying_carrying_Sonic_flag).w,a2
 		lea	(Player_1).w,a1
 		btst	#Status_InAir,status(a1)
@@ -808,19 +759,18 @@ loc_1408A:
 		move.w	#$A,(Tails_CPU_routine).w
 +
 		move.w	d0,(Tails_CPU_idle_timer).w
-	;	move.l	d0,(Ctrl2_Player).w
 		move.b	(Level_frame_counter+1).w,d1
 		andi.b	#$F,d1
 		bne.s	+
 		move.l	#(button_right_mask+button_ABC_mask)<<16|button_right_mask+button_ABC_mask,d0
 +
-		move.l	d0,(Ctrl2_Player).w
+		move.l	d0,playctrl(a4)
 		rts
 ; ---------------------------------------------------------------------------
 
 loc_140C6:
 		moveq	#0,d0
-		move.l	d0,(Ctrl2_Player).w
+		move.l	d0,playctrl(a4)
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -840,13 +790,12 @@ loc_14106:
 		move.w	#0,(Tails_CPU_idle_timer).w
 		move.b	#$F0,double_jump_property(a0)
 		moveq	#0,d0
-	;	move.l	d0,(Ctrl2_Player).w
 		move.b	(Level_frame_counter+1).w,d1
 		andi.b	#7,d1
 		bne.s	+
 		move.l	#(button_ABC_mask)<<16|button_ABC_mask,d0
 +
-		move.l	d0,(Ctrl2_Player).w
+		move.l	d0,playctrl(a4)
 
 		move.w	(Camera_Y_pos).w,d0
 		addi.w	#$90,d0
@@ -871,7 +820,7 @@ loc_1414C:
 ; ---------------------------------------------------------------------------
 
 loc_14164:
-		clr.l	(Ctrl2_Player).w
+		clr.l	playctrl(a4)
 		tst.b	(Flying_carrying_Sonic_flag).w
 		beq.w	loc_142E2
 		clr.b	(_unkFAAC).w
@@ -881,7 +830,7 @@ loc_14164:
 		cmpi.b	#$C0,(Tails_CPU_auto_fly_timer).w
 		blo.s	loc_141D2
 		move.b	#0,(Tails_CPU_auto_fly_timer).w
-		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,(Ctrl2_Player).w
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,playctrl(a4)
 		bra.s	loc_141D2
 ; ---------------------------------------------------------------------------
 
@@ -892,7 +841,7 @@ loc_14198:
 		cmpi.b	#$20,(Tails_CPU_auto_fly_timer).w
 		blo.s	loc_141D2
 		move.b	#0,(Tails_CPU_auto_fly_timer).w
-		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,(Ctrl2_Player).w
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,playctrl(a4)
 		bra.s	loc_141D2
 ; ---------------------------------------------------------------------------
 
@@ -901,13 +850,13 @@ loc_141BA:
 		cmpi.b	#$58,(Tails_CPU_auto_fly_timer).w
 		blo.s	loc_141D2
 		move.b	#0,(Tails_CPU_auto_fly_timer).w
-		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,(Ctrl2_Player).w
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,playctrl(a4)
 
 loc_141D2:
 		move.b	(Ctrl_1).w,d0
 		andi.b	#$C,d0
-		or.b	(Ctrl_2_logical).w,d0
-		move.b	d0,(Ctrl_2_logical).w
+		or.b	playctrl_hd_abc(a4),d0
+		move.b	d0,playctrl_hd_abc(a4)
 
 loc_141E2:
 		lea	(Flying_carrying_Sonic_flag).w,a2
@@ -933,8 +882,7 @@ loc_1421C:
 		andi.b	#7,d1
 		bne.s	+
 		move.l	#(button_ABC_mask)<<16|button_ABC_mask,d0
-+
-		move.l	d0,(Ctrl2_Player).w
++		move.l	d0,playctrl(a4)
 
 		move.w	(Camera_Y_pos).w,d0
 		addi.w	#$90,d0
@@ -967,8 +915,7 @@ loc_14286:
 		andi.b	#$1F,d1
 		bne.s	+
 		move.l	#(button_right_mask)<<16|button_right_mask,d0
-+
-		move.l	d0,(Ctrl2_Player).w
++		move.l	d0,playctrl(a4)
 		btst	#Status_InAir,status(a0)
 		bne.s	locret_142E0
 		move.w	#6,(Tails_CPU_routine).w
@@ -996,7 +943,7 @@ loc_142E2:
 		cmpi.w	#$300,y_vel(a1)
 		bge.s	loc_14330
 		move.w	#0,x_vel(a0)
-		clr.l	(Ctrl2_Player).w
+		clr.l	playctrl(a4)
 		cmpi.w	#$200,y_vel(a0)
 		bge.s	+
 		addq.b	#1,(Tails_CPU_auto_fly_timer).w
@@ -1004,7 +951,7 @@ loc_142E2:
 		blo.s	loc_1432E
 		move.b	#0,(Tails_CPU_auto_fly_timer).w
 +
-		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,(Ctrl2_Player).w
+		ori.l	#(button_ABC_mask)<<16|button_ABC_mask,playctrl(a4)
 
 loc_1432E:
 		bra.s	loc_143AA
@@ -1035,7 +982,7 @@ loc_14358:
 ; ---------------------------------------------------------------------------
 
 loc_14362:
-		clr.l	(Ctrl2_Player).w	; clear
+		clr.l	playctrl(a4)	; clear
 		lea	(Player_1).w,a1
 		move.w	x_pos(a0),d0
 		move.w	y_pos(a0),d1
@@ -1418,8 +1365,8 @@ loc_1485E:
 ; ---------------------------------------------------------------------------
 
 loc_14860:
-		move.b	(Ctrl_2_pressed_logical).w,d0
-		andi.b	#$70,d0
+		move.w	playctrl_pr(a4),d0
+		andi.w	#$70,d0
 		beq.s	loc_1488C
 		cmpi.w	#-$100,y_vel(a0)
 		blt.s	loc_1488C
@@ -1558,19 +1505,19 @@ loc_149BA:
 
 
 Tails_InputAcceleration_Path:
-		move.w	Max_speed_P2-Max_speed_P2(a4),d6
-		move.w	Acceleration_P2-Max_speed_P2(a4),d5
-		move.w	Deceleration_P2-Max_speed_P2(a4),d4
+		move.w	max_speed(a4),d6
+		move.w	acceleration(a4),d5
+		move.w	deceleration(a4),d4
 		tst.b	status_secondary(a0)
 		bmi.w	loc_14B5C
 		tst.w	move_lock(a0)
 		bne.w	loc_14B14
-		btst	#2,(Ctrl_2_logical).w
+		btst	#button_left,playctrl_hd_abc(a4)
 		beq.s	loc_14A0A
 		bsr.w	sub_14C20
 
 loc_14A0A:
-		btst	#3,(Ctrl_2_logical).w
+		btst	#button_right,playctrl_hd_abc(a4)
 		beq.s	loc_14A16
 		bsr.w	sub_14CAC
 
@@ -1604,7 +1551,9 @@ loc_14A16:
 
 loc_14A6C:
 		move.w	x_pos(a0),d3
+		move.l	a4,-(sp)	; save a4 (ChooseChkFloorEdge uses it)
 		bsr.w	ChooseChkFloorEdge
+		move.l	(sp)+,a4
 		cmpi.w	#$C,d1
 		blt.s	loc_14AA0
 		cmpi.b	#3,next_tilt(a0)
@@ -1628,7 +1577,7 @@ loc_14A98:
 ; ---------------------------------------------------------------------------
 
 loc_14AA0:
-		btst	#1,(Ctrl_2_logical).w
+		btst	#1,playctrl_hd_abc(a4)
 		beq.s	loc_14ADA
 		move.b	#8,anim(a0)
 		addq.b	#1,scroll_delay_counter(a0)
@@ -1651,7 +1600,7 @@ loc_14AD0:
 ; ---------------------------------------------------------------------------
 
 loc_14ADA:
-		btst	#0,(Ctrl_2_logical).w
+		btst	#0,playctrl_hd_abc(a4)
 		beq.s	loc_14B14
 		move.b	#7,anim(a0)
 		addq.b	#1,scroll_delay_counter(a0)
@@ -1680,7 +1629,7 @@ loc_14B1A:
 	resetlookcamerapos (a5)
 
 loc_14B26:
-		move.b	(Ctrl_2_logical).w,d0
+		move.b	playctrl_hd_abc(a4),d0
 		andi.b	#$C,d0
 		bne.s	loc_14B5C
 		move.w	ground_vel(a0),d0
@@ -1733,9 +1682,9 @@ loc_14B9A:
 loc_14BA8:
 		move.b	angle(a0),d0
 		add.b	d1,d0
-		move.w	d0,-(sp)
+		movem.l	d0/a4,-(sp)
 		bsr.w	CalcRoomInFront
-		move.w	(sp)+,d0
+		movem.l	(sp)+,d0/a4
 		tst.w	d1
 		bpl.s	locret_14C1E
 		asl.w	#8,d1
@@ -1886,9 +1835,9 @@ locret_14D30:
 ; =============== S U B R O U T I N E =======================================
 
 Tails_RollSpeed:
-		move.w	Max_speed_P2-Max_speed_P2(a4),d6
+		move.w	max_speed(a4),d6
 		asl.w	#1,d6
-		move.w	Acceleration_P2-Max_speed_P2(a4),d5
+		move.w	acceleration(a4),d5
 		asr.w	#1,d5
 		move.w	#$20,d4
 		tst.b	spin_dash_flag(a0)
@@ -1897,12 +1846,12 @@ Tails_RollSpeed:
 		bmi.w	loc_14DF0
 		tst.w	move_lock(a0)
 		bne.s	loc_14D78
-		btst	#2,(Ctrl_2_logical).w
+		btst	#button_left,playctrl_hd_abc(a4)
 		beq.s	loc_14D6C
 		bsr.w	sub_14E32
 
 loc_14D6C:
-		btst	#3,(Ctrl_2_logical).w
+		btst	#button_right,playctrl_hd_abc(a4)
 		beq.s	loc_14D78
 		bsr.w	sub_14E56
 
@@ -1938,18 +1887,8 @@ loc_14DA2:
 		tst.b	spin_dash_flag(a0)
 		bne.s	loc_14DDE
 		bclr	#Status_Roll,status(a0)
-		move.b	y_radius(a0),d0
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
 		move.b	#5,anim(a0)
-		sub.b	default_y_radius(a0),d0
-		ext.w	d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_14DD8
-		neg.w	d0
-
-loc_14DD8:
-		add.w	d0,y_pos(a0)
+	fixplayerposition a0,land,1
 		bra.s	loc_14DF0
 ; ---------------------------------------------------------------------------
 
@@ -2025,13 +1964,13 @@ loc_14E72:
 ; =============== S U B R O U T I N E =======================================
 
 Tails_InputAcceleration_Freespace:
-		move.w	Max_speed_P2-Max_speed_P2(a4),d6
-		move.w	Acceleration_P2-Max_speed_P2(a4),d5
+		move.w	max_speed(a4),d6
+		move.w	acceleration(a4),d5
 		asl.w	#1,d5
 		btst	#Status_RollJump,status(a0)
 		bne.s	loc_14ECC
 		move.w	x_vel(a0),d0
-		btst	#2,(Ctrl_2_logical).w
+		btst	#button_left,playctrl_hd_abc(a4)
 		beq.s	loc_14EAC
 		bset	#Status_Facing,status(a0)
 		sub.w	d5,d0
@@ -2045,7 +1984,7 @@ Tails_InputAcceleration_Freespace:
 		move.w	d1,d0
 
 loc_14EAC:
-		btst	#3,(Ctrl_2_logical).w
+		btst	#button_right,playctrl_hd_abc(a4)
 		beq.s	loc_14EC8
 		bclr	#Status_Facing,status(a0)
 		add.w	d5,d0
@@ -2138,124 +2077,9 @@ loc_14F5C:
 
 ; =============== S U B R O U T I N E =======================================
 
-Tails_Roll:
-		tst.b	status_secondary(a0)
-		bmi.s	locret_14FA8
-		move.b	(Ctrl_2_logical).w,d0
-		andi.b	#$C,d0
-		bne.s	locret_14FA8
-		btst	#1,(Ctrl_2_logical).w
-		beq.s	loc_14FAA
-		move.w	ground_vel(a0),d0
-		bpl.s	loc_14F94
-		neg.w	d0
+Tails_Roll = SonicKnux_Roll
+Tails_Jump = Sonic_Jump
 
-loc_14F94:
-		cmpi.w	#$100,d0
-		bhs.s	loc_14FBA
-		btst	#Status_OnObj,status(a0)
-		bne.s	locret_14FA8
-		move.b	#8,anim(a0)
-
-locret_14FA8:
-		rts
-; ---------------------------------------------------------------------------
-
-loc_14FAA:
-		cmpi.b	#8,anim(a0)
-		bne.s	locret_14FA8
-		move.b	#0,anim(a0)
-		rts
-; ---------------------------------------------------------------------------
-
-loc_14FBA:
-		btst	#Status_Roll,status(a0)
-		beq.s	loc_14FC4
-		rts
-; ---------------------------------------------------------------------------
-
-loc_14FC4:
-		bset	#Status_Roll,status(a0)
-		move.b	#$E,y_radius(a0)
-		move.b	#7,x_radius(a0)
-		move.b	#2,anim(a0)
-		addq.w	#1,y_pos(a0)
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_14FEA
-		subq.w	#2,y_pos(a0)
-
-loc_14FEA:
-		sfx	sfx_Roll
-		tst.w	ground_vel(a0)
-		bne.s	locret_15000
-		move.w	#$200,ground_vel(a0)
-
-locret_15000:
-		rts
-
-; =============== S U B R O U T I N E =======================================
-
-Tails_Jump:
-		move.b	(Ctrl_2_pressed_logical).w,d0
-		andi.b	#$70,d0
-		beq.w	locret_150D0
-		moveq	#0,d0
-		move.b	angle(a0),d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_15024
-		addi.b	#$40,d0
-		neg.b	d0
-		subi.b	#$40,d0
-
-loc_15024:
-		addi.b	#$80,d0
-		movem.l	a4-a6,-(sp)
-		bsr.w	CalcRoomOverHead
-		movem.l	(sp)+,a4-a6
-		cmpi.w	#6,d1
-		blt.w	locret_150D0
-		moveq	#0,d0
-		move.b	angle(a0),d0
-		subi.b	#$40,d0
-		jsr	(GetSineCosine).w
-		move.w	Jump_height_P2-Max_speed_P2(a4),d2
-		muls.w	d2,d1
-		asr.l	#8,d1
-		add.w	d1,x_vel(a0)
-		muls.w	d2,d0
-		asr.l	#8,d0
-		add.w	d0,y_vel(a0)
-		bset	#Status_InAir,status(a0)
-		bclr	#Status_Push,status(a0)
-		addq.l	#4,sp
-		move.b	#1,jumping(a0)
-		clr.b	stick_to_convex(a0)
-		sfx	sfx_Jump
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
-		btst	#Status_Roll,status(a0)
-		bne.s	loc_150D2
-		move.b	#$E,y_radius(a0)
-		move.b	#7,x_radius(a0)
-		move.b	#2,anim(a0)
-		bset	#Status_Roll,status(a0)
-		move.b	y_radius(a0),d0
-		sub.b	default_y_radius(a0),d0
-		ext.w	d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_150CC
-		neg.w	d0
-
-loc_150CC:
-		sub.w	d0,y_pos(a0)
-
-locret_150D0:
-		rts
-; ---------------------------------------------------------------------------
-
-loc_150D2:
-		bset	#Status_RollJump,status(a0)
-		rts
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -2269,7 +2093,7 @@ Tails_JumpHeight:
 +
 		cmp.w	y_vel(a0),d1
 		ble.s	Tails_Test_For_Flight
-		move.b	(Ctrl_2_logical).w,d0
+		move.b	playctrl_hd_abc(a4),d0
 		andi.b	#$70,d0
 		bne.s	locret_15104
 		move.w	d1,y_vel(a0)
@@ -2292,7 +2116,7 @@ locret_1511A:
 Tails_Test_For_Flight:
 		tst.b	double_jump_flag(a0)
 		bne.w	locret_151A2
-		move.b	(Ctrl_2_pressed_logical).w,d0
+		move.b	playctrl_pr_abc(a4),d0
 		andi.b	#$70,d0
 		beq.w	locret_151A2
 		cmpi.w	#2,(Player_mode).w
@@ -2336,7 +2160,7 @@ Tails_Spindash:
 		bne.s	loc_1527C
 		cmpi.b	#8,anim(a0)
 		bne.s	locret_1527A
-		move.b	(Ctrl_2_pressed_logical).w,d0
+		move.b	playctrl_pr_abc(a4),d0
 		andi.b	#$70,d0
 		beq.w	locret_1527A
 		move.b	#9,anim(a0)
@@ -2358,7 +2182,7 @@ locret_1527A:
 ; ---------------------------------------------------------------------------
 ; Tails_UpdateSpindash:
 loc_1527C:
-		move.b	(Ctrl_2_logical).w,d0
+		move.b	playctrl_hd_abc(a4),d0
 		btst	#1,d0
 		bne.w	loc_15332
 		move.b	#$E,y_radius(a0)
@@ -2386,13 +2210,8 @@ loc_152A8:
 ;		andi.w	#$1F,d0	 ; none of these removed bits are ever set
 		neg.w	d0
 		addi.w	#$20,d0
-		lea	(H_scroll_frame_offset).w,a1
-		cmpa.w	#Player_1,a0
-		beq.s	+
-		lea	(H_scroll_frame_offset_P2).w,a1
-+
-		move.b	d0,(a1)+			; H_scroll_frame_offset
-		move.b	(Pos_table_byte).w,(a1)+	; H_scroll_frame_copy ; Back up the position array index for later.
+		move.b	d0,hscroll_table(a4)			; H_scroll_frame_offset
+		move.b	pos_index(a4),hscroll_table_poscopy(a4)	; H_scroll_frame_copy ; Back up the position array index for later.
 
 		btst	#Status_Facing,status(a0)
 		beq.s	loc_152F8
@@ -2433,7 +2252,7 @@ loc_15332:
 		move.w	#0,spin_dash_counter(a0)
 
 loc_1534A:
-		move.b	(Ctrl_2_pressed_logical).w,d0
+		move.b	playctrl_pr_abc(a4),d0
 		andi.b	#$70,d0
 		beq.w	loc_1537A
 		move.w	#$900,anim(a0)
@@ -2703,29 +2522,13 @@ Tails_TouchFloor_Check_Spindash:
 ; =============== S U B R O U T I N E =======================================
 
 Tails_TouchFloor:
-		move.b	y_radius(a0),d0
-		move.b	default_y_radius(a0),y_radius(a0)
-		move.b	default_x_radius(a0),x_radius(a0)
-		btst	#Status_Roll,status(a0)
-		beq.s	loc_1565E
 		bclr	#Status_Roll,status(a0)
-		move.b	#0,anim(a0)
-		sub.b	default_y_radius(a0),d0
-		ext.w	d0
-		tst.b	(Reverse_gravity_flag).w
-		beq.s	loc_1564A
-		neg.w	d0
-
-loc_1564A:
-		move.w	d0,-(sp)
-		move.b	angle(a0),d0
-		addi.b	#$40,d0
-		bpl.s	loc_15658
-		neg.w	(sp)
-
-loc_15658:
-		move.w	(sp)+,d0
-		add.w	d0,y_pos(a0)
+		beq.s	.alreadyclear
+		clr.b	anim(a0)	; id_Walk
+.alreadyclear
+		move.w	d1,-(sp)
+	fixplayerposition a0,land,1
+		move.w	(sp)+,d1
 
 loc_1565E:
 		bclr	#Status_InAir,status(a0)
@@ -3044,8 +2847,8 @@ loc_1598A:
 		move.b	1(a1),d0
 
 loc_159A4:
+		add.b	d3,d0
 		move.b	d0,mapping_frame(a0)
-		add.b	d3,mapping_frame(a0)
 		subq.b	#1,anim_frame_timer(a0)
 		bpl.s	locret_159C6
 		neg.w	d2

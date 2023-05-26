@@ -109,18 +109,24 @@ Obj_Invincibility:
 	moveq	#-(9*4),d5			; reverse
 +
 	add.b	d5,Invinc_RotateOffset(a0)	; add rotation for next frame
+	lea	(a1),a2				; load a1 into a2 (draw_sprite uses a1)
 	bsr.w	Draw_Sprite			; render before setting up all the other stars.
 ; init offset stars
 	moveq	#(1*4),d5			;
-	btst	#Status_Facing,status(a1)	; is player facing left?
+	btst	#Status_Facing,status(a2)	; is player facing left?
 	beq.s	+				; if not, branch
 	moveq	#-(1*4),d5			; reverse
 +
 ;	moveq	#0,d6
 	move.b	Invinc_Subs_RotateOffset(a0),d6	; prepare rotation offset
 	add.b	d5,Invinc_Subs_RotateOffset(a0) ; add rotation for next frame
-	lea	(Pos_table).w,a2		; load position table from player object
-	move.w	(Pos_table_index).w,d7	; a1 is free.
+
+	movea.w	playadd_addr(a2),a1		; get stuff from players additional ram
+	moveq	#0,d7
+	move.b	pos_index(a1),d7		; load index for position table
+	movea.w	pos_table(a1),a2		; load position table
+; beyond this point, a1 is free
+
 ; handle offset stars
 	move.b	Invinc_sub3animbuffer(a0),mapping_frame(a0)
 	bsr.s	+

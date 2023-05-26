@@ -1,5 +1,3 @@
-playerchild_anim_change	= air_left	; byte, if not equal to player anim, change anim
-playerchild_renderflag	= jumping	; byte, if 1 don't render (usually relying on player to render for it)
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -8,20 +6,22 @@ Obj_Tails_Tail:
 		move.l	#Map_Tails_Tail,mappings(a0)
 		move.w	#ArtTile_Player_2_Tail,art_tile(a0)
 ;		move.w	#make_priority(2),priority(a0)
-		move.b	#$18,width_pixels(a0)
-		move.b	#$18,height_pixels(a0)
+		move.w	#bytes_to_word($18,$18),height_pixels(a0)
 ;		move.w	#bytes_to_word(ren_camerapos,objflag_continue),render_flags(a0)
-		move.l	#Obj_Tails_Tail_Main,address(a0)
+		move.l	#byte_tri_to_long(2,Obj_Tails_Tail_Main),address(a0)	; mark that we've loaded additional object
 
 Obj_Tails_Tail_Main:
 		; Here, several SSTs are inheritied from the parent, normally Tails
-		movea.w	playeradd_parent(a0),a2
+		movea.w	playadd_parent(a0),a2
 		move.b	angle(a2),angle(a0)
 		move.b	status(a2),status(a0)
 		move.w	x_pos(a2),x_pos(a0)
 		move.w	y_pos(a2),y_pos(a0)
 		move.w	priority(a2),priority(a0)
-		move.w	render_flags(a2),render_flags(a0)
+		move.w	render_flags(a2),d0
+		andi.w	#bytes_to_word(~(ren_xflip|ren_yflip),$FF),d0
+		andi.w	#bytes_to_word((ren_xflip|ren_yflip),0),render_flags(a0)
+		or.w	d0,render_flags(a0)	; copy over all of render_flags, aside for flipped rendering flags
 		andi.w	#drawing_mask,art_tile(a0)
 		tst.w	art_tile(a2)
 		bpl.s	+
@@ -41,24 +41,21 @@ Obj_Tails_Tail_Main:
 		moveq	#4,d0
 +
 .skipedgecases
-		cmp.b	playerchild_anim_change(a0),d0	; Has the input parent anim changed since last check?
+		cmp.b	playadd_animchange(a0),d0	; Has the input parent anim changed since last check?
 		beq.s	+				; If not, branch and skip setting a matching Tails' Tails anim
-		move.b	d0,playerchild_anim_change(a0)	; Store d0 for the above comparision
+		move.b	d0,playadd_animchange(a0)	; Store d0 for the above comparision
 		move.b	Obj_Tails_Tail_AniSelection(pc,d0.w),anim(a0)	; Load anim relative to parent's
-+
-		lea	(AniTails_Tail).l,a1
++		lea	(AniTails_Tail).l,a1
 		bsr.w	Animate_Tails_Part2
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	+
 		cmpi.b	#3,anim(a0)		; Is this the Directional animation?
 		beq.s	+			; If so, skip the gravity flip
 		eori.b	#2,render_flags(a0)	; Reverse the vertical mirror render_flag bit (On if Off beforehand and vice versa)
-+
-		tst.b	playerchild_renderflag(a0)
++		tst.b	playadd_renderflag(a0)
 		bne.s	+
 		jsr	(Draw_Sprite).w		; main tails object renders it to fix layering bugs
-+
-		bra.w	Tails_Tail_Load_PLC
++		bra.w	Tails_Tail_Load_PLC
 ; ---------------------------------------------------------------------------
 ; animation master script table for the tails
 ; chooses which animation script to run depending on what Tails is doing

@@ -357,14 +357,8 @@ Monitor_Give_SpeedShoes:
 		bset	#Status_SpeedShoes,status_secondary(a1)
 		move.b	#150,speed_shoes_timer(a1)
 		music	mus_Speedup				; speed up the music
-		lea	(Max_speed).w,a2
-		cmpi.b	#1,character_id(a1)	; are we Tails?
-		beq.s	.tailsedgecase		; if so, fix edgecase
-		cmpa.w	#Player_1,a1
-		beq.s	+
-.tailsedgecase	; TODO: Make Tails use real Max_speed if P1
-		lea	(Max_speed_P2).w,a2
-+
+		movea.w	playadd_addr(a1),a2
+		lea	max_speed(a2),a2
 		bra.w	Player_SetSpeed.regset
 ; ---------------------------------------------------------------------------
 

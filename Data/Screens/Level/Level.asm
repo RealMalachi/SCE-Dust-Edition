@@ -230,6 +230,7 @@ SpawnLevelMainSprites:
 		move.l	#Obj_ResetCollisionResponseList,(Reserved_object_3).w
 		move.l	#Obj_InstaShield,(v_Shield+address).w
 		move.w	#Player_1,(v_Shield+Shield_PlayerAddr).w
+		move.w	#v_Tails_tails,(Player_1+playadd_addr).w
 		move.w	(Player_mode).w,d0
 		bne.s	.sonicalone
 
@@ -239,6 +240,7 @@ SpawnLevelMainSprites:
 		move.l	#Obj_InstaShield,(v_Shield_P2+address).w
 		move.w	#Player_2,(v_Shield_P2+Shield_PlayerAddr).w
 		move.l	#Obj_Tails,(Player_2).w
+		move.w	#v_Tails_tails_2P,(Player_2+playadd_addr).w
 		move.w	(Player_1+x_pos).w,(Player_2+x_pos).w
 		move.w	(Player_1+y_pos).w,(Player_2+y_pos).w
 		subi.w	#$20,(Player_2+x_pos).w

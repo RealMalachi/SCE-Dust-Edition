@@ -387,8 +387,8 @@ loc_5C770:
 		addq.w	#4,y_pos(a0)
 		lea	(v_Tails_tails).w,a1
 		move.l	#Obj_Tails_Tail,address(a1)
-		move.w	a0,playeradd_parent(a1)
-		clr.b	playerchild_renderflag(a1)	; Tails doesn't render for it
+		move.w	a0,playadd_parent(a1)
+		clr.b	playadd_renderflag(a1)	; Tails doesn't render for it
 
 loc_5C790:
 		moveq	#0,d0

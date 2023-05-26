@@ -65,8 +65,28 @@ ObjectFreezeFlag		ds.b 1	; set when player 1 dies, freezes most objects
 
 ; used by DPLC routines to detect whether a DMA transfer is required
 Player_prev_frame			= Player_1+mapping_frame_copy
-Player_prev_frame_P2			= Player_1+mapping_frame_copy
-Player_prev_frame_P2_tail		= v_Tails_tails+mapping_frame_copy
+Player_prev_frame_tail			= v_Tails_tails+mapping_frame_copy
+Distance_from_top:			= v_Tails_tails+screen_distance		; The vertical scroll manager scrolls the screen until the player's distance from the top of the screen is equal to this (or between this and this + $40 when in the air). $60 by default
+Pos_table_byte:				= v_Tails_tails+pos_index
+Pos_table_index:			= Pos_table_byte	; usually read as a byte. Clear the high byte and change those instances
+H_scroll_frame_offset:			= v_Tails_tails+hscroll_table	; byte, word ; If this is non-zero, scrolling is based on the player's x position + 1 frames ago
+H_scroll_frame_copy:			= v_Tails_tails+hscroll_table_poscopy	;
+;Max_speed:				= v_Tails_tails+max_speed
+;Acceleration:				= v_Tails_tails+acceleration
+;Deceleration:				= v_Tails_tails+deceleration
+;Jump_height:				= v_Tails_tails+jump_height
+
+Player_prev_frame_P2			= Player_2+mapping_frame_copy
+Player_prev_frame_P2_tail		= v_Tails_tails_2P+mapping_frame_copy
+Distance_from_top_P2:			= v_Tails_tails_2P+screen_distance
+Pos_table_byte_P2:			= v_Tails_tails_2P+pos_index
+Pos_table_index_P2:			= Pos_table_byte_P2	; same, change word writes to bytes
+H_scroll_frame_offset_P2:		= v_Tails_tails_2P+hscroll_table		; byte, word	;
+H_scroll_frame_copy_P2:			= v_Tails_tails_2P+hscroll_table_poscopy	;
+;Max_speed_P2:				= v_Tails_tails_2P+max_speed
+;Acceleration_P2:			= v_Tails_tails_2P+acceleration
+;Deceleration_P2:			= v_Tails_tails_2P+deceleration
+;Jump_height_P2:			= v_Tails_tails_2P+jump_height
 ; ---------------------------------------------------------------------------
 	if EnableSRAM=1
 Save_pointer:			ds.l 1		; SRAM address to copy the RAM data to and vice versa
@@ -130,19 +150,6 @@ Camera_max_X_pos_Saved:				ds.w 1
 Camera_min_Y_pos_Saved:				ds.w 1
 Camera_max_Y_pos_Saved:				ds.w 1
 
-H_scroll_frame_offset:				ds.b 1	; byte, word	; If this is non-zero, scrolling is based on the player's x position + 1 frames ago
-H_scroll_frame_copy:				ds.b 1			;
-
-H_scroll_frame_offset_P2:			ds.b 1	; byte, word	;
-H_scroll_frame_copy_P2:				ds.b 1			; 
-
-Pos_table_index:				ds.b 1
-Pos_table_byte:					ds.b 1
-Pos_table_index_P2:				ds.b 1
-Pos_table_byte_P2:				ds.b 1
-
-Distance_from_top:				ds.w 1			; The vertical scroll manager scrolls the screen until the player's distance from the top of the screen is equal to this (or between this and this + $40 when in the air). $60 by default
-Distance_from_top_P2:				ds.w 1
 Camera_max_Y_pos_changing:			ds.b 1			; Set when the maximum camera Y pos is undergoing a change
 Fast_V_scroll_flag:				ds.b 1			; If this is set vertical scroll when the player is on the ground and has a speed of less than $800 is capped at 24 pixels per frame instead of 6
 Scroll_lock:					ds.b 1			; If this is set scrolling routines aren't called
@@ -195,11 +202,12 @@ Ring_consumption_table_end			= *
 Plane_buffer:					ds.w $240		; Used by level drawing routines
 ; ---------------------------------------------------------------------------
 
-v_snddriver_ram:				ds.b $399	; Start of RAM for the sound driver data
+v_snddriver_ram:			ds.b $399;+$160	; Start of RAM for the sound driver data
 v_snddriver_ram_end:
 	evenram
 ; sound data moreso related to game code then driver code
-Current_music:					ds.w 1		; music id to play back when a jingle ends
+Current_music:				ds.w 1		; music id to play back when a jingle ends
+;SoundDriverAddon_flags:			ds.b 1		; flags to enable sound driver options from addons
 	evenram
 ; ---------------------------------------------------------------------------
 v_gamemode:				= *
@@ -224,21 +232,21 @@ Ctrl2_Pr:		; word
 Ctrl2_Pr_XYZ:		ds.b 1
 Ctrl2_Pr_ABC:		ds.b 1
 ; TODO: Merge logical with player variables
-Ctrl1_Player =		Player_1+playctrl	; longword
-Ctrl1_Player_Hd =	Player_1+playctrl_hd	; word
-Ctrl1_Player_Hd_XYZ =	Player_1+playctrl_hd_xyz
-Ctrl1_Player_Hd_ABC =	Player_1+playctrl_hd_abc
-Ctrl1_Player_Pr =	Player_1+playctrl_hd	; word
-Ctrl1_Player_Pr_XYZ =	Player_1+playctrl_pr_xyz
-Ctrl1_Player_Pr_ABC =	Player_1+playctrl_pr_abc
+Ctrl1_Player =		v_Tails_tails+playctrl	; longword
+Ctrl1_Player_Hd =	v_Tails_tails+playctrl_hd	; word
+Ctrl1_Player_Hd_XYZ =	v_Tails_tails+playctrl_hd_xyz
+Ctrl1_Player_Hd_ABC =	v_Tails_tails+playctrl_hd_abc
+Ctrl1_Player_Pr =	v_Tails_tails+playctrl_hd	; word
+Ctrl1_Player_Pr_XYZ =	v_Tails_tails+playctrl_pr_xyz
+Ctrl1_Player_Pr_ABC =	v_Tails_tails+playctrl_pr_abc
 
-Ctrl2_Player =		Player_2+playctrl	; longword
-Ctrl2_Player_Hd =	Player_2+playctrl_hd	; word
-Ctrl2_Player_Hd_XYZ =	Player_2+playctrl_hd_xyz
-Ctrl2_Player_Hd_ABC =	Player_2+playctrl_hd_abc
-Ctrl2_Player_Pr =	Player_2+playctrl_hd	; word
-Ctrl2_Player_Pr_XYZ =	Player_2+playctrl_pr_xyz
-Ctrl2_Player_Pr_ABC =	Player_2+playctrl_pr_abc
+Ctrl2_Player =		v_Tails_tails_2P+playctrl	; longword
+Ctrl2_Player_Hd =	v_Tails_tails_2P+playctrl_hd	; word
+Ctrl2_Player_Hd_XYZ =	v_Tails_tails_2P+playctrl_hd_xyz
+Ctrl2_Player_Hd_ABC =	v_Tails_tails_2P+playctrl_hd_abc
+Ctrl2_Player_Pr =	v_Tails_tails_2P+playctrl_hd	; word
+Ctrl2_Player_Pr_XYZ =	v_Tails_tails_2P+playctrl_pr_xyz
+Ctrl2_Player_Pr_ABC =	v_Tails_tails_2P+playctrl_pr_abc
 
 	if Joypad_StateSupport=1
 Ctrl1State:		ds.b 1		; controller type (0 = 3 button, -1 = 6 button)
@@ -347,15 +355,6 @@ Game_paused:					ds.b 1
 f_restart:					= *
 Restart_level_flag:				ds.b 1
 Disable_death_plane:				ds.b 1			; if set, going below the screen wont kill the player
-
-Max_speed:					ds.w 1
-Acceleration:					ds.w 1
-Deceleration:					ds.w 1
-Jump_height:					ds.w 1
-Max_speed_P2:					ds.w 1			; identical use for player 2 (or as it stands right now, Tails. Even P1 Tails.)
-Acceleration_P2:				ds.w 1
-Deceleration_P2:				ds.w 1
-Jump_height_P2:					ds.w 1
 
 Object_load_addr_front:				ds.l 1			; The address inside the object placement data of the first object whose X pos is >= Camera_X_pos_coarse + $280
 Object_load_addr_back:				ds.l 1			; The address inside the object placement data of the first object whose X pos is >= Camera_X_pos_coarse - $80

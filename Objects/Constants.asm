@@ -77,17 +77,16 @@ respawn_addr		ds.w 1 ; word ; the address of this object's entry in the respawn 
 	endif
 	dephase
 ; ---------------------------------------------------------------------------
-; Conventions specific to Sonic/Tails/Knuckles:
+; Conventions specific to player objects (Sonic/Tails/Knuckles):
 ; ---------------------------------------------------------------------------
-
 	phase collision_backup
 double_jump_property	ds.b 1 ; byte ; remaining frames of flight / 2 for Tails, gliding-related for Knuckles
 	ds.b 1	; $26 ; angle
 flip_angle		ds.b 1 ; byte ; angle about horizontal axis (360 degrees = 256)
-	ds.w 1	; unused for now
+playadd_addr		ds.w 1 ; word ; RAM address to addition object RAM
 	ds.b 1	; $2A ; status
-status_secondary	ds.b 1 ; byte ; see SCHG for details
-
+mapping_frame_copy	ds.b 1 ; byte, $41 ; used for DPLC routines
+playerchild_start
 air_left		ds.b 1 ; byte
 flip_type		ds.b 1 ; byte ; bit 7 set means flipping is inverted, lower bits control flipping type
 object_control		ds.b 1 ; byte ; bit 0 set means character can jump out, bit 7 set means he can't
@@ -108,8 +107,7 @@ spin_dash_flag		ds.b 1 ; byte ; bit 1 indicates spin dash, bit 7 indicates force
 restart_timer		; word
 spin_dash_counter	ds.w 1 ; word
 jumping			ds.b 1 ; byte
-mapping_frame_copy	ds.b 1 ; byte, $41 ; used for DPLC routines
-playeradd_parent	; word ; RAM address of the player parent object for child objects (Tails' tails)
+status_secondary	ds.b 1 ; byte ; see SCHG for details
 interact		ds.w 1 ; word ; RAM address of the last object the character stood on
 
 default_y_radius	ds.b 1 ; byte ; default value of y_radius
@@ -118,6 +116,43 @@ top_solid_bit		ds.b 1 ; byte ; the bit to check for top solidity (either $C or $
 lrb_solid_bit		ds.b 1 ; byte ; the bit to check for left/right/bottom solidity (either $D or $F)
 	if * > object_size
 	fatal "Player Object variables are too big by $\{*-object_size} bytes"
+	endif
+	dephase
+; ---------------------------------------------------------------------------
+; Conventions specific to additional player objects (Tails' tails):
+; ---------------------------------------------------------------------------
+playadd_activeflag =	routine	; if set, the additional object isn't just a spacer
+
+	phase playerchild_start
+; specific to the additional object
+	evenram
+playadd_parent		ds.w 1 ; word ; RAM address of the player parent object for child objects (Tails' tails)
+playadd_animchange	ds.b 1 ; byte, if not equal to player anim, change anim
+playadd_renderflag	ds.b 1 ; byte, if 1 don't render (usually relying on player to render for it)
+	evenram
+; just more RAM for the player
+playctrl
+playctrl_hd
+playctrl_hd_xyz		ds.b 1
+playctrl_hd_abc		ds.b 1
+playctrl_pr
+playctrl_pr_xyz		ds.b 1
+playctrl_pr_abc		ds.b 1
+playctrl_lock		ds.b 1
+
+pos_index		ds.b 1
+pos_table		ds.w 1	; RAM address to Pos_Table
+
+hscroll_table		ds.b 1
+hscroll_table_poscopy	ds.b 1
+
+max_speed		ds.w 1
+acceleration		ds.w 1
+deceleration		ds.w 1
+jump_height		ds.w 1
+screen_distance		ds.w 1
+	if * > object_size
+	fatal "Player Additional Object variables are too big by $\{*-object_size} bytes"
 	endif
 	dephase
 ; ---------------------------------------------------------------------------

@@ -10,19 +10,22 @@ DeformBgLayer:
 		clr.l	(H_scroll_amount).w	; clear horizontal and vertical scroll amount
 		tst.b	(Scroll_lock).w
 		bne.s	.events
+; load player addresses
 		lea	(Player_1).w,a0
+		movea.w	playadd_addr(a0),a3
+		lea	hscroll_table(a3),a5
+		movea.w	pos_table(a3),a6
+
 		lea	(Camera_X_pos).w,a1
 		lea	(Camera_min_X_pos).w,a2
 		lea	(H_scroll_amount).w,a4
-		lea	(H_scroll_frame_offset).w,a5
-		lea	(Pos_table).w,a6
 		bsr.s	MoveCameraX
-		lea	(Camera_Y_pos).w,a1
-		lea	(Camera_min_X_pos).w,a2
-		lea	(V_scroll_amount).w,a4
-		move.w	(Distance_from_top).w,d3
-		bsr.w	MoveCameraY
 
+		move.w	screen_distance(a3),d3
+		lea	(Camera_Y_pos).w,a1
+		lea	(Camera_min_X_pos).w,a2		; TODO: why not Camera_min_Y_pos?
+		lea	(V_scroll_amount).w,a4
+		bsr.w	MoveCameraY
 .events
 		jmp	Do_ResizeEvents(pc)
 ; ---------------------------------------------------------------------------
@@ -51,19 +54,20 @@ MoveCameraX:
 	; works around the issue by resetting the old position values to the
 	; current position (see 'Reset_Player_Position_Array').
 		move.w	(a1),d4
-		move.b	H_scroll_frame_offset-H_scroll_frame_offset(a5),d1	; should scrolling be delayed?
-		beq.s	.scrollNotDelayed					; if not, branch
-		lsl.b	#2,d1			; multiply by 4, the size of a position buffer entry
-		subq.b	#1,H_scroll_frame_offset-H_scroll_frame_offset(a5)	; reduce delay value
-		move.b	Pos_table_byte-H_scroll_frame_offset(a5),d0
-		sub.b	H_scroll_frame_copy-H_scroll_frame_offset(a5),d0
+		move.b	hscroll_table-hscroll_table(a5),d1	; should scrolling be delayed?
+		beq.s	.scrollNotDelayed			; if not, branch
+		lsl.b	#2,d1				; multiply by 4, the size of a position buffer entry
+		subq.b	#1,hscroll_table-hscroll_table(a5)	; reduce delay value
+		moveq	#0,d2
+		move.b	pos_index(a3),d2
+		move.w	d2,d0
+		sub.b	hscroll_table_poscopy-hscroll_table(a5),d0
 		cmp.b	d0,d1
 		blo.s	.doNotCap
 		move.b	d0,d1
 .doNotCap:
-		move.w	Pos_table_index-H_scroll_frame_offset(a5),d0
-		sub.b	d1,d0
-		move.w	(a6,d0.w),d0
+		sub.b	d1,d2
+		move.w	(a6,d2.w),d0
 		andi.w	#$7FFF,d0
 		bra.s	loc_1C0D6
 

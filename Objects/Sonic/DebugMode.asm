@@ -24,9 +24,10 @@ DebugMode:
 		beq.s	.select
 		movea.w	a0,a1
 		jsr	Player_ResetAirTimer(pc)
-		move.w	#$600,(Max_speed).w
-		move.w	#$C,(Acceleration).w
-		move.w	#$80,(Deceleration).w
+		lea	(a0),a1
+		movea.w	playadd_addr(a1),a2
+		lea	max_speed(a2),a2
+		jsr	(Player_SetSpeed.regset)
 
 .select
 		moveq	#0,d0
