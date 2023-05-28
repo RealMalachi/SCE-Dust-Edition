@@ -462,17 +462,19 @@ DoPauseMusic:
 	beq.w	.locret
 	move.b	#2,SMPS_RAM.f_stopmusic(a6)
 	tst.b	SMPS_RAM.variables.v_cda_playing(a6)
-	bmi.s	.bgm_cd
 	beq.s	.bgm_noaddon
+	btst	#sndadd_msu,(SoundDriverAddon_flags).w
+	beq.s	+
 	MSD_CheckACE
-	move.w	#MSD_OverlayValue,(MSD_OverlayPort)			; open MSD_OverlayPort
-	move.w	#bytes_to_word(msd_comm_pause,20),(MSD_CommandPort)	; pause music (with a slight fade if 1.04+)
-	move.w	#0,(MSD_OverlayPort)					; close MSD_OverlayPort
-	bra.s	.bgm_addonend
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)	; open MSD_OverlayPort
+	move.w	#bytes_to_word(msd_comm_pause,20),(MSD_CommandPort)
+	move.w	#0,(MSD_OverlayPort)			; close MSD_OverlayPort
 	MSD_CheckACE
-.bgm_cd
++
+	btst	#sndadd_redbook,(SoundDriverAddon_flags).w
+	beq.s	+
 	MCDSend	#_MCD_PauseTrack, #20		; Stop
-.bgm_addonend
++
 .bgm_noaddon
 	bsr.w	FMSilenceAll
 	bsr.w	PSGSilenceAll
@@ -495,17 +497,19 @@ DoUnpauseMusic:
 
 	; Resume CDA
 	tst.b	SMPS_RAM.variables.v_cda_playing(a6)
-	bmi.s	.bgm_cd
 	beq.s	.bgm_noaddon
+	btst	#sndadd_msu,(SoundDriverAddon_flags).w
+	beq.s	+
 	MSD_CheckACE
-	move.w	#MSD_OverlayValue,(MSD_OverlayPort)			; open MSD_OverlayPort
-	move.w	#bytes_to_word(msd_comm_resume,0),(MSD_CommandPort)	; resume music
-	move.w	#0,(MSD_OverlayPort)					; close MSD_OverlayPort
-	bra.s	.bgm_addonend
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)	; open MSD_OverlayPort
+	move.w	#bytes_to_word(msd_comm_resume,0),(MSD_CommandPort)
+	move.w	#0,(MSD_OverlayPort)			; close MSD_OverlayPort
 	MSD_CheckACE
-.bgm_cd
++
+	btst	#sndadd_redbook,(SoundDriverAddon_flags).w
+	beq.s	+
 	MCDSend	#_MCD_UnPauseTrack
-.bgm_addonend
++
 .bgm_noaddon
 	; Resume music FM channels
 	lea	SMPS_RAM.v_music_fm_tracks(a6),a5
@@ -606,9 +610,9 @@ CycleSoundQueue:
 Sound_PlaySong:
 	bclr	#0,SMPS_RAM.variables.v_cda_ignore(a6)
 	bne.w	Sound_PlayBGM
-	btst	#addon_megasd,(Addons_flags).w
+	btst	#sndadd_msu,(SoundDriverAddon_flags).w
 	bne.s	Sound_PlayMSU
-	btst	#addon_mcd,(Addons_flags).w
+	btst	#sndadd_redbook,(SoundDriverAddon_flags).w
 	bne.w	Sound_PlayCDA
 	bra.w	Sound_PlayBGM
 
@@ -658,7 +662,7 @@ Sound_PlayMSU:
 	clr.b	SMPS_RAM.variables.v_sndprio(a6)	; Clear priority twice?
 
 	bsr.w	InitMusicPlayback			; reset SMPS memory
-	move.b	#1,SMPS_RAM.variables.v_cda_playing(a6)	; set CDA playing flag
+	st	SMPS_RAM.variables.v_cda_playing(a6)	; set CDA playing flag
 
 ;	subi.w	#MusID__First,d7			; subtract $E5 to get track number
 	move.w	d7,d1
@@ -734,7 +738,7 @@ Sound_PlayCDA:
 	clr.b	SMPS_RAM.variables.v_sndprio(a6)		; Clear priority twice?
 
 	bsr.w	InitMusicPlayback				; reset SMPS memory
-	move.b	#-1,SMPS_RAM.variables.v_cda_playing(a6)	; set CDA playing flag
+	st	SMPS_RAM.variables.v_cda_playing(a6)		; set CDA playing flag
 
 ;	subi.w	#MusID__First,d7				; subtract $E5 to get track number
 
@@ -925,18 +929,19 @@ Sound_PlayBGM:
 
 	; If CDA is playing, stop it
 	tst.b	SMPS_RAM.variables.v_cda_playing(a6)
-	bmi.s	.bgm_cd
 	beq.s	.bgm_noaddon
+	btst	#sndadd_msu,(SoundDriverAddon_flags).w
+	beq.s	+
 	MSD_CheckACE
-	move.w	#MSD_OverlayValue,(MSD_OverlayPort)			; open MSD_OverlayPort
-	move.w	#bytes_to_word(msd_comm_pause,0),(MSD_CommandPort)	; pause music (with a slight fade if 1.04+)
-	move.w	#0,(MSD_OverlayPort)					; close MSD_OverlayPort
-	bra.s	.bgm_addonend
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)	; open MSD_OverlayPort
+	move.w	#bytes_to_word(msd_comm_pause,0),(MSD_CommandPort)
+	move.w	#0,(MSD_OverlayPort)			; close MSD_OverlayPort
 	MSD_CheckACE
-.bgm_cd
++
+	btst	#sndadd_redbook,(SoundDriverAddon_flags).w
+	beq.s	+
 	MCDSend	#_MCD_PauseTrack, #0		; Stop
-
-.bgm_addonend
++
 	clr.b	SMPS_RAM.variables.v_cda_playing(a6)
 
 .bgm_noaddon
@@ -1642,14 +1647,21 @@ FadeOutMusic:
 ;    endif
 	move.b	#3,SMPS_RAM.variables.v_fadeout_delay(a6)	; Set fadeout delay to 3
 	move.b	#$28,SMPS_RAM.variables.v_fadeout_counter(a6)	; Set fadeout counter
+	bclr	#f_speedup,SMPS_RAM.variables.bitfield2(a6)	; Disable speed shoes tempo
 
 	; Fade out CD track
-	btst	#addon_mcd,(Addons_flags).w
-	beq.s	.skip
+	btst	#sndadd_redbook,(SoundDriverAddon_flags).w
+	beq.s	+
 	MCDSend	#_MCD_PauseTrack, #$28		; flag, timer
-
-.skip:
-	bclr	#f_speedup,SMPS_RAM.variables.bitfield2(a6)	; Disable speed shoes tempo
++
+	btst	#sndadd_msu,(SoundDriverAddon_flags).w
+	beq.s	+
+	MSD_CheckACE
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)
+	move.w	#bytes_to_word(msd_comm_pause,$28),(MSD_CommandPort)
+	move.w	#0,(MSD_OverlayPort)
+	MSD_CheckACE
++
 	rts
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
@@ -1792,21 +1804,21 @@ FMSilenceAll:
 ; ---------------------------------------------------------------------------
 ; Sound_E4: StopSoundAndMusic:
 StopAllSound:
-
 	; If CDA is playing, stop it
 	tst.b SMPS_RAM.variables.v_cda_playing(a6)
-	bmi.s	.bgm_cd
 	beq.s	.bgm_noaddon
+	btst	#sndadd_msu,(SoundDriverAddon_flags).w
+	beq.s	+
 	MSD_CheckACE
-	move.w	#MSD_OverlayValue,(MSD_OverlayPort)			; open MSD_OverlayPort
-	move.w	#bytes_to_word(msd_comm_pause,0),(MSD_CommandPort)	; pause music (with a slight fade if 1.04+)
-	move.w	#0,(MSD_OverlayPort)					; close MSD_OverlayPort
-	bra.s	.bgm_addonend
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)	; open MSD_OverlayPort
+	move.w	#bytes_to_word(msd_comm_pause,0),(MSD_CommandPort)
+	move.w	#0,(MSD_OverlayPort)			; close MSD_OverlayPort
 	MSD_CheckACE
-.bgm_cd
++
+	btst	#sndadd_redbook,(SoundDriverAddon_flags).w
+	beq.s	+
 	MCDSend	#_MCD_PauseTrack, #0		; Stop
-
-.bgm_addonend
++
 	clr.b	SMPS_RAM.variables.v_cda_playing(a6)
 
 .bgm_noaddon

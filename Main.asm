@@ -112,12 +112,7 @@ Modem_Info:
 Country_Code:	dc.b "JUE"	; old style is the most reliable
 	dcb.b $200-*, ' '	; unused
 EndOfHeader:
--
-;	!org MSD_OverlaySignature
-;	MSD_CheckACE
-	!org $03FFFF+1
-	MSD_CheckACE
-	!org -
+
 ; ---------------------------------------------------------------------------
 ; Security Subroutine
 ; ---------------------------------------------------------------------------

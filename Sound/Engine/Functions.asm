@@ -22,14 +22,22 @@ SMPS_LoadDACDriver:
 ;	nop
 	SMPS_resetZ80
 	move.w	d1,(SMPS_z80_bus_request).l	; start the Z80
+;	btst	#addon_32x,(Addons_flags).w
+;	beq.s	+
+;	bset	#sndadd_pwm,(SoundDriverAddon_flags).w
++
 	MSD_SoundDriver_Init +
+	bset	#sndadd_msu,(SoundDriverAddon_flags).w
 	rts	; megasd is given priority over mega cd
 ;	MSD_CheckACE
-+	btst	#addon_mcd,(Addons_flags).w
++
+	btst	#addon_mcd,(Addons_flags).w
 	beq.s	+
 	MCDSend	#_MCD_SetVolume, #255
 	MCDSend	#_MCD_NoSeek, #1	; turn off seek-time emulation
-+	rts
+	bset	#sndadd_redbook,(SoundDriverAddon_flags).w
++
+	rts
 ; End of function SMPS_LoadDACDriver
 
 ; ---------------------------------------------------------------------------

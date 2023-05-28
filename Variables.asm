@@ -204,10 +204,12 @@ Plane_buffer:					ds.w $240		; Used by level drawing routines
 
 v_snddriver_ram:			ds.b $399;+$160	; Start of RAM for the sound driver data
 v_snddriver_ram_end:
+; this abstraction allows you to turn them off
+SoundDriverAddon_flags:			ds.b 1	; bitfield flags to enable sound driver options from addons
 	evenram
+
 ; sound data moreso related to game code then driver code
 Current_music:				ds.w 1		; music id to play back when a jingle ends
-;SoundDriverAddon_flags:			ds.b 1		; flags to enable sound driver options from addons
 	evenram
 ; ---------------------------------------------------------------------------
 v_gamemode:				= *

@@ -5,6 +5,15 @@ UpdateSoundDriver macro
 Size_of_Snd_driver_guess	= Size_of_Mega_PCM_guess	; Specifically, the size of the Z80 portion
 Size_of_Snd_driver2_guess	= 0
 
+-
+	phase 0
+sndadd_redbook	ds.b 1
+;sndadd_mcdpcm	ds.b 1		; TODO: Get its actual name
+sndadd_pwm	ds.b 1
+sndadd_msu	ds.b 1
+	dephase
+	!org -
+
 ; ---------------------------------------------------------------------------
 ; play a sound effect or music
 ; input: track, terminate routine, branch or jump, move operand size
@@ -103,5 +112,4 @@ MSD_SoundDriver_Init macro ifnotbranch
 	move.w	#bytes_to_word(msd_comm_volume,$FF),(MSD_CommandPort)
 	move.w	#0,(MSD_OverlayPort)
 	MSD_CheckACE
-+
 	endm

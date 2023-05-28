@@ -73,6 +73,5 @@ MSD_SoundDriver_Init macro ifnotbranch
 	move.w	#bytes_to_word(msd_comm_volume,$FF),(MSD_CommandPort)
 	move.w	#0,(MSD_OverlayPort)
 	MSD_CheckACE
-+
 	endm
 	endif
