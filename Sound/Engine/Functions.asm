@@ -16,16 +16,19 @@ SMPS_LoadDACDriver:
 
 	moveq	#0,d1
 	move.w	d1,(SMPS_z80_reset).l
-	nop
-	nop
-	nop
-	nop
+	nop2
+	nop2
+;	nop
+;	nop
 	SMPS_resetZ80
 	move.w	d1,(SMPS_z80_bus_request).l	; start the Z80
-	btst	#addon_mcd,(Addons_flags).w
+	MSD_SoundDriver_Init +
+	rts	; megasd is given priority over mega cd
+;	MSD_CheckACE
++	btst	#addon_mcd,(Addons_flags).w
 	beq.s	+
 	MCDSend	#_MCD_SetVolume, #255
-	MCDSend	#_MCD_NoSeek, #1
+	MCDSend	#_MCD_NoSeek, #1	; turn off seek-time emulation
 +	rts
 ; End of function SMPS_LoadDACDriver
 
@@ -69,6 +72,13 @@ SMPS_QueueSound2:
 ;
 ; d0 = Sample ID
 ; ---------------------------------------------------------------------------
+
+SMPS_PlaySample:
+    if SMPS_EnablePWM
+	btst	#addon_32x,(Addons_flags).w
+	bne.s	SMPS_PlayPWMSample
+    endif
+
 SMPS_PlayDACSample:
 	SMPS_stopZ80_safe
 	move.b  d0,(SMPS_z80_ram+MegaPCM_DAC_Number).l
@@ -79,7 +89,6 @@ SMPS_PlayDACSample:
 	SMPS_startZ80_safe
 	rts
 ; End of function SMPS_PlayDACSample
-
     if SMPS_EnablePWM
 
 ; ---------------------------------------------------------------------------

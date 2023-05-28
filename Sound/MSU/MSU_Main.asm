@@ -24,6 +24,8 @@ _MCD_PlayTrack_Loop	= $1A			; #1 = decimal number of track (1-99). #2 = offset i
 ; a0 - KosPlus compressed PRG-RAM program
 Init_MSU_Driver:
 Load_PRGRAM:
+	btst	#addon_megasd,(Addons_flags).w	; does the system have a MegaSD?
+	bne.s	.end				; if so, branch
 	btst	#addon_mcd,(Addons_flags).w	; does the system have any form of MegaCD support?
 	beq.s	.end				; if not, branch
 ;	moveq	#1,d0

@@ -457,15 +457,23 @@ locret_71E48:
 ; ===========================================================================
 ; loc_71E50: PauseMusic:
 DoPauseMusic:
-	bmi.s	DoUnpauseMusic		; Branch if music is being unpaused
+	bmi.w	DoUnpauseMusic		; Branch if music is being unpaused
 	cmpi.b	#2,SMPS_RAM.f_stopmusic(a6)
-	beq.s	.locret
+	beq.w	.locret
 	move.b	#2,SMPS_RAM.f_stopmusic(a6)
 	tst.b	SMPS_RAM.variables.v_cda_playing(a6)
-	beq.s	.skip
-	MCDSend	#_MCD_PauseTrack, #20	; flag, timer
-
-.skip:
+	bmi.s	.bgm_cd
+	beq.s	.bgm_noaddon
+	MSD_CheckACE
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)			; open MSD_OverlayPort
+	move.w	#bytes_to_word(msd_comm_pause,20),(MSD_CommandPort)	; pause music (with a slight fade if 1.04+)
+	move.w	#0,(MSD_OverlayPort)					; close MSD_OverlayPort
+	bra.s	.bgm_addonend
+	MSD_CheckACE
+.bgm_cd
+	MCDSend	#_MCD_PauseTrack, #20		; Stop
+.bgm_addonend
+.bgm_noaddon
 	bsr.w	FMSilenceAll
 	bsr.w	PSGSilenceAll
     if SMPS_EnablePWM
@@ -487,11 +495,18 @@ DoUnpauseMusic:
 
 	; Resume CDA
 	tst.b	SMPS_RAM.variables.v_cda_playing(a6)
-	beq.s	.skip
+	bmi.s	.bgm_cd
+	beq.s	.bgm_noaddon
+	MSD_CheckACE
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)			; open MSD_OverlayPort
+	move.w	#bytes_to_word(msd_comm_resume,0),(MSD_CommandPort)	; resume music
+	move.w	#0,(MSD_OverlayPort)					; close MSD_OverlayPort
+	bra.s	.bgm_addonend
+	MSD_CheckACE
+.bgm_cd
 	MCDSend	#_MCD_UnPauseTrack
-
-.skip:
-
+.bgm_addonend
+.bgm_noaddon
 	; Resume music FM channels
 	lea	SMPS_RAM.v_music_fm_tracks(a6),a5
 	moveq	#SMPS_MUSIC_FM_TRACK_COUNT-1,d7		; 6 FM
@@ -588,13 +603,16 @@ CycleSoundQueue:
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
 
-Sound_PlayCDA:
-	btst	#addon_mcd,(Addons_flags).w
-	beq.w	Sound_PlayBGM
-
+Sound_PlaySong:
 	bclr	#0,SMPS_RAM.variables.v_cda_ignore(a6)
 	bne.w	Sound_PlayBGM
+	btst	#addon_megasd,(Addons_flags).w
+	bne.s	Sound_PlayMSU
+	btst	#addon_mcd,(Addons_flags).w
+	bne.w	Sound_PlayCDA
+	bra.w	Sound_PlayBGM
 
+Sound_PlayMSU:
 	bsr.w	StopSFX
     if SMPS_EnableSpecSFX
 	bsr.w	StopSpecSFX
@@ -605,7 +623,87 @@ Sound_PlayCDA:
 ;	clr.b	SMPS_RAM.variables.v_sndprio(a6)		; Clear priority (S2 removes this one)
 	lea	SMPS_RAM.v_music_track_ram(a6),a0
 	lea	SMPS_RAM.v_1up_ram_copy(a6),a1
-	moveq	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; Backup music track data
+	if ((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1 > $7F
+	move.w	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; Backup music track data
+	else
+	moveq	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; restore music track data
+	endif
+; loc_72012:
+.backuptrackramloop:
+	move.l	(a0)+,(a1)+
+	dbf	d0,.backuptrackramloop
+
+    if (SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)&2
+	move.w	(a0)+,(a1)+
+    endif
+    if (SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)&1
+	move.b	(a0)+,(a1)+
+    endif
+
+	lea	SMPS_RAM.variables(a6),a0
+	lea	SMPS_RAM.variables_backup(a6),a1
+	moveq	#(SMPS_RAM_Variables.len/4)-1,d0	; Backup variables
+
+.backupvariablesloop:
+	move.l	(a0)+,(a1)+
+	dbf	d0,.backupvariablesloop
+
+    if SMPS_RAM_Variables.len&2
+	move.w	(a0)+,(a1)+
+    endif
+    if SMPS_RAM_Variables.len&1
+	move.b	(a0)+,(a1)+
+    endif
+
+	clr.b	SMPS_RAM.variables.v_sndprio(a6)	; Clear priority twice?
+
+	bsr.w	InitMusicPlayback			; reset SMPS memory
+	move.b	#1,SMPS_RAM.variables.v_cda_playing(a6)	; set CDA playing flag
+
+;	subi.w	#MusID__First,d7			; subtract $E5 to get track number
+	move.w	d7,d1
+	lsl.w	#2,d1
+	lea	PlayMSU_Index-4(pc,d1.w),a0
+	move.w	(a0),d0					; argument
+	move.b	d7,d0
+	move.l	(a0),d1					; loop state
+	andi.l	#$FFFFFF,d1
+
+	MSD_CheckACE
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)	; open MSD_OverlayPort
+	move.l	d1,(MSD_ParameterData)			; set loop if it applies
+	move.w	d0,(MSD_CommandPort)			; play music
+	move.w	#0,(MSD_OverlayPort)			; close MSD_OverlayPort
+	rts
+	MSD_CheckACE
+
+PlayMSU_Index:
+	dc.l byte_tri_to_long(msd_comm_playloopoffset,257)	; $01 (DEZ)
+	dc.l byte_tri_to_long(msd_comm_playloop,0)	; $02 (Mid Boss)
+	dc.l byte_tri_to_long(msd_comm_playloop,0)	; $03 (Boss)
+	dc.l byte_tri_to_long(msd_comm_playloop,0)	; $04 (Invincible)
+	dc.l byte_tri_to_long(pld_comm_playonce,0)	; $05 (Act Clear)
+	dc.l byte_tri_to_long(pld_comm_playonce,0)	; $06 (Countdown)
+	dc.l byte_tri_to_long(msd_comm_playloop,0)	; $07 (Speedup)
+	even
+; ---------------------------------------------------------------------------
+
+Sound_PlayCDA:
+	bsr.w	StopSFX
+    if SMPS_EnableSpecSFX
+	bsr.w	StopSpecSFX
+    endif
+
+	; Clownacy | We're backing-up the variables and tracks separately, to put the backed-up variables after the backed-up tracks
+	; this is so the backed-up tracks and SFX tracks start at the same place: at the end of the music tracks
+;	clr.b	SMPS_RAM.variables.v_sndprio(a6)		; Clear priority (S2 removes this one)
+	lea	SMPS_RAM.v_music_track_ram(a6),a0
+	lea	SMPS_RAM.v_1up_ram_copy(a6),a1
+	if ((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1 > $7F
+	move.w	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; Backup music track data
+	else
+	moveq	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; restore music track data
+	endif
 ; loc_72012:
 .backuptrackramloop:
 	move.l	(a0)+,(a1)+
@@ -635,32 +733,33 @@ Sound_PlayCDA:
 
 	clr.b	SMPS_RAM.variables.v_sndprio(a6)		; Clear priority twice?
 
-	bsr.w	InitMusicPlayback						; reset SMPS memory
-	st	SMPS_RAM.variables.v_cda_playing(a6)		; set CDA playing flag
+	bsr.w	InitMusicPlayback				; reset SMPS memory
+	move.b	#-1,SMPS_RAM.variables.v_cda_playing(a6)	; set CDA playing flag
 
-;	subi.w	#MusID__First,d7					; subtract $E5 to get track number
+;	subi.w	#MusID__First,d7				; subtract $E5 to get track number
 
 	move.w	d7,d1
 	add.w	d1,d1
 	add.w	d1,d1
 	lea	PlayCD_Index-4(pc,d1.w),a0
 	moveq	#0,d0
-	move.b	(a0),d0								; argument
-	move.l	(a0),d1								; loop state
-	andi.l	#$FFFFFF,d1							; get loop
-	MCDSend	d0, d7, d1						; request MCD a track
-	addq.w	#4,sp								; Tamper return value so we don't return to caller
+	move.b	(a0),d0						; argument
+	move.l	(a0),d1						; loop state
+	andi.l	#$FFFFFF,d1					; get loop
+	MCDSend	d0, d7, d1					; request MCD a track
+	addq.w	#4,sp						; Tamper return value so we don't return to caller
 	rts
 ; ===========================================================================
-
+; technically a lot of commands line up with MD+, but it has so much more commands that...
+; ...it's not worth merging them
 PlayCD_Index:
-	dc.l _MCD_PlayTrack<<24|$00000000			; $01 (DEZ)
-	dc.l _MCD_PlayTrack<<24|$00000000			; $02 (Mid Boss)
-	dc.l _MCD_PlayTrack<<24|$00000000			; $03 (Boss)
-	dc.l _MCD_PlayTrack<<24|$00000000			; $04 (Invincible)
-	dc.l _MCD_PlayTrack_Once<<24|$00000000	; $05 (Act Clear)
-	dc.l _MCD_PlayTrack_Once<<24|$00000000	; $06 (Countdown)
-	dc.l _MCD_PlayTrack<<24|$00000000			; $07 (Speedup)
+	dc.l byte_tri_to_long(_MCD_PlayTrack_Loop,257)		; $01 (DEZ)
+	dc.l byte_tri_to_long(_MCD_PlayTrack,0)		; $02 (Mid Boss)
+	dc.l byte_tri_to_long(_MCD_PlayTrack,0)		; $03 (Boss)
+	dc.l byte_tri_to_long(_MCD_PlayTrack,0)		; $04 (Invincible)
+	dc.l byte_tri_to_long(_MCD_PlayTrack_Once,0)	; $05 (Act Clear)
+	dc.l byte_tri_to_long(_MCD_PlayTrack_Once,0)	; $06 (Countdown)
+	dc.l byte_tri_to_long(_MCD_PlayTrack,0)		; $07 (Speedup)
 	even
 
 ; ||||||||||||||| S U B	R O U T	I N E |||||||||||||||||||||||||||||||||||||||
@@ -671,7 +770,7 @@ PlaySoundID:	; For the love of god, don't rearrange the order of the groups, it 
 	cmpi.b	#MusID__First,d7	; Is this before music?
 	blo.w	CycleSoundQueue.locret	; Return if yes
 	cmpi.b	#MusID__End,d7		; Is this music ($01-$1F)?
-	blo.w	Sound_PlayCDA		; Branch if yes
+	blo.w	Sound_PlaySong		; Branch if yes
 
 	; SFX
 	cmpi.b	#SndID__First,d7	; Is this after music but before sfx?
@@ -780,7 +879,11 @@ Sound_PlayBGM:
 ;	clr.b	SMPS_RAM.variables.v_sndprio(a6)		; Clear priority (S2 removes this one)
 	lea	SMPS_RAM.v_music_track_ram(a6),a0
 	lea	SMPS_RAM.v_1up_ram_copy(a6),a1
-	moveq	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; Backup music track data
+	if ((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1 > $7F
+	move.w	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; Backup music track data
+	else
+	moveq	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; restore music track data
+	endif
 ; loc_72012:
 .backuptrackramloop:
 	move.l	(a0)+,(a1)+
@@ -821,12 +924,22 @@ Sound_PlayBGM:
 .bgm_loadMusic:
 
 	; If CDA is playing, stop it
-	tst.b SMPS_RAM.variables.v_cda_playing(a6)
-	beq.s	.NoCD
+	tst.b	SMPS_RAM.variables.v_cda_playing(a6)
+	bmi.s	.bgm_cd
+	beq.s	.bgm_noaddon
+	MSD_CheckACE
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)			; open MSD_OverlayPort
+	move.w	#bytes_to_word(msd_comm_pause,0),(MSD_CommandPort)	; pause music (with a slight fade if 1.04+)
+	move.w	#0,(MSD_OverlayPort)					; close MSD_OverlayPort
+	bra.s	.bgm_addonend
+	MSD_CheckACE
+.bgm_cd
 	MCDSend	#_MCD_PauseTrack, #0		; Stop
+
+.bgm_addonend
 	clr.b	SMPS_RAM.variables.v_cda_playing(a6)
 
-.NoCD:
+.bgm_noaddon
 	bsr.w	InitMusicPlayback
 	subi.b	#MusID__First,d7
 	add.w	d7,d7
@@ -1681,12 +1794,22 @@ FMSilenceAll:
 StopAllSound:
 
 	; If CDA is playing, stop it
-	tst.b	SMPS_RAM.variables.v_cda_playing(a6)
-	beq.s	.NoCD
+	tst.b SMPS_RAM.variables.v_cda_playing(a6)
+	bmi.s	.bgm_cd
+	beq.s	.bgm_noaddon
+	MSD_CheckACE
+	move.w	#MSD_OverlayValue,(MSD_OverlayPort)			; open MSD_OverlayPort
+	move.w	#bytes_to_word(msd_comm_pause,0),(MSD_CommandPort)	; pause music (with a slight fade if 1.04+)
+	move.w	#0,(MSD_OverlayPort)					; close MSD_OverlayPort
+	bra.s	.bgm_addonend
+	MSD_CheckACE
+.bgm_cd
 	MCDSend	#_MCD_PauseTrack, #0		; Stop
+
+.bgm_addonend
 	clr.b	SMPS_RAM.variables.v_cda_playing(a6)
 
-.NoCD:
+.bgm_noaddon
 	moveq	#$27,d0		; Timers, FM3/FM6 mode
 	moveq	#0,d1		; FM3/FM6 normal mode, disable timers
 	bsr.w	WriteFMI
@@ -1767,8 +1890,11 @@ InitMusicPlayback:
 
 	; Clear music track RAM
 	lea	SMPS_RAM.v_music_track_ram(a6),a0
-	moveq	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d1
-
+	if ((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1 > $7F
+	move.w	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d1	; Backup music track data
+	else
+	moveq	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d1	; restore music track data
+	endif
 ; loc_725E4:
 .clearramloop:
 	move.l	d0,(a0)+
@@ -2600,7 +2726,11 @@ cfFadeInToPrevious:
 	; this is so the backed-up tracks and SFX tracks start at the same place: at the end of the music tracks
 	lea	SMPS_RAM.v_music_track_ram(a6),a0
 	lea	SMPS_RAM.v_1up_ram_copy(a6),a1
+	if ((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1 > $7F
+	move.w	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; Backup music track data
+	else
 	moveq	#((SMPS_RAM.v_music_track_ram_end-SMPS_RAM.v_music_track_ram)/4)-1,d0	; restore music track data
+	endif
 ; loc_72B1E:
 .restoretrackramloop:
 	move.l	(a1)+,(a0)+

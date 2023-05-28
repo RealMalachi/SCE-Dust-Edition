@@ -70,6 +70,7 @@ Vectors:
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 56
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 60
 Header:		dc.b "SEGA GENESIS    "		; "SEGA" needed for TMSS
+	;	dc.b "SEGA MEGASD     "
 Copyright:	dc.b "(C)CCCC YYYY.MMM"
 Domestic_Name:	dc.b "SONIC CLEAN ENGINE DUST"
 	dcb.b $150-*, ' '
@@ -111,7 +112,12 @@ Modem_Info:
 Country_Code:	dc.b "JUE"	; old style is the most reliable
 	dcb.b $200-*, ' '	; unused
 EndOfHeader:
-
+-
+;	!org MSD_OverlaySignature
+;	MSD_CheckACE
+	!org $03FFFF+1
+	MSD_CheckACE
+	!org -
 ; ---------------------------------------------------------------------------
 ; Security Subroutine
 ; ---------------------------------------------------------------------------
@@ -522,6 +528,11 @@ EndOfHeader:
 ; ---------------------------------------------------------------------------
 
 	include "Sound/MSU/MSU_Main.asm"
+	include "Sound/MDplus/MDplus.asm"
+
+	cpu SH7000
+	include "Data/Addon/32x.asm"
+	cpu 68000
 
 ; ---------------------------------------------------------------
 ; Error handling module
