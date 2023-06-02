@@ -185,6 +185,7 @@ Level_Screen:
 		move.b	#$7F,(Ctrl_1_held).w
 		move.b	#$7F,(Ctrl_2_held).w
 		andi.b	#$7F,(Last_star_post_hit).w
+		jsr	(Wait_VSync).w		; add a bit of delay for frame timing. Remove if unnecessary
 		bclr	#GameModeFlag_TitleCard,(Game_mode).w		; subtract $80 from mode to end pre-level stuff
 		move.l	#VInt_Level,(V_int_routine).w
 
@@ -194,15 +195,17 @@ Level_Screen:
 		jsr	(Process_Kos_Queue).w
 		jsr	(Wait_VSync).w
 		addq.w	#1,(Level_frame_counter).w
-		jsr	(Animate_Palette).l
+; handle object code first
 		jsr	(Load_Sprites).w
 		jsr	(Process_Sprites).w
-		tst.b	(Restart_level_flag).w
+		tst.b	(Restart_level_flag).w	; if object prompts a restart, restart
 		bne.w	Level_Screen
+; handle level movement
 		jsr	(DeformBgLayer).w
 		jsr	(ScreenEvents).l
 		jsr	(Handle_Onscreen_Water_Height).l
 		jsr	(Load_Rings).w
+		jsr	(Animate_Palette).l
 		jsr	(Animate_Tiles).l
 		jsr	(Process_Kos_Module_Queue).w
 		jsr	(OscillateNumDo).w

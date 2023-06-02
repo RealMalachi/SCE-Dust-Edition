@@ -61,6 +61,8 @@ dma68kToVDP macro source,dest,length,type
 	move.w	#((vdpComm(dest,type,DMA)>>16)&$FFFF),VDP_control_port-VDP_control_port(a5)
 	move.w	#(vdpComm(dest,type,DMA)&$FFFF),(DMA_trigger_word).w
 	move.w	(DMA_trigger_word).w,VDP_control_port-VDP_control_port(a5)
+	endm
+	; regarding DMA_trigger_word
 	; From '  § 7  DMA TRANSFER' of https://emu-docs.org/Genesis/sega2f.htm:
 	;
 	; "In the case of ROM to VRAM transfers,
@@ -73,7 +75,6 @@ dma68kToVDP macro source,dest,length,type
 	; --The final write must use the work RAM.
 	;   There are two ways to accomplish this, by copying the DMA program
 	;   into RAM or by doing a final "move.w ram address $C00004""
-    endm
 
 ; tells the VDP to fill a region of VRAM with a certain byte
 dmaFillVRAM macro byte,addr,length
@@ -82,7 +83,7 @@ dmaFillVRAM macro byte,addr,length
 	move.w	#$9780,VDP_control_port-VDP_control_port(a5) ; VRAM fill
 	move.l	#$40000080|(((addr)&$3FFF)<<16)|(((addr)&$C000)>>14),VDP_control_port-VDP_control_port(a5) ; Start at ...
 	move.w	#(byte)<<8,(VDP_data_port).l ; Fill with byte
-.loop:
+.loop
 	move.w	VDP_control_port-VDP_control_port(a5),d1
 	btst	#1,d1
 	bne.s	.loop	; busy loop until the VDP is finished filling...
@@ -91,40 +92,40 @@ dmaFillVRAM macro byte,addr,length
 
 ; -------------------------------------------------------------
 ; Macro to check button presses
-; Arguments:
-; 1 - buttons to check
+; Output:
+; d0 - buttons to check
 ; -------------------------------------------------------------
-
-tpress:	macro press,player
-		if player=2
-	move.b	(Ctrl_2_pressed).w,d0
-		else
-	move.b	(Ctrl_1_pressed).w,d0
-		endif
-	andi.b	#(press),d0
-    endm
-
-; -------------------------------------------------------------
-; Macro to check if buttons are held
-; Arguments:
-; 1 - buttons to check
-; -------------------------------------------------------------
-
-theld:	macro press,player
-		if player=2
-	move.b	(Ctrl_2_held).w,d0
-		else
-	move.b	(Ctrl_1_held).w,d0
-		endif
-	andi.b	#(press),d0
-    endm
-
+ctrlcheck macro press,input,type
+	if ("type"=="") || ("type"=="0") || ("type"=="hd")
+	  if input=2
+	move.b	(Ctrl2_Hd).w,d0
+	  else
+	move.b	(Ctrl1_Hd).w,d0
+	  endif
+	elseif ("type"=="1") || ("type"=="pr")
+	  if input=2
+	move.b	(Ctrl2_Pr).w,d0
+	  else
+	move.b	(Ctrl1_Pr).w,d0
+	  endif
+	else
+	fatal "Undefined joypad button type!"
+	endif
+	andi.w	#(press),d0
+	endm
+; back compat
+tpress macro press,input
+	ctrlcheck press,input,pr
+	endm
+theld macro press,input
+	ctrlcheck press,input,hd
+	endm
 ; ---------------------------------------------------------------------------
 ; Set a VRAM address via the VDP control port.
 ; input: 16-bit VRAM address, control port (default is ($C00004).l)
 ; ---------------------------------------------------------------------------
 
-locVRAM:	macro loc,controlport
+locVRAM macro loc,controlport
 	if ("controlport"=="")
 	move.l	#($40000000+((loc&$3FFF)<<16)+((loc&$C000)>>14)),(VDP_control_port).l
 	else
@@ -140,7 +141,7 @@ __LABEL__ label *
     endm
 
 ; macro to define debug list object data
-dbglistobj macro   obj,mapaddr,subtype,frame,vram
+dbglistobj macro obj,mapaddr,subtype,frame,vram
 	dc.l byte_tri_to_long(subtype,obj)	; object placement data
 	dc.l byte_tri_to_long(frame,mapaddr)	; object selection data
 	dc.w vram
@@ -159,7 +160,7 @@ levartptrs macro art,map16x16,map128x128,palette
     endm
 
 ; macro to declare sub-object data
-subObjData	macro mappings,vram,priority,width,height,frame,collision
+subObjData macro mappings,vram,priority,width,height,frame,collision
 	dc.l mappings
 	dc.w vram,priority
 	dc.b width,height,frame,collision
@@ -169,7 +170,7 @@ subObjData	macro mappings,vram,priority,width,height,frame,collision
     endm
 
 ; macro to declare sub-object data
-subObjData2	macro vram,priority,width,height,frame,collision
+subObjData2 macro vram,priority,width,height,frame,collision
 	dc.w vram,priority
 	dc.b width,height,frame,collision
 	if priority < Sprite_table_input
@@ -178,7 +179,7 @@ subObjData2	macro vram,priority,width,height,frame,collision
     endm
 
 ; macro to declare sub-object data
-subObjData3	macro priority,width,height,frame,collision
+subObjData3 macro priority,width,height,frame,collision
 	dc.w priority
 	dc.b width,height,frame,collision
 	if priority < Sprite_table_input
@@ -219,11 +220,7 @@ bytesToXcnt function n,x,n/x-1
 
 ; fills a region of 68k RAM with 0
 clearRAM macro startaddr,endaddr
-    if ((startaddr)&$8000)==0
-	lea	(startaddr).l,a1
-    else
-	lea	(startaddr).w,a1
-    endif
+	lea	(startaddr),a1
 	moveq	#0,d0
     if ((startaddr)&1)
 	move.b	d0,(a1)+
@@ -241,11 +238,7 @@ clearRAM macro startaddr,endaddr
 
 ; fills a region of 68k RAM with 0
 clearRAM2 macro startaddr,endaddr
-    if ((startaddr)&$8000)==0
-	lea	(startaddr).l,a1
-    else
-	lea	(startaddr).w,a1
-    endif
+	lea	(startaddr),a1
 	moveq	#0,d0
     if ((startaddr)&1)
 	move.b	d0,(a1)+
@@ -263,11 +256,7 @@ clearRAM2 macro startaddr,endaddr
 
 ; fills a region of 68k RAM with 0 (4 bytes at a time)
 clearRAM3 macro addr,length
-    if ((addr)&$8000)==0
-	lea	(addr).l,a1
-    else
-	lea	(addr).w,a1
-    endif
+	lea	(addr),a1
 	moveq	#0,d0
 	move.w	#bytesTo4Lcnt(length-addr),d1
 -	move.l	d0,(a1)+
@@ -282,7 +271,7 @@ clearRAM3 macro addr,length
 ; input: location to jump to if out of range, x-axis pos (x_pos(a0) by default)
 ; ---------------------------------------------------------------------------
 
-out_of_xrange	macro exit, xpos
+out_of_xrange macro exit,xpos
 	if ("xpos"<>"")
 		move.w	xpos,d0							; get object position (if specified as not x_pos)
 	else
@@ -294,7 +283,7 @@ out_of_xrange	macro exit, xpos
 	bhi.ATTRIBUTE	exit
     endm
 
-out_of_xrange2	macro exit
+out_of_xrange2 macro exit
 	andi.w	#$FF80,d0							; round down to nearest $80
 	sub.w	(Camera_X_pos_coarse_back).w,d0		; get screen position
 	cmpi.w	#$80+320+$40+$80,d0				; this gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
@@ -306,7 +295,7 @@ out_of_xrange2	macro exit
 ; input: location to jump to if out of range, x-axis pos (y_pos(a0) by default)
 ; ---------------------------------------------------------------------------
 
-out_of_yrange	macro exit, ypos
+out_of_yrange macro exit,ypos
 	if ("ypos"<>"")
 		move.w	ypos,d0							; get object position (if specified as not y_pos)
 	else
@@ -318,14 +307,14 @@ out_of_yrange	macro exit, ypos
 	bhi.ATTRIBUTE	exit
     endm
 
-out_of_yrange2	macro exit
+out_of_yrange2 macro exit
 	sub.w	(Camera_Y_pos).w,d0
 	addi.w	#$80,d0
 	cmpi.w	#$80+256+$80,d0
 	bhi.ATTRIBUTE	exit
     endm
 
-out_of_yrange3	macro exit, ypos
+out_of_yrange3 macro exit,ypos
 	if ("ypos"<>"")
 		move.w	ypos,d0							; get object position (if specified as not y_pos)
 	else
@@ -337,7 +326,7 @@ out_of_yrange3	macro exit, ypos
 	bhi.ATTRIBUTE	exit
     endm
 
-out_of_yrange4	macro exit
+out_of_yrange4 macro exit
 	andi.w	#$FF80,d0
 	sub.w	(Camera_Y_pos_coarse_back).w,d0
 	cmpi.w	#$80+256+$80,d0
@@ -368,7 +357,7 @@ clearZ80RAM macro
 	lea	(Z80_RAM).l,a0
 	move.w	#$1FFF,d0
 
--	clr.b (a0)+
+-	clr.b	(a0)+
 	dbf	d0,-
     endm
 
@@ -386,26 +375,19 @@ paddingZ80RAM macro
 
 ; tells the Z80 to stop, and waits for it to finish stopping (acquire bus)
 stopZ80 macro
-
 	if OptimiseStopZ80=0
 	move.w	#$100,(Z80_bus_request).l ; stop the Z80
-	nop
-	nop
-	nop
-
+	nop3
 -	btst	#0,(Z80_bus_request).l
 	bne.s	- 	; loop until it says it's stopped
 	endif
-
     endm
 
 ; tells the Z80 to stop, and waits for it to finish stopping (acquire bus)
 stopZ80a macro
-
 	if OptimiseStopZ80=0
 	move.w	#$100,(Z80_bus_request).l ; stop the Z80
 	endif
-
     endm
 
 ; ---------------------------------------------------------------------------
@@ -414,12 +396,10 @@ stopZ80a macro
 
 ; tells the Z80 to wait for it to finish stopping (acquire bus)
 waitZ80 macro
-
 	if OptimiseStopZ80=0
 -	btst	#0,(Z80_bus_request).l
 	bne.s	- 	; loop until
 	endif
-
     endm
 
 ; ---------------------------------------------------------------------------
@@ -428,20 +408,16 @@ waitZ80 macro
 
 ; tells the Z80 to reset
 resetZ80 macro
-
 	if OptimiseStopZ80=0
 	move.w	#$100,(Z80_reset).l
 	endif
-
     endm
 
 ; tells the Z80 to reset
 resetZ80a macro
-
 	if OptimiseStopZ80=0
 	move.w	#0,(Z80_reset).l
 	endif
-
     endm
 
 ; ---------------------------------------------------------------------------
@@ -450,11 +426,9 @@ resetZ80a macro
 
 ; tells the Z80 to start again
 startZ80 macro
-
 	if OptimiseStopZ80=0
 	move.w	#0,(Z80_bus_request).l    ; start the Z80
 	endif
-
     endm
 
 ; ---------------------------------------------------------------------------
@@ -463,17 +437,12 @@ startZ80 macro
 
 ; tells the Z80 to stop, and waits for it to finish stopping (acquire bus)
 stopZ802 macro
-
 	if OptimiseStopZ80=2
 	move.w	#$100,(Z80_bus_request).l ; stop the Z80
-	nop
-	nop
-	nop
-
+	nop3
 -	btst	#0,(Z80_bus_request).l
 	bne.s	- 	; loop until it says it's stopped
 	endif
-
     endm
 
 ; ---------------------------------------------------------------------------
@@ -482,11 +451,9 @@ stopZ802 macro
 
 ; tells the Z80 to start again
 startZ802 macro
-
 	if OptimiseStopZ80=2
 	move.w	#0,(Z80_bus_request).l    ; start the Z80
 	endif
-
     endm
 
 ; ---------------------------------------------------------------------------
@@ -495,11 +462,7 @@ startZ802 macro
 
 waitZ80time macro time
 	move.w	#(time),d0
-
--	nop
-	nop
-	nop
-	nop
+-	nop4
 	dbf	d0,-
     endm
 
@@ -541,9 +504,9 @@ enableIntsSave macro
 ; ---------------------------------------------------------------------------
 
 disableScreen macro
-		move.w	(VDP_reg_1_command).w,d0
-		andi.b	#%10111111,d0
-		move.w	d0,(VDP_control_port).l
+	move.w	(VDP_reg_1_command).w,d0
+	andi.b	#%10111111,d0
+	move.w	d0,(VDP_control_port).l
     endm
 
 ; ---------------------------------------------------------------------------
@@ -551,100 +514,99 @@ disableScreen macro
 ; ---------------------------------------------------------------------------
 
 enableScreen macro
-		moveq	#%1000000,d0
-		or.w	(VDP_reg_1_command).w,d0
-		move.w	d0,(VDP_control_port).l
+	moveq	#%1000000,d0
+	or.w	(VDP_reg_1_command).w,d0
+	move.w	d0,(VDP_control_port).l
     endm
 
 ; ---------------------------------------------------------------------------
 ; long conditional jumps
 ; ---------------------------------------------------------------------------
 
-jhi:		macro loc
-		bls.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jhi macro loc
+	bls.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jcc:		macro loc
-		bcs.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jcc macro loc
+	bcs.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jhs:		macro loc
-		jcc	loc
-	    endm
+jhs macro loc
+	jcc	loc
+	endm
 
-jls:		macro loc
-		bhi.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jls macro loc
+	bhi.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jcs:		macro loc
-		bcc.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jcs macro loc
+	bcc.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jlo:		macro loc
-		jcs	loc
-	    endm
+jlo macro loc
+	jcs	loc
+	endm
 
-jeq:		macro loc
-		bne.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jeq macro loc
+	bne.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jne:		macro loc
-		beq.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jne macro loc
+	beq.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jgt:		macro loc
-		ble.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jgt macro loc
+	ble.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jge:		macro loc
-		blt.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jge macro loc
+	blt.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jle:		macro loc
-		bgt.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jle macro loc
+	bgt.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jlt:		macro loc
-		bge.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jlt macro loc
+	bge.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jpl:		macro loc
-		bmi.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
+jpl macro loc
+	bmi.s	.nojump
+	jmp	loc
+.nojump
+	endm
 
-jmi:		macro loc
-		bpl.s	.nojump
-		jmp	loc
-.nojump:
-	    endm
-
+jmi macro loc
+	bpl.s	.nojump
+	jmp	loc
+.nojump
+	endm
+; ---------------------------------------------------------------------------
 
 ; Function to point to a ROM address for an object
 ; Currently, should only be needed for RAM addresses
 make_objaddr function addr,(addr&$00FFFFFF)
-
 
 ; Function to determine an objects sprite rendering priority
 ; prid is boxed because priority constants would otherwise screw the assemblers math
@@ -676,10 +638,10 @@ _Kos_RunBitStream macro
 	dbra	d2,.skip
 	moveq	#7,d2				; Set repeat count to 8.
 	move.b	d1,d0				; Use the remaining 8 bits.
-	not.w	d3					; Have all 16 bits been used up?
+	not.w	d3				; Have all 16 bits been used up?
 	bne.s	.skip				; Branch if not.
-	move.b	(a0)+,d0				; Get desc field low-byte.
-	move.b	(a0)+,d1				; Get desc field hi-byte.
+	move.b	(a0)+,d0			; Get desc field low-byte.
+	move.b	(a0)+,d1			; Get desc field hi-byte.
 	if _Kos_UseLUT==1
 		move.b	(a4,d0.w),d0		; Invert bit order...
 		move.b	(a4,d1.w),d1		; ... for both bytes.
@@ -691,7 +653,7 @@ _Kos_ReadBit macro
 	if _Kos_UseLUT==1
 		add.b	d0,d0			; Get a bit from the bitstream.
 	else
-		lsr.b	#1,d0				; Get a bit from the bitstream.
+		lsr.b	#1,d0			; Get a bit from the bitstream.
 	endif
     endm
 ; ---------------------------------------------------------------------------
@@ -736,20 +698,20 @@ tribyte macro val
 ; ---------------------------------------------------------------------------
 
 ; macro to define a palette script pointer
-palscriptptr	macro header, data
+palscriptptr macro header,data
 	dc.w data-header, 0
 	dc.l header
 ._headpos :=	header
     endm
 
 ; macro to define a palette script header
-palscripthdr	macro palette, entries, value
+palscripthdr macro palette,entries,value
 	dc.w (palette)&$FFFF
 	dc.b entries-1, value
     endm
 
 ; macro to define a palette script data
-palscriptdata	macro frames, data
+palscriptdata macro frames,data
 .framec :=	frames-1
 	shift
 	dc.w ALLARGS
@@ -757,7 +719,7 @@ palscriptdata	macro frames, data
     endm
 
 ; macro to define a palette script data from an external file
-palscriptfile	macro frames, data
+palscriptfile macro frames,data
 .framec :=	frames-1
 	shift
 	binclude ALLARGS
@@ -765,18 +727,18 @@ palscriptfile	macro frames, data
     endm
 
 ; macro to repeat script from start
-palscriptrept	macro header
+palscriptrept macro header
 	dc.w -4
     endm
 
 ; macro to define loop from start for x number of times, then initialize with new header
-palscriptloop	macro header
+palscriptloop macro header
 	dc.w -8, header-._headpos
 ._headpos :=	header
     endm
 
 ; macro to run the custom script routine
-palscriptrun	macro header
+palscriptrun macro header
 	dc.w -$C
     endm
 ; ---------------------------------------------------------------------------
@@ -801,8 +763,10 @@ __LABEL__ label *
 	dc.b ((__LABEL___end - __LABEL__ - 1) / 5)
 	elseif SonicMappingsVer==2
 	dc.w ((__LABEL___end - __LABEL__ - 2) / 8)
-	else
+	elseif SonicMappingsVer==3
 	dc.w ((__LABEL___end - __LABEL__ - 2) / 6)
+	else
+	fatal "Undefined sprite mapping version"
 	endif
     endm
 
@@ -818,10 +782,12 @@ spritePiece macro xpos,ypos,width,height,tile,xflip,yflip,pal,pri
 	dc.w	((pri&1)<<15)|((pal&3)<<13)|((yflip&1)<<12)|((xflip&1)<<11)|(tile&$7FF)
 	dc.w	((pri&1)<<15)|((pal&3)<<13)|((yflip&1)<<12)|((xflip&1)<<11)|((tile>>1)&$7FF)
 	dc.w	xpos
-	else
+	elseif SonicMappingsVer==3
 	dc.w	((ypos&$FF)<<8)|(((width-1)&3)<<2)|((height-1)&3)
 	dc.w	((pri&1)<<15)|((pal&3)<<13)|((yflip&1)<<12)|((xflip&1)<<11)|(tile&$7FF)
 	dc.w	xpos
+	else
+	fatal "Undefined sprite mapping version"
 	endif
     endm
 
@@ -837,10 +803,12 @@ spritePiece2P macro xpos,ypos,width,height,tile,xflip,yflip,pal,pri,tile2,xflip2
 	dc.w	((pri&1)<<15)|((pal&3)<<13)|((yflip&1)<<12)|((xflip&1)<<11)|(tile&$7FF)
 	dc.w	((pri2&1)<<15)|((pal2&3)<<13)|((yflip2&1)<<12)|((xflip2&1)<<11)|(tile2&$7FF)
 	dc.w	xpos
-	else
+	elseif SonicMappingsVer==3
 	dc.w	((ypos&$FF)<<8)|(((width-1)&3)<<2)|((height-1)&3)
 	dc.w	((pri&1)<<15)|((pal&3)<<13)|((yflip&1)<<12)|((xflip&1)<<11)|(tile&$7FF)
 	dc.w	xpos
+	else
+	fatal "Undefined sprite mapping version"
 	endif
     endm
 
@@ -850,8 +818,10 @@ __LABEL__ label *
 	dc.b ((__LABEL___end - __LABEL__ - 1) / 2)
 	elseif SonicMappingsVer==2
 	dc.w ((__LABEL___end - __LABEL__ - 2) / 2)
-	else
+	elseif SonicMappingsVer==3
 	dc.w ((__LABEL___end - __LABEL__ - 4) / 2)
+	else
+	fatal "Undefined sprite mapping version"
 	endif
     endm
 
@@ -896,7 +866,7 @@ disableSRAM macro
 ; input: destination, width [cells], height [cells], terminate
 ; ---------------------------------------------------------------------------
 
-copyTilemap	macro loc,width,height,terminate
+copyTilemap macro loc,width,height,terminate
 	locVRAM	loc,d0
 	moveq	#(width/8-1),d1
 	moveq	#(height/8-1),d2
@@ -912,7 +882,7 @@ copyTilemap	macro loc,width,height,terminate
 ; input: destination, VRAM shift, width [cells], height [cells], terminate
 ; ---------------------------------------------------------------------------
 
-copyTilemap2	macro loc,address,width,height,terminate
+copyTilemap2 macro loc,address,width,height,terminate
 	locVRAM	loc,d0
 	moveq	#(width/8-1),d1
 	moveq	#(height/8-1),d2
@@ -929,7 +899,7 @@ copyTilemap2	macro loc,address,width,height,terminate
 ; input: destination, width [cells], height [cells], terminate
 ; ---------------------------------------------------------------------------
 
-copyTilemap3		macro loc,width,height,terminate
+copyTilemap3 macro loc,width,height,terminate
 	locVRAM	loc,d0
 	moveq	#(width/8-1),d1
 	moveq	#(height/8-1),d2
@@ -945,7 +915,7 @@ copyTilemap3		macro loc,width,height,terminate
 ; input: source, destination, width [cells], height [cells], terminate
 ; ---------------------------------------------------------------------------
 
-clearTilemap	macro loc,width,height,terminate
+clearTilemap macro loc,width,height,terminate
 	locVRAM	loc,d0
 	moveq	#(width/8-1),d1
 	moveq	#(height/8-1),d2
@@ -962,27 +932,25 @@ LoadArtUnc macro offset,size,vram
 	locVRAM	vram,VDP_control_port-VDP_data_port(a6)
 	lea	(offset).l,a0
 	moveq	#(size>>5)-1,d0
-
 .load
 	rept 8
-		move.l	(a0)+,VDP_data_port-VDP_data_port(a6)
+	move.l	(a0)+,VDP_data_port-VDP_data_port(a6)
 	endr
-		dbf	d0,.load
+	dbf	d0,.load
     endm
 ; ---------------------------------------------------------------------------
 
-LoadMapUnc	macro offset,size,arg,loc,width,height
+LoadMapUnc macro offset,size,arg,loc,width,height
 	lea	(offset).l,a0
 	move.w	#arg,d0
 	move.w	#((size)>>4),d1
-
 .load
 	rept 4
-		move.l	(a0)+,(a1)
-		add.w	d0,(a1)+
-		add.w	d0,(a1)+
+	move.l	(a0)+,(a1)
+	add.w	d0,(a1)+
+	add.w	d0,(a1)+
 	endr
-		dbf	d1,.load
+	dbf	d1,.load
 	locVRAM	loc,d0
 	moveq	#(width/8-1),d1
 	moveq	#(height/8-1),d2
@@ -1009,7 +977,7 @@ plreq macro toVRAMaddr,fromROMaddr
 ; input: index address, element size
 ; ---------------------------------------------------------------------------
 
-zonewarning:	macro loc,elementsize
+zonewarning macro loc,elementsize
 ._end:
 	if (._end-loc)-(ZoneCount*elementsize)<>0
 	fatal "Size of loc (\{(._end-loc)/elementsize}) does not match ZoneCount (\{ZoneCount})."
@@ -1025,19 +993,10 @@ abs macro destination
 .skip:
     endm
 
-    if 0|AllOptimizations
+; leftover from when some code used word-sized absolute value branching
 absw macro destination	; use a short branch instead
 	abs.ATTRIBUTE	destination
     endm
-    else
-; macro to replace the destination with its absolute value using a word-sized branch
-absw macro destination
-	tst.ATTRIBUTE	destination
-	bpl.w	.skip
-	neg.ATTRIBUTE	destination
-.skip:
-    endm
-    endif
 
 ; macro to move the absolute value of the source in the destination
 mvabs macro source,destination

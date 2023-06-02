@@ -85,7 +85,7 @@ UpdateHUD:
 
 		addq.b	#1,-(a1)				; increment 1/60s counter
 		moveq	#60,d0
-		btst	#6,(Graphics_flags).w
+		tst.b	(PAL_flag).w
 		beq.s	+
 		moveq	#50,d0
 +		cmp.b	(a1),d0					; check if passed 60
@@ -116,7 +116,7 @@ loc_DD9E:
 		move.b	(Timer_frame).w,d1 			; load centisecond
 		mulu.w	#100,d1
 		moveq	#60,d0
-		btst	#6,(Graphics_flags).w
+		tst.b	(PAL_flag).w
 		beq.s	+
 		moveq	#50,d0
 +		divu.w	d0,d1

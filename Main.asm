@@ -91,8 +91,8 @@ SRAMSupport:
 	if EnableSRAM=1
 CartRAM_Info:	dc.b "RA"
 CartRAM_Type:	dc.b %10100000|(BackupSRAM<<6)|(AddressSRAM<<3),$20	; 1B1AA0000 00100000
-CartRAMStartLoc:dc.l SRAM_Address|sram_start	; SRAM start
-CartRAMEndLoc:	dc.l SRAM_Address|sram_end	; SRAM end
+CartRAMStartLoc:dc.l SRAM_Address+sram_start	; SRAM start
+CartRAMEndLoc:	dc.l SRAM_Address+sram_end	; SRAM end
 	else
 CartRAM_Info:	dc.b "  "
 CartRAM_Type:	dc.w %10000000100000

@@ -13,7 +13,6 @@ DeformBgLayer:
 ; load player addresses
 		lea	(Player_1).w,a0
 		movea.w	playadd_addr(a0),a3
-		lea	hscroll_table(a3),a5
 		movea.w	pos_table(a3),a6
 
 		lea	(Camera_X_pos).w,a1
@@ -54,21 +53,21 @@ MoveCameraX:
 	; works around the issue by resetting the old position values to the
 	; current position (see 'Reset_Player_Position_Array').
 		move.w	(a1),d4
-		move.b	hscroll_table-hscroll_table(a5),d1	; should scrolling be delayed?
-		beq.s	.scrollNotDelayed			; if not, branch
+		move.b	hscroll_table(a3),d1		; should scrolling be delayed?
+		beq.s	.scrollNotDelayed		; if not, branch
 		lsl.b	#2,d1				; multiply by 4, the size of a position buffer entry
-		subq.b	#1,hscroll_table-hscroll_table(a5)	; reduce delay value
+		subq.b	#1,hscroll_table(a3)		; reduce delay value
 		moveq	#0,d2
 		move.b	pos_index(a3),d2
-		move.w	d2,d0
-		sub.b	hscroll_table_poscopy-hscroll_table(a5),d0
+		move.b	d2,d0
+		sub.b	hscroll_table_poscopy(a3),d0
 		cmp.b	d0,d1
 		blo.s	.doNotCap
 		move.b	d0,d1
 .doNotCap:
 		sub.b	d1,d2
 		move.w	(a6,d2.w),d0
-		andi.w	#$7FFF,d0
+	;	andi.w	#$7FFF,d0
 		bra.s	loc_1C0D6
 
 .scrollNotDelayed:
@@ -95,7 +94,7 @@ locret_1C0E6:
 loc_1C0E8:
 		cmpi.w	#-24,d0
 		bgt.s	.skip
-		move.w	#-24,d0
+		moveq	#-24,d0
 
 .skip
 		add.w	(a1),d0
@@ -108,7 +107,7 @@ loc_1C0E8:
 loc_1C0FC:
 		cmpi.w	#24,d0
 		blo.s	.skip2
-		move.w	#24,d0
+		moveq	#24,d0
 
 .skip2
 		add.w	(a1),d0

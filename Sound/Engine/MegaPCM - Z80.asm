@@ -657,10 +657,6 @@ MegaPCM_LastBankReached:
 
 zmake68kPtr  function addr,8000h+(addr&7FFFh)
 zmake68kBank function addr,(((addr&3F8000h)/8000h))
-
-DAC_Entry macro vPitch,vOffset,vFlags
-	db	vFlags			; 00h	- Flags
-
 	; Lemme explain what's going on here: the Z80 is clocked at 3579545Hz.
 	; 1Hz means 1 cycle per second. So, we divide the clock by the playback speed
 	; we want. This gets us a kind of delta: the amount of cycles the Z80 needs to occupy
@@ -678,7 +674,8 @@ DAC_Entry macro vPitch,vOffset,vFlags
 	; the sample twice (one for each nibble in a byte of sample data).
 	; An extra thing we do is perform rounding, to get more-accurate conversions, hence
 	; the '*10's and '+5'.
-
+DAC_Entry macro vPitch,vOffset,vFlags
+	db	vFlags			; 00h	- Flags
 	if vFlags&MegaPCM_dpcm
 		db	(((((((3579545*10)*2)/vPitch)-(214*10))/(13*2))+5)/10)+1	; 01h	- Pitch (DPCM-converted)
 	else

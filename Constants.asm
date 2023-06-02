@@ -17,6 +17,8 @@ Security_flag =				$A14101	;
 VDP_data_port =				$C00000
 VDP_control_port =			$C00004
 VDP_counter =				$C00008
+VDP_h_counter =				VDP_counter
+VDP_v_counter =				VDP_counter+1
 
 PSG_input =				$C00011
 
