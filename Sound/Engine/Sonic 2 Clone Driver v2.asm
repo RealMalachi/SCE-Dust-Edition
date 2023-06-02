@@ -467,13 +467,13 @@ DoPauseMusic:
 	beq.s	+
 	MSD_CheckACE
 	move.w	#MSD_OverlayValue,(MSD_OverlayPort)	; open MSD_OverlayPort
-	move.w	#bytes_to_word(msd_comm_pause,20),(MSD_CommandPort)
+	move.w	#bytes_to_word(msd_comm_pause,0),(MSD_CommandPort)
 	move.w	#0,(MSD_OverlayPort)			; close MSD_OverlayPort
 	MSD_CheckACE
 +
 	btst	#sndadd_redbook,(SoundDriverAddon_flags).w
 	beq.s	+
-	MCDSend	#_MCD_PauseTrack, #20		; Stop
+	MCDSend	#_MCD_PauseTrack,#0		; Stop
 +
 .bgm_noaddon
 	bsr.w	FMSilenceAll
