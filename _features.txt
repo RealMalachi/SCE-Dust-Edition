@@ -4,7 +4,7 @@ I think it's best to document the engine features, especially the changes
 
 ; ---------------------------------------------------------------------------
 Basics
-SCED is an upgraded version of SCE. It brings together a variety of code and techniques from Sonic hackers and general megadrive enthusiasts, to bring peak performance out of this ancient system
+SCED is an upgraded version of SCE. It brings together a variety of code and techniques from Sonic hackers and general megadrive enthusiasts, to bring peak performance out of this ancient system. I plan to use practically everything it's got, pushing emulators to there knees
 
 The engine targets the following in order of priority
 - Real SEGA Megadrive/Genesis hardware
@@ -12,15 +12,17 @@ The engine targets the following in order of priority
 - Kega Fusion 3.64 (not running Mode 1)
 - a variety of emulators, for much smaller checks
 
+; ---------------------------------------------------------------------------
+Audio
 
-
+Sound Driver - Clone Driver v2.7b/MegaPCM v1.1, modified with MD+ and MSU-MD support
 
 
 ; ---------------------------------------------------------------------------
 Controller types
 
 3-button controller
-- The standard, not much to say.
+- The standard, not much to say
 
 6-button controller (optional)
 - code adjusts between 3pad and 6pad handling automatically
@@ -29,13 +31,13 @@ Controller types
 
 ; ---------------------------------------------------------------------------
 SRAM (optional)
-- Contains a word-sized checksum, 8 letter string, byte-sized version number, and an additional byte which may see later use
+Contains a word-sized checksum, 8 letter string, byte-sized version number, and an additional byte which may see later use
 - If string isn't there, init SRAM
-- If checksum fails, it loads a backup onto the main SRAM
+- If checksum fails, load backup onto the main SRAM
 - If version number is an older version, convert SRAM to new type. If a newer version, do... something.
 
 I highly advise that final versions of a game only revise SRAM when absolutely necessary
-Currently no debug versions of SRAM, 
+Currently no debug versions of SRAM
 
 ; ---------------------------------------------------------------------------
 Misc
@@ -46,6 +48,7 @@ Addon detection, to enhance the systems capabilities
 ; ---------------------------------------------------------------------------
 Planned features
 
+Custom MSU-MD that I think you'll love
 Multitap (4WayPlay and/or Multitap, 4 player planned only)
 Keyboard controllers (XBand and/or Saturn Keyboard. Converts configurable inputs into 6pad controls, rather then true keyboard support)
 Wifi (MegaWifi and/or Retro.Link)

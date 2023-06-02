@@ -3,15 +3,31 @@ TODO
 ; ---------------------------------------------------------------------------
 Maintainance
 
+Fix a lot of a4-a6 register errors with players
+Make sound driver calls more module
+Made audio from addons more module
 Make SRAM easier to work with
 Remove 6pad related code when 6pad is disabled (more macros yeah...)
+
 Proper documentation on smaller engine changes
 - Merged object address and routine
 Emulator enhancements spreadsheet
 Emulator speedups
 
+Expand hardware checks
+- Add more emulators to the list (clownmdemu)
+- Flashcart detection
+- Test and enhance console frame speed check
+- Implement console revision check
+- Detect hardware mods
+- V30 60Hz by beloved
+- CRAM dot inaccuracy speedups
+
 ; ---------------------------------------------------------------------------
 Features
+
+Easier code and data file compression
+
 
 Improved Render_Sprites
 - If hardware can't render any more sprites but has objects to check are onscreen, use heavily simplified check
@@ -35,27 +51,21 @@ https://github.com/b1tsh1ft3r/retro.link
 
 
 More controller support
-; https://drive.google.com/uc?id=1cVtJnv0XdEhLINv73P13DpBlyvhprZpw - Xband
-
-
-Console revision and emulator checks, to lock or rework certain features that would have unintentional effects, or ease CPU when inaccurate emulation can benefit
-https://github.com/DevsArchive/genesis-emulator-detector, BCD flags accuracy, TAS on RAM
-Requirements
-- Emulator/Clone check
-- Flashcart detection (Everdrive could be used for multi-threading)
-- Console speed check (S3Ks poorly named "Detect_PAL" is a good start)
-- Console revision check (at least enough to determine TAS)
-
-Advantages
-- load an error screen when you know the emulator doesn't support certain features, like mappers or wifi
-- better redbook audio looping
-- V30 60Hz by beloved
-- less Z80 pauses; higher quality PCM
-- CRAM dot inaccuracy speedups
+- EA and Sega MultiTap -
+- Xband keyboard if I can - https://github.com/Cinghialotto/xband/blob/master/Keyboard.zip
+https://drive.google.com/uc?id=1cVtJnv0XdEhLINv73P13DpBlyvhprZpw
+- Saturn keyboard - https://plutiedev.com/saturn-keyboard
+- RetroLink keyboard if that happens
+- Should probably also get mouse support - 
 
 
 Piracy checks? I don't want to stop players playing the game though, just a disclaimer
-- If the game doesn't have SRAM and succeeds a write
+- If the ROM detects mappers, SRAM, or enhancement chips it shouldn't have
 - If the ROM size is more then expected
 
-Expand on MCD Mode 1 support. Ideally should only be for enhancements, such as multi-threading 3D rendering
+
+Expand on MCD Mode 1 capabilities
+- RF5C68 support (the SNES-like sound chip). Sonic CD serves as a good reference, see https://github.com/DevsArchive/sonic-cd-disassembly/tree/main/Sound%20Drivers
+
+
+Experiment with SMS OPLL support on Megadrive
