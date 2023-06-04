@@ -24,14 +24,15 @@ Obj_MonitorInit:
 		move.w	#bytes_to_word(30/2,30/2),y_radius(a0)	; set y_radius and x_radius
 		move.l	#Map_Monitor,mappings(a0)
 		move.w	#make_art_tile(ArtTile_Monitors,0,0),art_tile(a0)
-		ori.b	#4,render_flags(a0)
+		ori.b	#ren_camerapos|ren_excessive,render_flags(a0)
 		move.w	#make_priority(3),priority(a0)
-		move.w	#bytes_to_word(32/2,28/2),height_pixels(a0)		; set height and width
+		move.w	#bytes_to_word(64/2,64/2),height_pixels(a0)	; set height and width (excessive test)
+	;	move.w	#bytes_to_word(32/2,28/2),height_pixels(a0)	; set height and width
 		move.w	respawn_addr(a0),d0				; Get address in respawn table
-		beq.s	.notbroken						; If it's zero, it isn't remembered
-		movea.w	d0,a2							; Load address into a2
-		btst	#0,(a2)								; Is this monitor broken?
-		beq.s	.notbroken						; If not, branch
+		beq.s	.notbroken					; If it's zero, it isn't remembered
+		movea.w	d0,a2						; Load address into a2
+		btst	#0,(a2)						; Is this monitor broken?
+		beq.s	.notbroken					; If not, branch
 		move.b	#$B,mapping_frame(a0)			; Use 'broken monitor' frame
 		move.l	#Sprite_OnScreen_Test,address(a0)
 		rts

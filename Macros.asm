@@ -746,7 +746,15 @@ palscriptrun macro header
 ; ---------------------------------------------------------------------------
 
 SonicMappingsVer := 3
-
+	if SonicMappingsVer=1
+spritemap_size = 5
+	elseif SonicMappingsVer=2
+spritemap_size = 8
+	elseif SonicMappingsVer=3
+spritemap_size = 6
+	else
+	fatal "Undefined object mapping type!"
+	endif
 mappingsTable macro {INTLABEL}
 current_mappings_table := __LABEL__
 __LABEL__ label *

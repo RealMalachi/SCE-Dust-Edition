@@ -47,12 +47,24 @@ Render_Sprites_ObjLoop:
 		move.b	render_flags(a0),d6
 		move.w	x_pos(a0),d0
 		move.w	y_pos(a0),d1
+		btst	#renbit_wordframe,d6	; is the rendering handled by a box?
+		beq.s	+
+		moveq	#0,d3
+		move.b	render_box(a0),d3
+		move.w	d3,d2
+		swap	d2
+		move.w	d3,d2
+		bra.s	++
++
+		moveq	#0,d2
+		move.b	height_pixels(a0),d2	; do height_pixels first because it's handled last
+		swap	d2
+		move.b	width_pixels(a0),d2
++
 		btst	#6,d6					; is the multi-draw flag set?
 		bne.w	Render_Sprites_MultiDraw		; if it is, branch
 		btst	#2,d6					; is this to be positioned by screen coordinates?
 		beq.s	Render_Sprites_ScreenSpaceObj		; if not, branch
-		moveq	#0,d2
-		move.b	width_pixels(a0),d2
 		sub.w	(a3),d0
 		move.w	d0,d3
 		add.w	d2,d3					; is the object right edge to the left of the screen?
@@ -62,7 +74,7 @@ Render_Sprites_ObjLoop:
 		cmpi.w	#320,d3					; is the object left edge to the right of the screen?
 		bge.s	Render_Sprites_NextObj			; if it is, branch
 		sub.w	4(a3),d1
-		move.b	height_pixels(a0),d2
+		swap	d2					; swap to height_pixels
 		add.w	d2,d1
 	;	bmi.s	Render_Sprites_NextObj			; if it is, branch
 		and.w	(Screen_Y_wrap_value).w,d1
@@ -83,14 +95,20 @@ Render_Sprites_ScreenSpaceObj:
 		movea.l	mappings(a0),a1
 		moveq	#0,d4
 		btst	#5,d6					; is the static mappings flag set?
-		bne.s	+					; if it is, branch
+		bne.s	.static					; if it is, branch
 		move.b	mapping_frame(a0),d4
 		add.w	d4,d4
+		btst	#renbit_wordframe,d6			; is the rendering handled by a box?
+		beq.s	.bytemap
+		move.w	mapping_frame_word(a0),d4
+		add.w	d4,d4
+.bytemap
 		adda.w	(a1,d4.w),a1
 		move.w	(a1)+,d4
 		subq.w	#1,d4					; get number of pieces
 		bmi.s	Render_Sprites_NextObj	; if there are 0 pieces, branch
-+		move.w	art_tile(a0),d5
+.static
+		move.w	art_tile(a0),d5
 		bsr.w	SpriteRenderProcess
 
 Render_Sprites_MultiDraw_TestIfDone:
@@ -135,12 +153,10 @@ Render_Sprites_NextLevel:
 ; ---------------------------------------------------------------------------
 
 Render_Sprites_MultiDraw:
-		moveq	#0,d2
 		move.w	#128,d4		; also clears high byte for later
 		btst	#2,d6						; is this to be positioned by screen coordinates?
 		bne.s	Render_Sprites_MultiDraw_CameraSpaceObj		; if not, branch
 	; check if object is within X bounds
-		move.b	width_pixels(a0),d2
 		sub.w	d4,d0
 		move.w	d0,d3
 		add.w	d2,d3
@@ -150,7 +166,7 @@ Render_Sprites_MultiDraw:
 		cmpi.w	#320,d3
 		bge.s	Render_Sprites_NextObj
 	; check if object is within Y bounds
-		move.b	height_pixels(a0),d2
+		swap	d2					; swap to height_pixels
 		sub.w	d4,d1
 		move.w	d1,d3
 		add.w	d2,d3
@@ -163,9 +179,7 @@ Render_Sprites_MultiDraw:
 ; ---------------------------------------------------------------------------
 
 Render_Sprites_MultiDraw_CameraSpaceObj:
-	;	moveq	#0,d2
 	; check if object is within X bounds
-		move.b	width_pixels(a0),d2
 		sub.w	(a3),d0
 		move.w	d0,d3
 		add.w	d2,d3
@@ -175,7 +189,7 @@ Render_Sprites_MultiDraw_CameraSpaceObj:
 		cmpi.w	#320,d3
 		bge.w	Render_Sprites_NextObj
 	; check if object is within Y bounds
-		move.b	height_pixels(a0),d2
+		swap	d2					; swap to height_pixels
 		sub.w	4(a3),d1
 		add.w	d2,d1
 	;	bmi.s	Render_Sprites_NextObj
@@ -201,16 +215,24 @@ Render_Sprites_MultiDraw_CameraSpaceObj:
 	;	bsr.w	SpriteRenderProcess
 	;	bra.s	.staticont
 +
+		btst	#renbit_wordframe,d6	; is the rendering handled by a box?
+		beq.s	.bytemap
+		move.w	mapping_frame_word(a0),d4
+		beq.s	+
+		bra.s	.wordmap
+.bytemap
 		move.b	mapping_frame(a0),d4
 		beq.s	+
+.wordmap
 		add.w	d4,d4
+
 		lea	(a2),a1
 		adda.w	(a1,d4.w),a1
 		move.w	(a1)+,d4
 		subq.w	#1,d4
 		bmi.s	+
 		move.w	d6,d3
-		bsr.w	SpriteRenderProcess_Excessive
+		bsr.w	SpriteRenderProcess_OriginalExcessive
 .staticont
 		tst.w	d7
 		bmi.w	Render_Sprites_CantAnymore
@@ -249,7 +271,7 @@ Render_Sprites_MultiDraw_CameraSpaceObj:
 		subq.w	#1,d4
 		bmi.s	+
 		move.w	d6,-(sp)
-		bsr.w	SpriteRenderProcess_Excessive
+		bsr.w	SpriteRenderProcess_OriginalExcessive
 .staticont2
 		move.w	(sp)+,d6
 +
@@ -269,6 +291,8 @@ sprprocess_xbugfix macro
 	endm
 
 SpriteRenderProcess:
+		btst	#renbit_excessive,d6
+		bne.w	SpriteRenderProcess_Excessive
 		lsr.b	#1,d6
 		bcs.s	.oxny_checky
 		lsr.b	#1,d6
@@ -384,7 +408,7 @@ SpriteRenderProcess:
 
 ; =============== S U B R O U T I N E =======================================
 
-SpriteRenderProcess_Excessive:
+SpriteRenderProcess_OriginalExcessive:
 		lsr.b	#1,d6
 		bcs.s	.oxny_checky
 		lsr.b	#1,d6
@@ -557,3 +581,119 @@ SpriteRenderProcess_Excessive:
 		addq.w	#4,a1
 		dbf	d4,.nxoy_loop
 		rts
+; =============== S U B R O U T I N E =======================================
+; render a bit more excessively; stops rendering individual sprites if it's offscreen
+; Trivia: S3K's multidraw had a lesser version of this. That's why the title card and end results used multidraw
+excessrender_macro macro xflip,yflip
+		move.w	d3,-(sp)	; save d3
+.loop:
+; y_pos
+		move.b	(a1)+,d2	; get mapping y_pos
+		ext.w	d2		; extend
+		move.b	(a1),d6		; Get tile amount
+		move.b	.ydata(pc,d6.w),d6	; get actual size of tiles
+	if yflip=1
+		neg.w	d2		; reverse mapping position
+		sub.w	d6,d2		; subtract by tile amount
+	endif
+		add.w	d1,d2		; add object y_pos
+
+		move.w	#128,d3		;
+		sub.w	d6,d3		; sub by tile amount
+		cmp.w	d3,d2
+		bls.s	.yfail
+		move.w	(ScreenSize_Vert).w,d3	; get vertical screen size -1
+		addi.w	#128+1,d3		; add VDP offset, account for -1
+		cmp.w	d3,d2		; compare that to the x_pos of the sprite
+		bge.s	.yfail		; if offscreen, don't render
+; success
+		move.w	d2,(a6)+	; set y_pos
+		move.b	(a1)+,d6	; get tile amount for x_pos flip check
+		move.b	d6,(a6)+	; set tile amount
+		addq.w	#1,a6		; skip sprite link
+; art_tile
+		move.w	(a1)+,d2	; get mapping art_tile
+		add.w	d5,d2		; add object art_tile
+	if xflip|yflip<>0	;
+		eori.w	#(xflip<<11)+(yflip<<12),d2	; flip art_tile
+	endif
+		move.w	d2,(a6)+	; send final copy
+; x_pos
+		move.w	(a1)+,d2	; get mapping x_pos
+		move.b	.xdata(pc,d6.w),d6	; get actual size of tiles	
+	if xflip=1
+		neg.w	d2		; reverse mapping position
+		sub.w	d6,d2		; subtract by tile amount
+	endif
+		add.w	d0,d2		; add object x_pos
+		move.w	#128,d3		;
+		sub.w	d6,d3		; sub by tile amount
+		cmp.w	d3,d2
+		bls.s	.xfail
+		move.w	(ScreenSize_Horz).w,d3	; get horizontal screen size -1
+		addi.w	#128+1,d3		; add VDP offset, account for -1
+		cmp.w	d3,d2		; compare that to the x_pos of the sprite
+		bge.s	.xfail		; if offscreen, don't render
+		move.w	d2,(a6)+	; set x_pos
+		subq.w	#1,d7		; count down successful sprite loads
+		dbmi	d4,.loop	; if d7 hits bmi range, end. If not, decrement d4. If d4 is now 0, end
+.endcheckrndr
++		move.w	(sp)+,d3; restore d3
+		rts
+.xfail:
+; x happens at the end of rendering
+; all the mapping frame was incremented and almost all the other sprite data was written
+; in the case something else doesn't overwrite this, it removes the data at the end of rendering
+		subq.w	#8-2,a6
+		dbf	d4,.loop
+		bra.s	.endcheckrndr
+.yfail:
+; y happens at the start of rendering
+; only a byte of the frame was incremented, and nothing was written
+		addq.w	#spritemap_size-1,a1
+		dbf	d4,.loop
+		bra.s	.endcheckrndr
+	endm
+
+SpriteRenderProcess_Excessive:
+	lsr.b	#1,d6
+	bcs.w	SpriteRenderProcess_Excessive_noXnoY.xflip
+	lsr.b	#1,d6
+	bcs.w	JustADotResetter_ExRndr.yflip
+;	btst	#Render_XFlip,d6		; is object horizontally flipped?
+;	bne.w	SpriteRenderProcess_Excessive_noXnoY.xflip	; if so, render as such
+;	btst	#Render_YFlip,d6		; is object vertically flipped?
+;	bne.w	JustADotResetter_ExRndr.yflip	; if so, render as such
+SpriteRenderProcess_Excessive_noXnoY:
+	excessrender_macro 0,0
+.ydata:
+	rept 4
+	dc.b 8,$10,$18,$20
+	endm
+.xdata:
+	dc.b   8,  8,  8,  8
+	dc.b $10,$10,$10,$10
+	dc.b $18,$18,$18,$18
+	dc.b $20,$20,$20,$20
+.xflip:
+	lsr.b	#1,d6
+	bcs.w	JustADotResetter_ExRndr.xyflip
+;	btst	#Render_YFlip,d6	; is object also vertically flipped?
+;	bne.w	JustADotResetter_ExRndr.xyflip	; if so, render as such
+	excessrender_macro 1,0
+JustADotResetter_ExRndr:	; small space optimization for data
+.xyflip:
+	excessrender_macro 1,1
+.ydata:
+	rept 4
+	dc.b 8,$10,$18,$20
+	endm
+.xdata:
+	dc.b   8,  8,  8,  8
+	dc.b $10,$10,$10,$10
+	dc.b $18,$18,$18,$18
+	dc.b $20,$20,$20,$20
+.yflip:
+	excessrender_macro 0,1
+; End of function SpriteRenderProcess_Excessive
+; ---------------------------------------------------------------------------
