@@ -1005,6 +1005,76 @@ mvabs macro source,destination
 	neg.ATTRIBUTE	destination
 .skip:
     endm
+
+; Subroutine to calculate unsigned modulo division
+; you should really strive for pre-calculated modulo, but eh
+; TODO: find better method for 'and' optimization
+;	modu	d1,d0
+;	modu	d0,d1
+;	modu	(a0),(a1)
+;	modu	#0,d1
+;	modu	#3,d1
+;	modu	#$3,d1
+modu macro mod,num,safety
+	  if ("mod"="#0")	; sort edgecase with mod by 0
+	clr.w	num
+;	  elseif ("mod"="#$1")||("mod"="#$3")||("mod"="#$7")||("mod"="#$F")||("mod"="#$1F")||("mod"="#$3F")||("mod"="#$7F")||("mod"="#$FF")||("mod"="#$1FF")||("mod"="#$3FF")||("mod"="#$7FF")||("mod"="#$FFF")||("mod"="#$1FFF")||("mod"="#$3FFF")||("mod"="#$7FFF")||("mod"="#$FFFF")||("mod"="#1")||("mod"="#3")||("mod"="#7")||("mod"="#$F")||("mod"="#$1F")||("mod"="#$3F")||("mod"="#$7F")||("mod"="#$FF")||("mod"="#$1FF")||("mod"="#$3FF")||("mod"="#$7FF")||("mod"="#$FFF")||("mod"="#$1FFF")||("mod"="#$3FFF")||("mod"="#$7FFF")||("mod"="#$FFFF")
+;	and.w	mod,num
+	  elseif safety = 2	; TODO: test ; additional mode
+	    if ("mod"="d0") || ("num"="d1")	; fixes edgecase where d0 is mod or d1 is num
+	move.w	num,d2		; get copy of number
+	move.w	mod,d1
+	move.w	d2,d0
+	  else
+	    if ("mod"<>"d1")
+	move.w	mod,d1
+	    endif
+	    if ("num"<>"d0")
+	move.w	num,d0
+	    endif
+	  endif
+-	sub.w	d1,d0
+	bcc.s	-
+	add.w	d1,d0
+	  else
+; alright, here's where the fun begins...
+; fundamentally, modulo is figuring out the remainder of a division
+	  if ("mod"="d0") || ("num"="d1")	; fixes edgecase where d0 is mod or d1 is num
+	move.w	num,d2		; get copy of number
+	move.w	mod,d1
+	    if ("safety"<>"")
+	bne.s	.modsafe
+	clr.w	num
+	bra.s	.modend
+.modsafe
+	    endif
+	move.w	d2,d0
+	  else
+	    if ("mod"<>"d1")
+	move.w	mod,d1
+	      if ("safety"<>"")
+	        if ("mod"<>"d1")
+	tst.w	d1
+	        endif
+	bne.s	.modsafe
+	clr.w	num
+	bra.s	.modend
+.modsafe
+	      endif
+	    endif
+	    if ("num"<>"d0")
+	move.w	num,d0
+	    endif
+	move.w	d0,d2		; get copy of number
+	  endif
+	divu.w	d1,d0		; 76-136 ; divide mod from number
+	mulu.w	d1,d0		; 38-70  ; multiply new number with mod to get number that lacks mod
+	sub.w	d0,d2		; subtract mod lacking number from original to get mod
+	    if ("safety"<>"")
+.modend
+	    endif
+	  endif
+	endm
 ; ---------------------------------------------------------------------------
 
 ; macro to declare an offset table
