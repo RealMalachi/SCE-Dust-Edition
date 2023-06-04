@@ -51,6 +51,11 @@ VInt_Done:
 	endif
 		movem.l	(sp)+,d0-a6							; return saved registers from the stack
 		rte
+ExtInt:
+		movem.l	d0-a6,-(sp)
+	sfx sfx_Menu
+		movem.l	(sp)+,d0-a6
+		rte
 
 ; ---------------------------------------------------------------------------
 ; Lag

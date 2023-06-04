@@ -1,7 +1,6 @@
 ; ===========================================================================
 ; Sonic: TEST GAME
 ; ===========================================================================
-
 ; Assembly options
 ; debug
 GameDebug:		= 1	; if 1, enable debug mode for Sonic
@@ -27,6 +26,7 @@ AllOptimizations:	= 1	; if 1, enables all optimizations
 EnableSRAM:		= 1	; change to 1 to enable SRAM
 BackupSRAM:		= 0
 AddressSRAM:		= 3	; 0 = odd+even; 2 = even only; 3 = odd only
+
 EnableModem:		= 0	; change to 1 to enable modem support (not implemented)
 EnableWifi:		= 0	; change to 1 to enable wifi support
 
@@ -47,19 +47,18 @@ CompCollision:		= 0	;
 ; https://plutiedev.com/rom-header
 ; https://drive.google.com/uc?id=14WsmPYLmKawSQoSj0LPu2eZNVBgyfMwP	; header doc on pages 8-9, 41-42,46(cringe)-47
 
-
 StartOfROM:
 	if * <> 0
 	fatal "StartOfROM was $\{*} but it should be 0"
 	endif
-Vectors:
+Vectors:	; https://wiki.megadrive.org/index.php?title=68k_vector_table
 	dc.l System_stack, EntryPoint, BusError, AddressError	; 0
 	dc.l IllegalInstr, ZeroDivide, ChkInstr, TrapvInstr	; 4
 	dc.l PrivilegeViol, Trace, Line1010Emu, Line1111Emu	; 8
 	dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept	; 12
 	dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept	; 16
 	dc.l ErrorExcept, ErrorExcept, ErrorExcept, ErrorExcept	; 20
-	dc.l ErrorExcept, ErrorTrap, ErrorTrap, ErrorTrap	; 24
+	dc.l ErrorExcept, ErrorTrap, ExtInt, ErrorTrap		; 24
 	dc.l H_int_jump, ErrorTrap, V_int_jump, ErrorTrap	; 28
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 32
 	dc.l ErrorTrap, ErrorTrap, ErrorTrap, ErrorTrap		; 36
@@ -89,17 +88,15 @@ RamStartLoc:	dc.l (RAM_start&$FFFFFF)
 RamEndLoc:	dc.l (RAM_start&$FFFFFF)+$FFFF
 SRAMSupport:
 	if EnableSRAM=1
-CartRAM_Info:	dc.b "RA"
-CartRAM_Type:	dc.b %10100000|(BackupSRAM<<6)|(AddressSRAM<<3),$20	; 1B1AA0000 00100000
+CartRAM_Info:	dc.b "RA"	; enabled
+	else
+CartRAM_Info:	dc.b "  "	; disabled
+	endif
+CartRAM_Type:	dc.b %10000000|(BackupSRAM<<6)|(EnableSRAM<<5)|(AddressSRAM<<3),$20	; 1BEAA0000 00100000
 CartRAMStartLoc:dc.l SRAM_Address+sram_start	; SRAM start
 CartRAMEndLoc:	dc.l SRAM_Address+sram_end	; SRAM end
-	else
-CartRAM_Info:	dc.b "  "
-CartRAM_Type:	dc.w %10000000100000
-CartRAMStartLoc:dc.l $20202020
-CartRAMEndLoc:	dc.l $20202020
-	endif
-
+;CartRAMStartLoc:dc.l $20202020
+;CartRAMEndLoc:	dc.l $20202020
 Modem_Info:
 	if EnableModem=1
 	dc.b "MO"		; indicator of modem support
