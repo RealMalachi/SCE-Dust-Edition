@@ -72,7 +72,7 @@ DetectHardware:
 		beq.s	.end			; if so, branch
 		dbf	d1,-
 ; check systems that don't support V30 at all
-		moveq	#signextendB(0),d4
+		moveq	#0,d4
 		moveq	#(VDP_V28_emu.end-VDP_V28_emu)-1,d1
 		lea	VDP_V28_emu(pc),a1
 -		move.b	(a1)+,d2
@@ -83,6 +83,18 @@ DetectHardware:
 		moveq	#signextendB(1<<hard_v3050),d4
 .end
 		or.b	d4,d0
+
+		moveq	#signextendB(1<<hard_cramdot),d4
+		move.b	(Emulator_ID).w,d3	; get emulator id
+		moveq	#(BlastProc_NoList.end-BlastProc_NoList)-1,d1
+		lea	BlastProc_NoList(pc),a1
+-		move.b	(a1)+,d2
+		cmp.b	d3,d2			; is the detected emulator in the list?
+		beq.s	.end2			; if so, branch
+		dbf	d1,-
+		moveq	#0,d4
+.end2
+		or.b	d4,d0
 		rts
 
 ; list of all the emulators that support V30 60Hz...
@@ -92,6 +104,10 @@ VDP_V30_emu:
 ; ...or don't support V30 at all
 VDP_V28_emu:
 	dc.b EMU_GENECYST	; TODO: Verify Genecyst
+.end
+; list of all emulators that don't support CRAM dots, and by proxy, blast processing
+BlastProc_NoList:
+	dc.b EMU_KEGA,EMU_GPGX,EMU_PICODRIVE,EMU_GENS,EMU_REGEN,EMU_CLOWNMDEMU,EMU_GENECYST,EMU_STEAM
 .end
 	even
 ; ---------------------------------------------------------------------------

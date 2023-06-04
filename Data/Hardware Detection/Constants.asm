@@ -1,5 +1,4 @@
 ; ---------------------------------------------------------------------------
-
 -	; used for !org
 ; Hardware capabilities bitfield.
 ; A bunch of flags to approximately determine which machine revision you own, separately from determining if you have hardware at all
@@ -7,6 +6,8 @@
 hard_tasmanian		ds.b 1		; TAS memory error flag
 hard_v3050		ds.b 1		; note: set if hardware support V30 at all
 hard_v3060		ds.b 1
+hard_cramdot		ds.b 1		; set if CRAM dots aren't displayed
+hard_opll		ds.b 1		; TODO: test if it's even possible ; YM2413 detected
 	dephase
 ; Addons bitfield
 ; I feel like there are gonna be more in the future. So, the code is built to be safely extended into a long
@@ -15,7 +16,7 @@ addon_32x		ds.b 1	; TODO: Make use
 addon_cdhardware	ds.b 1	; real MegaCD hardware
 addon_mcd		ds.b 1	; MegaCD functionality, but not strictly real hardware (such as flashcarts)
 addon_everdrive		ds.b 1	; TODO: Everything ; Everdrive Pro
-addon_megasd		ds.b 1	; TODO: Everything
+addon_megasd		ds.b 1	; MegaSD functionality
 addon_retrolink		ds.b 1	; TODO: Make use
 addon_megawifi		ds.b 1	; TODO: Everything
 addon_wifi		ds.b 1	; TODO: Make use ; some form of wifi
@@ -36,6 +37,7 @@ EMU_PICODRIVE		ds.b 1		; Picodrive
 EMU_FLASHBACK		ds.b 1		; AtGames Flashback
 EMU_FIRECORE		ds.b 1		; AtGames Firecore
 EMU_GENECYST		ds.b 1		; Genecyst
+EMU_CLOWNMDEMU		ds.b 1		; TODO: Detection ; ClownMdEmu v0.1-v0.4.2
 	dephase
 	!org -
 ; ---------------------------------------------------------------------------
