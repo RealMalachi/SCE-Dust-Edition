@@ -61,10 +61,23 @@ Render_Sprites_ObjLoop:
 		swap	d2
 		move.b	width_pixels(a0),d2
 +
-		btst	#6,d6					; is the multi-draw flag set?
-		bne.w	Render_Sprites_MultiDraw		; if it is, branch
-		btst	#2,d6					; is this to be positioned by screen coordinates?
-		beq.s	Render_Sprites_ScreenSpaceObj		; if not, branch
+		btst	#renbit_multidraw,d6			; is the multi-draw flag set?
+		bne.w	Render_Sprites_MultiDraw		; if so, branch
+
+		btst	#renbit_excessive,d6	; if excessive, skip position rendering check
+		beq.s	+
+		btst	#renbit_camerapos,d6			; is this to be positioned by screen coordinates?
+		beq.s	Render_Sprites_ExcessiveSkip		; if so, branch
+		sub.w	(a3),d0
+		sub.w	4(a3),d1
+		move.w	#128,d4
+		add.w	d4,d0		; adjust positions for VDP
+		add.w	d4,d1
+		and.w	(Screen_Y_wrap_value).w,d1
+		bra.s	Render_Sprites_ExcessiveSkip
++
+		btst	#renbit_camerapos,d6			; is this to be positioned by screen coordinates?
+		beq.s	Render_Sprites_ScreenSpaceObj		; if so, branch
 		sub.w	(a3),d0
 		move.w	d0,d3
 		add.w	d2,d3					; is the object right edge to the left of the screen?
@@ -89,12 +102,14 @@ Render_Sprites_ObjLoop:
 		add.w	d4,d1
 
 Render_Sprites_ScreenSpaceObj:
-		ori.b	#$80,render_flags(a0)			; set on-screen flag
+		ori.b	#ren_onscreen,render_flags(a0)		; set on-screen flag
+
+Render_Sprites_ExcessiveSkip:
 		tst.w	d7					; have we exceeded the amount of sprites it can handle?
 		bmi.s	Render_Sprites_CantAnymore		; if so, branch
 		movea.l	mappings(a0),a1
 		moveq	#0,d4
-		btst	#5,d6					; is the static mappings flag set?
+		btst	#renbit_static,d6			; is the static mappings flag set?
 		bne.s	.static					; if it is, branch
 		move.b	mapping_frame(a0),d4
 		add.w	d4,d4
@@ -154,7 +169,7 @@ Render_Sprites_NextLevel:
 
 Render_Sprites_MultiDraw:
 		move.w	#128,d4		; also clears high byte for later
-		btst	#2,d6						; is this to be positioned by screen coordinates?
+		btst	#renbit_camerapos,d6				; is this to be positioned by screen coordinates?
 		bne.s	Render_Sprites_MultiDraw_CameraSpaceObj		; if not, branch
 	; check if object is within X bounds
 		sub.w	d4,d0
@@ -207,13 +222,13 @@ Render_Sprites_MultiDraw_CameraSpaceObj:
 		tst.w	d7					; have we exceeded the amount of sprites it can handle?
 		bmi.w	Render_Sprites_CantAnymore		; if so, branch
 		move.w	art_tile(a0),d5
-		movea.l	mappings(a0),a2
-	;	btst	#5,d6					; is the static mappings flag set?
-	;	beq.s	+					; if not, branch
-	;	moveq	#0,d4
-	;	move.w	d6,d3
-	;	bsr.w	SpriteRenderProcess
-	;	bra.s	.staticont
+		movea.l	mappings(a0),a1
+		btst	#renbit_static,d6			; is the static mappings flag set?
+		beq.s	+					; if not, branch
+		moveq	#0,d4
+		move.w	d6,d3
+		bsr.w	SpriteRenderProcess
+		bra.s	.staticont
 +
 		btst	#renbit_wordframe,d6	; is the rendering handled by a box?
 		beq.s	.bytemap
@@ -225,8 +240,6 @@ Render_Sprites_MultiDraw_CameraSpaceObj:
 		beq.s	+
 .wordmap
 		add.w	d4,d4
-
-		lea	(a2),a1
 		adda.w	(a1,d4.w),a1
 		move.w	(a1)+,d4
 		subq.w	#1,d4
@@ -241,13 +254,13 @@ Render_Sprites_MultiDraw_CameraSpaceObj:
 		move.w	mainspr_childsprites(a0),d3
 		subq.w	#1,d3
 		bcs.w	Render_Sprites_NextObj
-		lea	sub2_x_pos(a0),a0
+		lea	sub2_x_pos(a0),a2
 .multiloop
-		move.w	(a0)+,d0
-		move.w	(a0)+,d1
+		move.w	(a2)+,d0
+		move.w	(a2)+,d1
 		moveq	#128-8,d4	; also clears high byte for later
-		btst	#2,d6				; is this to be positioned by screen coordinates?
-		beq.s	+				; if not, branch
+		btst	#renbit_camerapos,d6		; is this to be positioned by screen coordinates?
+		beq.s	+				; if so, branch
 		sub.w	(a3),d0
 		sub.w	4(a3),d1
 		addq.w	#8,d4		;
@@ -255,17 +268,17 @@ Render_Sprites_MultiDraw_CameraSpaceObj:
 		add.w	d4,d1		; the camera coord versions are pre-adjusted, then?
 		and.w	(Screen_Y_wrap_value).w,d1
 +
-		addq.w	#1,a0
-	;	btst	#5,d6					; is the static mappings flag set?
-	;	beq.s	+					; if not, branch
-	;	moveq	#0,d4
-	;	move.w	d6,-(sp)
-	;	bsr.w	SpriteRenderProcess
-	;	bra.s	.staticont2
+		addq.w	#1,a2
+		movea.l	mappings(a0),a1
+		btst	#renbit_static,d6		; is the static mappings flag set?
+		beq.s	+				; if not, branch
+		moveq	#0,d4
+		move.w	d6,-(sp)
+		bsr.w	SpriteRenderProcess
+		bra.s	.staticont2
 +
-		move.b	(a0)+,d4
+		move.b	(a2)+,d4
 		add.w	d4,d4
-		lea	(a2),a1
 		adda.w	(a1,d4.w),a1
 		move.w	(a1)+,d4
 		subq.w	#1,d4
@@ -409,6 +422,8 @@ SpriteRenderProcess:
 ; =============== S U B R O U T I N E =======================================
 
 SpriteRenderProcess_OriginalExcessive:
+		btst	#renbit_excessive,d6
+		bne.w	SpriteRenderProcess_Excessive
 		lsr.b	#1,d6
 		bcs.s	.oxny_checky
 		lsr.b	#1,d6
@@ -586,7 +601,8 @@ SpriteRenderProcess_OriginalExcessive:
 ; Trivia: S3K's multidraw had a lesser version of this. That's why the title card and end results used multidraw
 excessrender_macro macro xflip,yflip
 		move.w	d3,-(sp)	; save d3
-.loop:
+		move.w	d7,-(sp)	; save d7 (for onscreen check)
+.loop
 ; y_pos
 		move.b	(a1)+,d2	; get mapping y_pos
 		ext.w	d2		; extend
@@ -601,11 +617,11 @@ excessrender_macro macro xflip,yflip
 		move.w	#128,d3		;
 		sub.w	d6,d3		; sub by tile amount
 		cmp.w	d3,d2
-		bls.s	.yfail
+		blo.s	.yfail
 		move.w	(ScreenSize_Vert).w,d3	; get vertical screen size -1
 		addi.w	#128+1,d3		; add VDP offset, account for -1
 		cmp.w	d3,d2		; compare that to the x_pos of the sprite
-		bge.s	.yfail		; if offscreen, don't render
+		bhs.s	.yfail		; if offscreen, don't render
 ; success
 		move.w	d2,(a6)+	; set y_pos
 		move.b	(a1)+,d6	; get tile amount for x_pos flip check
@@ -629,25 +645,30 @@ excessrender_macro macro xflip,yflip
 		move.w	#128,d3		;
 		sub.w	d6,d3		; sub by tile amount
 		cmp.w	d3,d2
-		bls.s	.xfail
+		blo.s	.xfail
 		move.w	(ScreenSize_Horz).w,d3	; get horizontal screen size -1
 		addi.w	#128+1,d3		; add VDP offset, account for -1
 		cmp.w	d3,d2		; compare that to the x_pos of the sprite
-		bge.s	.xfail		; if offscreen, don't render
+		bhs.s	.xfail		; if offscreen, don't render
 		move.w	d2,(a6)+	; set x_pos
 		subq.w	#1,d7		; count down successful sprite loads
 		dbmi	d4,.loop	; if d7 hits bmi range, end. If not, decrement d4. If d4 is now 0, end
 .endcheckrndr
-+		move.w	(sp)+,d3; restore d3
+		move.w	(sp)+,d3; restore original d7
+		cmp.w	d3,d7
+		beq.s	.none	; if they're the same, branch
+		ori.b	#ren_onscreen,render_flags(a0)	; set onscreen flag
+.none
+		move.w	(sp)+,d3; restore d3
 		rts
-.xfail:
+.xfail
 ; x happens at the end of rendering
 ; all the mapping frame was incremented and almost all the other sprite data was written
 ; in the case something else doesn't overwrite this, it removes the data at the end of rendering
 		subq.w	#8-2,a6
 		dbf	d4,.loop
 		bra.s	.endcheckrndr
-.yfail:
+.yfail
 ; y happens at the start of rendering
 ; only a byte of the frame was incremented, and nothing was written
 		addq.w	#spritemap_size-1,a1
