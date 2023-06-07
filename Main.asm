@@ -92,7 +92,7 @@ CartRAM_Info:	dc.b "RA"	; enabled
 	else
 CartRAM_Info:	dc.b "  "	; disabled
 	endif
-CartRAM_Type:	dc.b %10000000|(BackupSRAM<<6)|(EnableSRAM<<5)|(AddressSRAM<<3),$20	; 1BEAA0000 00100000
+CartRAM_Type:	dc.b (EnableSRAM<<7)|(BackupSRAM<<6)|(1<<5)|(AddressSRAM<<3),$20	; EB1AA000 00100000
 CartRAMStartLoc:dc.l SRAM_Address+sram_start	; SRAM start
 CartRAMEndLoc:	dc.l SRAM_Address+sram_end	; SRAM end
 ;CartRAMStartLoc:dc.l $20202020
