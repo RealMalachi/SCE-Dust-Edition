@@ -98,15 +98,15 @@ dmaFillVRAM macro byte,addr,length
 ctrlcheck macro press,input,type
 	if ("type"=="") || ("type"=="0") || ("type"=="hd")
 	  if input=2
-	move.b	(Ctrl2_Hd).w,d0
+	move.w	(Ctrl2_Hd).w,d0
 	  else
-	move.b	(Ctrl1_Hd).w,d0
+	move.w	(Ctrl1_Hd).w,d0
 	  endif
 	elseif ("type"=="1") || ("type"=="pr")
 	  if input=2
-	move.b	(Ctrl2_Pr).w,d0
+	move.w	(Ctrl2_Pr).w,d0
 	  else
-	move.b	(Ctrl1_Pr).w,d0
+	move.w	(Ctrl1_Pr).w,d0
 	  endif
 	else
 	fatal "Undefined joypad button type!"
@@ -149,12 +149,12 @@ dbglistobj macro obj,mapaddr,subtype,frame,vram
 
 palp macro paladdress,ramaddress,colours
 	dc.l paladdress
-	dc.w ramaddress, (colours>>1)-1
+	dc.w ramaddress,(colours>>1)-1
 	endm
 
 ; macro for declaring a "main level load block" (MLLB)
 levartptrs macro art,map16x16,map128x128,palette
-	dc.l palette<<24|art
+	dc.l byte_tri_to_long(palette,art)
 	dc.l map16x16
 	dc.l map128x128
     endm
@@ -254,7 +254,7 @@ clearRAM2 macro startaddr,endaddr
     endif
     endm
 
-; fills a region of 68k RAM with 0 (4 bytes at a time)
+; fills a region of 68k RAM with 0 (16 bytes at a time)
 clearRAM3 macro addr,length
 	lea	(addr),a1
 	moveq	#0,d0
@@ -352,19 +352,16 @@ RingLayoutBoundary macro
 ; ---------------------------------------------------------------------------
 ; clear the Z80 RAM
 ; ---------------------------------------------------------------------------
-
+; (12+10) x ($2000/4) + (12-10) = 45,058 cycles
 clearZ80RAM macro
-	lea	(Z80_RAM).l,a0
-	move.w	#$1FFF,d0
-
--	clr.b	(a0)+
-	dbf	d0,-
+	lea	(Z80_RAM).l,a1
+	move.w	#((Z80_RAM_end-Z80_RAM)/4)-1,d0
+-	clr.l	(a1)+	; 12(1/2)
+	dbf	d0,-	; 10(2/0), 12(2/0) when done
     endm
 
 paddingZ80RAM macro
-	moveq	#0,d0
-
--	move.b	d0,(a1)+
+-	clr.b	(a1)+
 	cmpa.l	#(Z80_RAM_end),a1
 	bne.s	-
     endm
@@ -503,20 +500,28 @@ enableIntsSave macro
 ; disable screen
 ; ---------------------------------------------------------------------------
 
-disableScreen macro
+disableScreen macro reg
 	move.w	(VDP_reg_1_command).w,d0
 	andi.b	#%10111111,d0
+	if ("reg" = "")
 	move.w	d0,(VDP_control_port).l
+	else
+	move.w	d0,reg
+	endif
     endm
 
 ; ---------------------------------------------------------------------------
 ; enable screen
 ; ---------------------------------------------------------------------------
 
-enableScreen macro
+enableScreen macro reg
 	moveq	#%1000000,d0
 	or.w	(VDP_reg_1_command).w,d0
+	if ("reg" = "")
 	move.w	d0,(VDP_control_port).l
+	else
+	move.w	d0,reg
+	endif
     endm
 
 ; ---------------------------------------------------------------------------
@@ -681,7 +686,7 @@ zoneanimdeclanonid := 0
 zoneanimdecl macro duration,artaddr,vramaddr,numentries,numvramtiles
 zoneanimdeclanonid := zoneanimdeclanonid + 1
 start:
-	dc.l (duration&$FF)<<24|artaddr
+	dc.l byte_tri_to_long(duration,artaddr)
 	dc.w tiles_to_bytes(vramaddr)
 	dc.b numentries, numvramtiles
 zoneanimcount := zoneanimcount + 1
@@ -689,10 +694,12 @@ zoneanimcount := zoneanimcount + 1
 ; ---------------------------------------------------------------------------
 
 tribyte macro val
-	if "val"<>""
-		dc.b (val >> 16)&$FF,(val>>8)&$FF,val&$FF
-		shift
-		tribyte ALLARGS
+	if "val"=""
+	message "tribyte has no data...?"
+	else
+	dc.b (val >> 16)&$FF,(val>>8)&$FF,val&$FF
+	shift
+	tribyte ALLARGS
 	endif
     endm
 ; ---------------------------------------------------------------------------
