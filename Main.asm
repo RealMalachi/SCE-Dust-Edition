@@ -76,7 +76,7 @@ Domestic_Name:	dc.b "SONIC CLEAN ENGINE DUST"
 Overseas_Name:	dc.b "SONIC CLEAN ENGINE"
 	dcb.b $180-*, ' '
 Serial_Number:	dc.b "GM H-00000 -00"	; new serial type, since MK is apparently SEGA branding
-Checksum:	dc.w 0
+Checksum:	dc.w 0	; calculated later
 Input:		dc.b "J"
 	if Joypad_6BSupport=1
 		dc.b "6"
