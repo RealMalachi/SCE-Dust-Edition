@@ -9,10 +9,12 @@ DelayProgram:
 	if Lagometer
 		move.w	#$9100,(VDP_control_port).l	; window H position at default
 	endif
-		move.b	#1,(V_int_flag).w	; set that we've reached Vsync
+		lea	(V_int_flag),a0
+		move.b	#1,(a0)			; set that we've reached Vsync
 		enableInts
 .wait
-		tst.b	(V_int_flag).w		; wait until V-int's run
-		bpl.s	.wait	
-		clr.b	(V_int_flag).w		; wait for next frame
+		tst.b	(a0)			; wait until V-int's run
+		bpl.s	.wait			; until then wait
+		clr.b	(a0)			; wait for next frame
+		clr.w	(Lag_frame_count).w
 		rts

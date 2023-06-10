@@ -29,7 +29,7 @@ Init_Controllers:
 ; a2 = CtrlXState (Joypad_StateSupport)
 ; d0 = controller inputs 1, final    held inputs
 ; d1 = controller inputs 2, final pressed inputs
-; d2 = control request type 1, controller type (3pad, Joypad_StateSupport)
+; d2 = control request type 1
 ; d3 = control request type 2
 ; d4 = misc (Joypad_6BSupport)
 ; d5 = controller type (6pad, Joypad_StateSupport)
@@ -38,6 +38,7 @@ Init_Controllers:
 ; =============== S U B R O U T I N E =======================================
 
 Poll_Controllers:
+	moveq	#0,d2			; do second
 	moveq	#$40,d3			; do first request
 	lea	(Ctrl1).w,a0		; address where joypad states are written
 	lea	(HW_Port_1_Data).l,a1	; first joypad port
@@ -50,23 +51,18 @@ Poll_Controllers:
 +
   endif
   if Joypad_6BSupport<>1	; simple 3pad controller code. Note how much simpler this code is.
-	move.b	d3,(a1)			; request no.1
+	move.b	d2,(a1)			; request no.1
 	moveq	#%00111111,d1		; DT (4) ; set the positions of B,C,Joypads as active
-	moveq	#0,d2			; DT (4) ; Prepare for next request
-	and.b	(a1),d1			; AND data with pressed B,C,Joypads
-
-	move.b	d2,(a1)			; request no.2
 	moveq	#%00110000,d0		; DT (4) ; set the positions of A and Start as active
-;  if Joypad_StateSupport=1	; uncomment if 3pad isn't defined as 0
-;	moveq	#0,d2			; DT (4) ; clear controller type (d2 gets reset every loop)
-;  else
-	nop				; DT (4)
-;  endif
 	and.b	(a1),d0			; AND data with pressed A and Start
-	lsl.b	#2,d0			; push data to the last two bits
+
+	move.b	d3,(a1)			; request no.3
+	lsl.b	#2,d0			; DT (10, 2 bled) ; push data to the last two bits
+	and.b	(a1),d1			; AND data with pressed B,C,Joypads
 	or.b	d1,d0			; combine them together
   if Joypad_StateSupport=1
-	move.b	d2,(a2)+		; set CtrlXState to whatever d2 has, increment to next controller
+	moveq	#0,d5			; clear controller type
+	move.b	d5,(a2)+		; set CtrlXState to whatever d5 has, increment to next controller
   endif
 ; copy final input data
 	not.b	d0			; reverse bits (Only the 3pad inputs)
@@ -80,15 +76,15 @@ Poll_Controllers:
   elseif Joypad_6BSupport=1
 	move.b	d3,(a1)			; request no.1
 	moveq	#%00111111,d1		; DT (4) ; set the positions of B,C,Joypads as active
-	moveq	#0,d2			; DT (4) ; Prepare for next request
+	moveq	#%00110000,d0		; DT (4) ; set the positions of A and Start as active
 	and.b	(a1),d1			; AND data with pressed B,C,Joypads
 
 	move.b	d2,(a1)			; request no.2
-	moveq	#%00110000,d0		; DT (4) ; set the positions of A and Start as active
     if Joypad_StateSupport=1
 	moveq	#0,d5			; DT (4) ; clear controller type
-    else
 	nop				; DT (4)
+    else
+	nop2				; DT (8)
     endif
 	and.b	(a1),d0			; AND data with pressed A and Start
 ; during all this downtime, sort out combining the main controller inputs
@@ -102,8 +98,7 @@ Poll_Controllers:
 	or.b	d1,d0			; DT (4) ; combine the controller inputs
 	moveq	#%00001111,d1		; DT (4) ; Prepare for 6pad check and positions of X,Y,Z,Mode
 	move.b	d2,(a1)			; request no.6
-;	nop2			; DT (8)
-	or.l	d0,d0			; DT (8) ; stall time
+	nop2				; DT (8)
     else
 	lsl.b	#2,d0			; DT (10,2 bled) ; push data to the last two bits
 	move.b	d2,(a1)			; request no.4

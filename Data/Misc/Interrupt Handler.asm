@@ -26,10 +26,9 @@ VInt:
 		tst.b	(V_int_flag).w	; has the game finished its routines before the end of the frame?
 		beq.s	VInt_Lag_Main	; if not, handle lag
 
-.wait
-		move.w	VDP_control_port-VDP_control_port(a5),d0
+-		move.w	VDP_control_port-VDP_control_port(a5),d0
 		andi.w	#8,d0
-		beq.s	.wait	; wait until vertical blanking is taking place
+		beq.s	-	; wait until vertical blanking is taking place
 
 		move.l	#vdpComm($0000,VSRAM,WRITE),VDP_control_port-VDP_control_port(a5)
 		move.l	(V_scroll_value).w,VDP_data_port-VDP_data_port(a6) ; send screen ypos to VSRAM
@@ -52,10 +51,10 @@ VInt_Done:
 		movem.l	(sp)+,d0-a6							; return saved registers from the stack
 		rte
 ExtInt:
-		movem.l	d0-a6,-(sp)
-	sfx sfx_Menu
-		movem.l	(sp)+,d0-a6
-		rte
+	move.l	d0,-(sp)
+	sfx	sfx_Menu
+	move.l	(sp)+,d0
+	rte
 
 ; ---------------------------------------------------------------------------
 ; Lag
@@ -67,7 +66,7 @@ VInt_Lag:
 ;		addq.w	#4,sp
 
 VInt_Lag_Main:
-		addq.b	#1,(Lag_frame_count).w
+		addq.w	#1,(Lag_frame_count).w
 
 		; branch if a level is running
 		cmpi.b	#GameModeID_TitleCard|id_LevelScreen,(Game_mode).w
@@ -110,7 +109,6 @@ VInt_Main:
 		tst.w	(Demo_timer).w
 		beq.s	.return
 		subq.w	#1,(Demo_timer).w
-
 .return
 		rts
 
@@ -125,7 +123,6 @@ VInt_Menu:
 		tst.w	(Demo_timer).w
 		beq.s	.kosm
 		subq.w	#1,(Demo_timer).w
-
 .kosm
 		jmp	(Set_Kos_Bookmark).w
 
@@ -177,12 +174,10 @@ VInt_Sega:
 		jsr	(Poll_Controllers).w
 		startZ802
 		startZ80
-
 .skip
 		tst.w	(Demo_timer).w
 		beq.s	.kosm
 		subq.w	#1,(Demo_timer).w
-
 .kosm
 		jmp	(Set_Kos_Bookmark).w
 
@@ -247,17 +242,15 @@ VInt_Level_Cont:
 		jsr	(VInt_DrawLevel).w
 		startZ80
 		enableInts
-		tst.b	(Water_flag).w
-		beq.s	.notwater
-		cmpi.b	#92,(H_int_counter).w	; is H-int occuring on or below line 92?
-		bhs.s	.notwater				; if it is, branch
-		st	(Do_Updates_in_H_int).w
-		jsr	(Set_Kos_Bookmark).w
-		addq.l	#4,sp
-		bra.w	VInt_Done
-; ---------------------------------------------------------------------------
-
-.notwater
+;		tst.b	(Water_flag).w
+;		beq.s	.notwater
+;		cmpi.b	#92,(H_int_counter).w	; is H-int occuring on or below line 92?
+;		bhs.s	.notwater				; if it is, branch
+;		st	(Do_Updates_in_H_int).w
+;		jsr	(Set_Kos_Bookmark).w
+;		addq.l	#4,sp
+;		bra.w	VInt_Done
+;.notwater
 		bsr.s	Do_Updates
 		jmp	(Set_Kos_Bookmark).w
 
@@ -272,7 +265,7 @@ Do_Updates:
 		beq.s	.return
 		subq.w	#1,(Demo_timer).w	; subtract 1 from time left
 .return
-		clr.w	(Lag_frame_count).w
+	;	clr.w	(Lag_frame_count).w
 		jmp	(UpdateHUD).w
 
 ; ---------------------------------------------------------------------------
@@ -284,7 +277,7 @@ Do_Updates:
 HInt:
 		disableInts
 		tst.b	(H_int_flag).w
-		beq.w	HInt_Done
+		beq.s	HInt_Done
 		clr.b	(H_int_flag).w
 
 		move.l	a5,-(sp)
@@ -293,13 +286,12 @@ HInt:
 		dma68kToVDP Water_palette,$0000,$80,CRAM
 		move.l	(sp)+,a5
 
-		tst.b	(Do_Updates_in_H_int).w
-		beq.s	HInt_Done
-		clr.b	(Do_Updates_in_H_int).w
-		movem.l	d0-a6,-(sp)		; move all the registers to the stack
-		bsr.w	Do_Updates
-		UpdateSoundDriver		; Update SMPS
-		movem.l	(sp)+,d0-a6		; load saved registers from the stack
-
+	;	tst.b	(Do_Updates_in_H_int).w
+	;	beq.s	HInt_Done
+	;	clr.b	(Do_Updates_in_H_int).w
+	;	movem.l	d0-a6,-(sp)		; move all the registers to the stack
+	;	bsr.w	Do_Updates
+	;	UpdateSoundDriver		; Update SMPS
+	;	movem.l	(sp)+,d0-a6		; load saved registers from the stack
 HInt_Done:
 		rte
