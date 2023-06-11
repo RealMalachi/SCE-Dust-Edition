@@ -500,13 +500,13 @@ enableIntsSave macro
 ; disable screen
 ; ---------------------------------------------------------------------------
 
-disableScreen macro reg
+disableScreen macro scraddr
 	move.w	(VDP_reg_1_command).w,d0
 	andi.b	#%10111111,d0
-	if ("reg" = "")
+	if ("scraddr" = "")
 	move.w	d0,(VDP_control_port).l
 	else
-	move.w	d0,reg
+	move.w	d0,scraddr
 	endif
     endm
 
@@ -514,13 +514,13 @@ disableScreen macro reg
 ; enable screen
 ; ---------------------------------------------------------------------------
 
-enableScreen macro reg
+enableScreen macro scraddr
 	moveq	#%1000000,d0
 	or.w	(VDP_reg_1_command).w,d0
-	if ("reg" = "")
+	if ("scraddr" = "")
 	move.w	d0,(VDP_control_port).l
 	else
-	move.w	d0,reg
+	move.w	d0,scraddr
 	endif
     endm
 
