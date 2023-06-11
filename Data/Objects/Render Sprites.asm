@@ -47,6 +47,21 @@ Render_Sprites_ObjLoop:
 		move.b	render_flags(a0),d6
 		move.w	x_pos(a0),d0
 		move.w	y_pos(a0),d1
+
+		btst	#renbit_excessive,d6	; if excessive, skip position rendering check
+		beq.s	.notexcessiveinit
+
+		btst	#renbit_camerapos,d6	; is this to be positioned by screen coordinates?
+		beq.s	+			; if so, branch
+		sub.w	(a3),d0
+		sub.w	4(a3),d1
++		move.w	#128,d4
+		add.w	d4,d0			; adjust positions for VDP
+		add.w	d4,d1
+		btst	#renbit_multidraw,d6		; is the multi-draw flag set?
+		beq.s	Render_Sprites_ExcessiveSkip	; if not,branch
+		bra.w	Render_Sprites_MultiDraw_ExcessiveSkip
+.notexcessiveinit
 		btst	#renbit_wordframe,d6	; is the rendering handled by a box?
 		beq.s	+
 		moveq	#0,d3
@@ -63,19 +78,6 @@ Render_Sprites_ObjLoop:
 +
 		btst	#renbit_multidraw,d6			; is the multi-draw flag set?
 		bne.w	Render_Sprites_MultiDraw		; if so, branch
-
-		btst	#renbit_excessive,d6	; if excessive, skip position rendering check
-		beq.s	+
-		btst	#renbit_camerapos,d6			; is this to be positioned by screen coordinates?
-		beq.s	Render_Sprites_ExcessiveSkip		; if so, branch
-		sub.w	(a3),d0
-		sub.w	4(a3),d1
-		move.w	#128,d4
-		add.w	d4,d0		; adjust positions for VDP
-		add.w	d4,d1
-		and.w	(Screen_Y_wrap_value).w,d1
-		bra.s	Render_Sprites_ExcessiveSkip
-+
 		btst	#renbit_camerapos,d6			; is this to be positioned by screen coordinates?
 		beq.s	Render_Sprites_ScreenSpaceObj		; if so, branch
 		sub.w	(a3),d0
@@ -97,11 +99,11 @@ Render_Sprites_ObjLoop:
 		cmp.w	d2,d1
 		bhs.s	Render_Sprites_NextObj			; if the object is below the screen
 		sub.w	d3,d1
+
+Render_Sprites_ScreenSpaceObj:
 		move.w	#128,d4
 		add.w	d4,d0		; adjust positions for VDP
 		add.w	d4,d1
-
-Render_Sprites_ScreenSpaceObj:
 		ori.b	#ren_onscreen,render_flags(a0)		; set on-screen flag
 
 Render_Sprites_ExcessiveSkip:
@@ -219,6 +221,8 @@ Render_Sprites_MultiDraw_CameraSpaceObj:
 		add.w	d4,d0		; adjust positions for VDP
 		add.w	d4,d1
 		ori.b	#$80,render_flags(a0)			; set on-screen flag
+
+Render_Sprites_MultiDraw_ExcessiveSkip:
 		tst.w	d7					; have we exceeded the amount of sprites it can handle?
 		bmi.w	Render_Sprites_CantAnymore		; if so, branch
 		move.w	art_tile(a0),d5
