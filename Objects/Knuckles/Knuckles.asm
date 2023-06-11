@@ -1322,74 +1322,7 @@ loc_17364:
 		move.w	d0,y_vel(a0)
 
 loc_17382:
-		btst	#6,object_control(a0)
-		bne.w	locret_17426
-		move.b	angle(a0),d0
-		andi.b	#$3F,d0
-		beq.s	loc_173A2
-		move.b	angle(a0),d0
-		addi.b	#$40,d0
-		bmi.w	locret_17426
-
-loc_173A2:
-		move.b	#$40,d1
-		tst.w	ground_vel(a0)
-		beq.s	locret_17426
-		bmi.s	loc_173B0
-		neg.w	d1
-
-loc_173B0:
-		move.b	angle(a0),d0
-		add.b	d1,d0
-		movem.l	d0/a4,-(sp)
-		bsr.w	CalcRoomInFront
-		movem.l	(sp)+,d0/a4
-		tst.w	d1
-		bpl.s	locret_17426
-		asl.w	#8,d1
-	;	cmpi.b	#8,(Current_zone).w
-	;	bne.s	loc_173D2
-		tst.b	d0
-		bpl.s	loc_173D2
-		subq.b	#1,d0
-
-loc_173D2:
-		addi.b	#$20,d0
-		andi.b	#$C0,d0
-		beq.s	loc_17422
-		cmpi.b	#$40,d0
-		beq.s	loc_17408
-		cmpi.b	#$80,d0
-		beq.s	loc_17402
-		add.w	d1,x_vel(a0)
-		move.w	#0,ground_vel(a0)
-		btst	#Status_Facing,status(a0)
-		bne.s	locret_17400
-		bset	#Status_Push,status(a0)
-
-locret_17400:
-		rts
-; ---------------------------------------------------------------------------
-
-loc_17402:
-		sub.w	d1,y_vel(a0)
-		rts
-; ---------------------------------------------------------------------------
-
-loc_17408:
-		sub.w	d1,x_vel(a0)
-		move.w	#0,ground_vel(a0)
-		btst	#Status_Facing,status(a0)
-		beq.s	locret_17400
-		bset	#Status_Push,status(a0)
-		rts
-; ---------------------------------------------------------------------------
-
-loc_17422:
-		add.w	d1,y_vel(a0)
-
-locret_17426:
-		rts
+		bra.w	loc_11350
 
 ; =============== S U B R O U T I N E =======================================
 

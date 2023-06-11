@@ -781,17 +781,18 @@ loc_11332:
 
 loc_11350:
 		btst	#6,object_control(a0)
-		bne.s	locret_113CE
-		move.b	angle(a0),d0
-		move.b	d0,d1
-		andi.b	#$3F,d0
-		beq.s	+
-		addi.b	#$40,d1
-		bmi.s	locret_113CE
+		bne.s	.end
+; causes this bug https://www.youtube.com/watch?v=jQcbw3-Uq2E
+	;	move.b	angle(a0),d0
+	;	move.b	d0,d1
+	;	andi.b	#$3F,d0
+	;	beq.s	+
+	;	addi.b	#$40,d1		
+	;	bmi.s	.end
 +
 		moveq	#$40,d1
 		tst.w	ground_vel(a0)
-		beq.s	locret_113CE
+		beq.s	.end
 		bmi.s	+
 		neg.w	d1
 +
@@ -801,40 +802,40 @@ loc_11350:
 		bsr.w	CalcRoomInFront
 		movem.l	(sp)+,d0/a4
 		tst.w	d1
-		bpl.s	locret_113CE
+		bpl.s	.end
 		asl.w	#8,d1
 		addi.b	#$20,d0
-		andi.b	#$C0,d0
-		beq.s	loc_113F0
-		cmpi.b	#$40,d0
-		beq.s	loc_113D6
-		cmpi.b	#$80,d0
-		beq.s	loc_113D0
+		andi.b	#%11000000,d0
+		tst.b	d0
+		beq.s	.floor
+		bpl.s	.leftwall	; $40
+		cmpi.b	#$C0,d0
+		beq.s	.rightwall
+.ceiling
+		sub.w	d1,y_vel(a0)
+.end
+		rts
+; ---------------------------------------------------------------------------
+
+.rightwall
 		add.w	d1,x_vel(a0)
 		clr.w	ground_vel(a0)
 		btst	#Status_Facing,status(a0)
-		bne.s	locret_113CE
+		bne.s	+
 		bset	#Status_Push,status(a0)
-
-locret_113CE:
-		rts
++		rts
 ; ---------------------------------------------------------------------------
 
-loc_113D0:
-		sub.w	d1,y_vel(a0)
-		rts
-; ---------------------------------------------------------------------------
-
-loc_113D6:
+.leftwall
 		sub.w	d1,x_vel(a0)
 		clr.w	ground_vel(a0)
 		btst	#Status_Facing,status(a0)
-		beq.s	locret_113CE
+		beq.s	+
 		bset	#Status_Push,status(a0)
-		rts
++		rts
 ; ---------------------------------------------------------------------------
 
-loc_113F0:
+.floor
 		add.w	d1,y_vel(a0)
 		rts
 
@@ -858,14 +859,12 @@ loc_11412:
 		move.w	d6,d1
 		neg.w	d1
 		cmp.w	d1,d0
-		bgt.s	loc_11424
+		bgt.s	+
 		add.w	d5,d0
 		cmp.w	d1,d0
-		ble.s		loc_11424
+		ble.s	+
 		move.w	d1,d0
-
-loc_11424:
-		move.w	d0,ground_vel(a0)
++		move.w	d0,ground_vel(a0)
 		clr.b	anim(a0)	; id_Walk
 		rts
 ; ---------------------------------------------------------------------------

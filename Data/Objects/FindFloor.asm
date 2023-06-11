@@ -51,49 +51,51 @@ SetCollAddrPlane_lrb_macro macro reg
 Player_AnglePos:
 		SetCollAddrPlane_macro
 		move.b	top_solid_bit(a0),d5
-		btst	#Status_OnObj,status(a0)
-		beq.s	loc_EC5A
-		moveq	#0,d0
-		move.b	d0,(Primary_Angle).w
-		move.b	d0,(Secondary_Angle).w
+		btst	#Status_OnObj,status(a0); are you standing on an object?
+		beq.s	.groundcheck		; if not, branch
+		clr.w	(Primary_Angle).w	; set Primary_Angle and Secondary_Angle to 0
 		rts
-; ---------------------------------------------------------------------------
-
-loc_EC5A:
-		moveq	#3,d0
-		move.b	d0,(Primary_Angle).w
-		move.b	d0,(Secondary_Angle).w
-		move.b	angle(a0),d0
+.groundcheck
+		move.w	#(3&$FF)<<8|(3&$FF),(Primary_Angle).w	; set Primary_Angle and Secondary_Angle to 3
+		move.b	angle(a0),d1
+		move.b	d1,d0
 		addi.b	#$20,d0
-		bpl.s	loc_EC7C
-		move.b	angle(a0),d0
-		bpl.s	loc_EC76
+		bpl.s	.angleonground
+;		move.b	angle(a0),d0
+;		bpl.s	+
+;		subq.b	#1,d0	; if bmi, +$1F
+;+		addi.b	#$20,d0	; if bpl, +$20
+		tst.b	d1
+		bpl.s	.angleonaircont
+		bra.s	.angleonairsubtract
+
+.angleonground
+;		move.b	angle(a0),d0
+;		bpl.s	+
+;		addq.b	#1,d0	; if bmi, +$20
+;+		addi.b	#$1F,d0	; if bpl, +$1F
+		tst.b	d1
+		bmi.s	.angleonaircont
+
+.angleonairsubtract
 		subq.b	#1,d0
 
-loc_EC76:
-		addi.b	#$20,d0
-		bra.s	loc_EC88
-; ---------------------------------------------------------------------------
+.angleonaircont
+		andi.w	#%11000000,d0
+		tst.b	d0
+		beq.s	Player_WalkFloor
+		bmi.w	Player_WalkCeiling	; checks for Player_WalkVertR, or at least it's meant to
+		bra.w	Player_WalkVertL
+	;	cmpi.b	#$40,d0
+	;	beq.w	Player_WalkVertL
+	;	cmpi.b	#$80,d0
+	;	beq.w	Player_WalkCeiling
+	;	cmpi.b	#$C0,d0
+	;	beq.w	Player_WalkVertR
 
-loc_EC7C:
-		move.b	angle(a0),d0
-		bpl.s	loc_EC84
-		addq.b	#1,d0
-
-loc_EC84:
-		addi.b	#$1F,d0
-
-loc_EC88:
-		andi.b	#$C0,d0
-		cmpi.b	#$40,d0
-		beq.w	Player_WalkVertL
-		cmpi.b	#$80,d0
-		beq.w	Player_WalkCeiling
-		cmpi.b	#$C0,d0
-		beq.w	Player_WalkVertR
+Player_WalkFloor:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -107,7 +109,6 @@ loc_EC88:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -122,39 +123,30 @@ loc_EC88:
 		move.w	(sp)+,d0
 		bsr.w	Player_Angle
 		tst.w	d1
-		beq.s	locret_ED12
-		bpl.s	loc_ED14
+		beq.s	+
+		bpl.s	.sloped
 		cmpi.w	#-$E,d1
-		blt.s	locret_ED12
+		blt.s	+
 		add.w	d1,y_pos(a0)
-
-locret_ED12:
-		rts
++		rts
 ; ---------------------------------------------------------------------------
-
-loc_ED14:
+.sloped
 		tst.b	stick_to_convex(a0)
-		bne.s	loc_ED32
+		bne.s	.convex
 		move.b	x_vel(a0),d0
-		bpl.s	loc_ED22
+		bpl.s	+
 		neg.b	d0
-
-loc_ED22:
-		addq.b	#4,d0
++		addq.b	#4,d0
 		cmpi.b	#$E,d0
-		blo.s	loc_ED2E
-		move.b	#$E,d0
-
-loc_ED2E:
-		cmp.b	d0,d1
-		bgt.s	loc_ED38
-
-loc_ED32:
+		ble.s	+
+		moveq	#$E,d0
++		cmp.b	d0,d1
+		bgt.s	.reset
+.convex
 		add.w	d1,y_pos(a0)
 		rts
 ; ---------------------------------------------------------------------------
-
-loc_ED38:
+.reset
 		bset	#Status_InAir,status(a0)
 		bclr	#Status_Push,status(a0)
 		move.b	#id_Run,prev_anim(a0)
@@ -163,31 +155,28 @@ loc_ED38:
 ; =============== S U B R O U T I N E =======================================
 
 Player_Angle:
-		move.w	d0,d3
+	;	move.w	d0,d3
 		move.b	(Secondary_Angle).w,d2
 		cmp.w	d0,d1
-		ble.s	+
+		ble.s	.usesecondary
 		move.b	(Primary_Angle).w,d2
-		move.w	d1,d3
+	;	move.w	d1,d3
 		move.w	d0,d1
-+
+.usesecondary
+	;	move.b	angle(a0),d3
 		btst	#0,d2
-		bne.s	loc_ED7A
+		bne.s	.type2
 		move.b	d2,d0
 		sub.b	angle(a0),d0
 		bpl.s	+
 		neg.b	d0
-+
-		cmpi.b	#$20,d0
-		bhs.s	loc_ED7A
-		move.b	d2,angle(a0)
-		rts
-; ---------------------------------------------------------------------------
-
-loc_ED7A:
++		cmpi.b	#$20,d0
+		blo.s	.setangle
+.type2
 		move.b	angle(a0),d2
 		addi.b	#$20,d2
 		andi.b	#$C0,d2
+.setangle
 		move.b	d2,angle(a0)
 		rts
 ; ---------------------------------------------------------------------------
@@ -195,7 +184,6 @@ loc_ED7A:
 Player_WalkVertR:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		neg.w	d0
@@ -210,7 +198,6 @@ Player_WalkVertR:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -224,37 +211,30 @@ Player_WalkVertR:
 		move.w	(sp)+,d0
 		bsr.w	Player_Angle
 		tst.w	d1
-		beq.s	locret_EE00
-		bpl.s	loc_EE22
+		beq.s	+
+		bpl.s	.sloped
 		cmpi.w	#-$E,d1
-		blt.s	locret_EE00
+		blt.s	+
 		add.w	d1,x_pos(a0)
-
-locret_EE00:
-		rts
++		rts
 ; ---------------------------------------------------------------------------
-
-loc_EE22:
+.sloped
 		tst.b	stick_to_convex(a0)
-		bne.s	loc_EE40
+		bne.s	.convex
 		move.b	y_vel(a0),d0
 		bpl.s	+
 		neg.b	d0
-+
-		addq.b	#4,d0
++		addq.b	#4,d0
 		cmpi.b	#$E,d0
-		blo.s	+
-		move.b	#$E,d0
-+
-		cmp.b	d0,d1
-		bgt.s	loc_EE46
-
-loc_EE40:
+		ble.s	+
+		moveq	#$E,d0
++		cmp.b	d0,d1
+		bgt.s	.reset
+.convex
 		add.w	d1,x_pos(a0)
 		rts
 ; ---------------------------------------------------------------------------
-
-loc_EE46:
+.reset
 		bset	#Status_InAir,status(a0)
 		bclr	#Status_Push,status(a0)
 		move.b	#id_Run,prev_anim(a0)
@@ -262,9 +242,10 @@ loc_EE46:
 ; ---------------------------------------------------------------------------
 
 Player_WalkCeiling:
+		cmpi.b	#$C0,d0
+		beq.w	Player_WalkVertR
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -274,12 +255,11 @@ Player_WalkCeiling:
 		add.w	d0,d3
 		lea	(Primary_Angle).w,a4
 		movea.w	#-$10,a3
-		move.w	#$800,d6
+		move.w	#1<<$B,d6
 		bsr.w	FindFloor
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -289,44 +269,35 @@ Player_WalkCeiling:
 		sub.w	d0,d3
 		lea	(Secondary_Angle).w,a4
 		movea.w	#-$10,a3
-		move.w	#$800,d6
+		move.w	#1<<$B,d6
 		bsr.w	FindFloor
 		move.w	(sp)+,d0
 		bsr.w	Player_Angle
 		tst.w	d1
-		beq.s	locret_EECE
-		bpl.s	loc_EED0
+		beq.s	+
+		bpl.s	.sloped
 		cmpi.w	#-$E,d1
-		blt.s	locret_EECE
+		blt.s	+
 		sub.w	d1,y_pos(a0)
-
-locret_EECE:
-		rts
++		rts
 ; ---------------------------------------------------------------------------
-
-loc_EED0:
+.sloped
 		tst.b	stick_to_convex(a0)
-		bne.s	loc_EEEE
+		bne.s	.convex
 		move.b	x_vel(a0),d0
-		bpl.s	loc_EEDE
+		bpl.s	+
 		neg.b	d0
-
-loc_EEDE:
-		addq.b	#4,d0
++		addq.b	#4,d0
 		cmpi.b	#$E,d0
-		blo.s	loc_EEEA
-		move.b	#$E,d0
-
-loc_EEEA:
-		cmp.b	d0,d1
-		bgt.s	loc_EEF4
-
-loc_EEEE:
+		ble.s	+
+		moveq	#$E,d0
++		cmp.b	d0,d1
+		bgt.s	.reset
+.convex
 		sub.w	d1,y_pos(a0)
 		rts
 ; ---------------------------------------------------------------------------
-
-loc_EEF4:
+.reset
 		bset	#Status_InAir,status(a0)
 		bclr	#Status_Push,status(a0)
 		move.b	#id_Run,prev_anim(a0)
@@ -336,7 +307,6 @@ loc_EEF4:
 Player_WalkVertL:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -346,12 +316,11 @@ Player_WalkVertL:
 		eori.w	#$F,d3
 		lea	(Primary_Angle).w,a4
 		movea.w	#-$10,a3
-		move.w	#$400,d6
+		move.w	#1<<$A,d6
 		bsr.w	FindWall
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -361,50 +330,46 @@ Player_WalkVertL:
 		eori.w	#$F,d3
 		lea	(Secondary_Angle).w,a4
 		movea.w	#-$10,a3
-		move.w	#$400,d6
+		move.w	#1<<$A,d6
 		bsr.w	FindWall
 		move.w	(sp)+,d0
 		bsr.w	Player_Angle
 		tst.w	d1
-		beq.s	locret_EF7C
-		bpl.s	loc_EF7E
+		beq.s	+
+		bpl.s	.sloped
 		cmpi.w	#-$E,d1
-		blt.s	locret_EF7C
+		blt.s	+
 		sub.w	d1,x_pos(a0)
-
-locret_EF7C:
-		rts
++		rts
 ; ---------------------------------------------------------------------------
-
-loc_EF7E:
+.sloped
 		tst.b	stick_to_convex(a0)
-		bne.s	loc_EF9C
+		bne.s	.convex
 		move.b	y_vel(a0),d0
-		bpl.s	loc_EF8C
+		bpl.s	+
 		neg.b	d0
-
-loc_EF8C:
-		addq.b	#4,d0
++		addq.b	#4,d0
 		cmpi.b	#$E,d0
-		blo.s	loc_EF98
-		move.b	#$E,d0
-
-loc_EF98:
-		cmp.b	d0,d1
-		bgt.s	loc_EFA2
-
-loc_EF9C:
+		ble.s	+
+		moveq	#$E,d0
++		cmp.b	d0,d1
+		bgt.s	.reset
+.convex
 		sub.w	d1,x_pos(a0)
 		rts
 ; ---------------------------------------------------------------------------
-
-loc_EFA2:
+.reset
 		bset	#Status_InAir,status(a0)
 		bclr	#Status_Push,status(a0)
 		move.b	#id_Run,prev_anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
-
+; collision registers
+; d2 = xpos
+; d3 = ypos
+; d4 = block tile, mostly used for collision
+; d5 = solidity bit to test
+; d6 = eor to d4 when checking collision, low byte used elsewhere
 GetFloorPosition:
 	if CompLevel=0
 		movea.l	(Level_layout_addr_ROM).w,a1
@@ -456,8 +421,8 @@ FindCollision_macro macro failbra,wallflag
 		move.b	(a2,d0.w),d0
 		beq.ATTRIBUTE	failbra
 		andi.w	#$FF,d0
-		lea	(AngleArray).l,a2
-		move.b	(a2,d0.w),d6	; copy collision angle into d6
+		lea	(AngleArray),a2
+		move.b	(a2,d0.w),d6	; copy collision angle into d6 (low byte is free)
 	if ("wallflag"="")
 		move.w	d3,d1
 		btst	#$A,d4
@@ -476,7 +441,7 @@ FindCollision_macro macro failbra,wallflag
 		neg.b	d6
 		sub.b	d0,d6
 +
-		lea	(HeightMaps).l,a2
+		lea	(HeightMaps),a2
 	else
 		move.w	d2,d1
 		btst	#$B,d4
@@ -494,7 +459,7 @@ FindCollision_macro macro failbra,wallflag
 		beq.s	+
 		neg.b	d6
 +
-		lea	(HeightMapsRot).l,a2
+		lea	(HeightMapsRot),a2
 	endif
 		move.b	d6,(a4)		; copy final angle into (a4)
 		move.b	(a2,d1.w),d0	; use HeightMaps to get final collision data
@@ -791,7 +756,6 @@ Sonic_CheckFloor:
 Sonic_CheckFloor2:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -805,7 +769,6 @@ Sonic_CheckFloor2:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -905,7 +868,6 @@ ChkFloorEdge:
 
 ChkFloorEdge_Part2:
 		move.w	y_pos(a0),d2
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -933,7 +895,6 @@ SonicOnObjHitFloor:
 
 SonicOnObjHitFloor2:
 		move.w	y_pos(a1),d2
-		moveq	#0,d0
 		move.b	y_radius(a1),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -1001,7 +962,6 @@ RingCheckFloorDist:
 CheckRightCeilingDist:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1015,7 +975,6 @@ CheckRightCeilingDist:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -1035,7 +994,6 @@ CheckRightCeilingDist:
 sub_FA1A:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1049,7 +1007,6 @@ sub_FA1A:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -1115,7 +1072,6 @@ ObjCheckRightWallDist:
 Sonic_CheckCeiling:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1130,7 +1086,6 @@ Sonic_CheckCeiling:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1151,7 +1106,6 @@ Sonic_CheckCeiling:
 sub_FB5A:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1167,7 +1121,6 @@ sub_FB5A:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1226,7 +1179,6 @@ ObjCheckCeilingDist_Part2:
 
 ObjCheckCeilingDist_Part3:
 		move.w	y_pos(a0),d2
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1245,7 +1197,6 @@ ObjCheckCeilingDist_Part3:
 
 ChkFloorEdge_ReverseGravity:
 		move.w	y_pos(a0),d2
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1289,7 +1240,6 @@ RingCheckFloorDist_ReverseGravity:
 CheckLeftCeilingDist:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1304,7 +1254,6 @@ CheckLeftCeilingDist:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
@@ -1325,7 +1274,6 @@ CheckLeftCeilingDist:
 sub_FD32:
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d2
@@ -1340,7 +1288,6 @@ sub_FD32:
 		move.w	d1,-(sp)
 		move.w	y_pos(a0),d2
 		move.w	x_pos(a0),d3
-		moveq	#0,d0
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
