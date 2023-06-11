@@ -114,8 +114,7 @@ Player_WalkFloor:
 		add.w	d0,d2
 		move.b	x_radius(a0),d0
 		ext.w	d0
-		neg.w	d0
-		add.w	d0,d3
+		sub.w	d0,d3
 		lea	(Secondary_Angle).w,a4
 		movea.w	#$10,a3
 		moveq	#0,d6
@@ -186,8 +185,7 @@ Player_WalkVertR:
 		move.w	x_pos(a0),d3
 		move.b	x_radius(a0),d0
 		ext.w	d0
-		neg.w	d0
-		add.w	d0,d2
+		sub.w	d0,d2
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
