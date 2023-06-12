@@ -73,44 +73,61 @@ SRAM_DefaultSettings =			%10000000
 
 ; used for handling the unused bytes of SRAM
 	if AddressSRAM=0
-sramaddr	macro num,flag
-	if ("flag"="")
+sramaddr macro num,saveramflag
+	if ("saveramflag"="")
 	ds.b	num
-	else
+	elseif saveramflag = 0
 	ds.b	num_end-num
+	elseif saveramflag = 1
+	ds.b	num_end-num
+	else
+	fatal "Undefined SRAM addressing type"
 	endif
 	endm
 SRAM_RAMSize	= 1
 	else
-sramaddr	macro num,flag
-	if ("flag"="")
+sramaddr macro num,saveramflag
+	if ("saveramflag"="")
 	ds.w	num
-	else
+	elseif saveramflag = 0
 	ds.w	num_end-num
+	elseif saveramflag = 1
+	ds.b	num_end-num
+	else
+	fatal "Undefined SRAM addressing type"
 	endif
 	endm
 SRAM_RAMSize	= 2
 	endif
 ; padding for word and longword data, to ensure AddressSRAM type 0 doesn't crash
 srampad macro
-	evenram
+	if AddressSRAM=0
+	  if (*)&1
+	ds.b 1
+	  endif
+	endif
+	endm
+sram_checkace macro
+	if * >= $200000
+	fatal "Code that's handling SRAM is in SRAM bankswitch area"
+	endif
 	endm
 
 ; Emulates structs without using AS' structs, by separating it from the main SRAM labels
 ; Also frequently used in RAM, so it helps simplify setting that up
 	phase 0
 sram_main
-sram_main_lives		ds.b 1
-sram_main_continues	ds.b 1
-sram_main_emeraldcount	ds.b 1
+sram_main_lives		sramaddr 1
+sram_main_continues	sramaddr 1
+sram_main_emeraldcount	sramaddr 1
 	srampad
-sram_main_emeraldarray	ds.b 2
+sram_main_emeraldarray	sramaddr 2
 sram_main_end
 	dephase
 ; Proof of concept
 	phase 0
 sram_submode
-	ds.b 2
+	sramaddr 2
 sram_submode_end
 	dephase
 
@@ -128,22 +145,27 @@ sram_settings	sramaddr 1
 	srampad
 ; separate save data
 sram_saves
-sramsave1	sramaddr sram_main,0
-sramsave2	sramaddr sram_main,0
-sramsub		sramaddr sram_submode,0
+sramsave1	sramaddr sram_main,1
+	srampad
+sramsave2	sramaddr sram_main,1
+	srampad
+sramsub		sramaddr sram_submode,1
 	srampad
 sram_saves_end
 ; copy of separate save data
-sram_copy	ds.b sram_saves_end-sram_saves
+sram_copy	sramaddr sram_saves,1
 sram_copy_end
+
+sram_static;	sramaddr 1
+sram_static_end
+	srampad
 
 sram_padding
 ; padding fixes some save data issues, notably on BlastEm
 ; this space can potentially hold junk data, and should never be read
 	sramaddr $FF-(*/SRAM_RAMSize)
-	srampad
 sram_end
-	if * > $200000
+	if * >= $200000
 	fatal "SRAM exceeds its maximum limit of $200000 bytes! Fix immediately."
 	elseif * > $FFFF
 	  if MOMPASS=0
