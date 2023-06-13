@@ -1,3 +1,15 @@
+; collision registers
+; d0 = misc
+; d1 = misc, distance between floor
+; d2 = ypos
+; d3 = xpos
+; d4 = block object is colliding with, mostly used for collision bits
+; d5 = solidity bit to test
+; d6 = high byte is eor to d4 when checking certain collisions, low byte is misc
+; a0 = object
+; a1 = collision angle to save results in, secondary object sometimes
+; a2 = misc address
+; a3 = collision addition thing
 
 SetCollAddrPlane_macro macro reg
 	if CompCollision=0
@@ -46,16 +58,17 @@ SetCollAddrPlane_lrb_macro macro reg
 .notprime
 	endif
 	endm
+
 ; =============== S U B R O U T I N E =======================================
 
 Player_AnglePos:
 		SetCollAddrPlane_macro
-		move.b	top_solid_bit(a0),d5
 		btst	#Status_OnObj,status(a0); are you standing on an object?
 		beq.s	.groundcheck		; if not, branch
 		clr.w	(Primary_Angle).w	; set Primary_Angle and Secondary_Angle to 0
 		rts
 .groundcheck
+		move.b	top_solid_bit(a0),d5
 		move.w	#(3&$FF)<<8|(3&$FF),(Primary_Angle).w	; set Primary_Angle and Secondary_Angle to 3
 		move.b	angle(a0),d1
 		move.b	d1,d0
@@ -102,7 +115,7 @@ Player_WalkFloor:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindFloor
@@ -115,7 +128,7 @@ Player_WalkFloor:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindFloor
@@ -189,7 +202,7 @@ Player_WalkVertR:
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindWall
@@ -202,7 +215,7 @@ Player_WalkVertR:
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindWall
@@ -251,7 +264,7 @@ Player_WalkCeiling:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#1<<$B,d6
 		bsr.w	FindFloor
@@ -265,7 +278,7 @@ Player_WalkCeiling:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#1<<$B,d6
 		bsr.w	FindFloor
@@ -312,7 +325,7 @@ Player_WalkVertL:
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#1<<$A,d6
 		bsr.w	FindWall
@@ -326,7 +339,7 @@ Player_WalkVertL:
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#1<<$A,d6
 		bsr.w	FindWall
@@ -362,33 +375,30 @@ Player_WalkVertL:
 		move.b	#id_Run,prev_anim(a0)
 		rts
 ; ---------------------------------------------------------------------------
-; collision registers
-; d2 = xpos
-; d3 = ypos
-; d4 = block tile, mostly used for collision
-; d5 = solidity bit to test
-; d6 = eor to d4 when checking collision, low byte used elsewhere
+; OUTPUT:
+; d0 = copy of d4
+; d4 = block the object is colliding with
 GetFloorPosition:
 	if CompLevel=0
-		movea.l	(Level_layout_addr_ROM).w,a1
+		movea.l	(Level_layout_addr_ROM).w,a2
 	else
-		lea	(Level_layout_header).w,a1
+		lea	(Level_layout_header).w,a2
 	endif
 		move.w	d2,d0
 		lsr.w	#5,d0
 		and.w	(Layout_row_index_mask).w,d0
-		move.w	8(a1,d0.w),d0
+		move.w	8(a2,d0.w),d0
 		andi.w	#$7FFF,d0
-	;	adda.w	d0,a1
+	;	adda.w	d0,a2
 		move.w	d3,d1
 		lsr.w	#3,d1
 		move.w	d1,d4
 		lsr.w	#4,d1
 		add.w	d0,d1
-		adda.w	d1,a1
+		adda.w	d1,a2
 		moveq	#-1,d1
 		clr.w	d1
-		move.b	(a1),d1
+		move.b	(a2),d1
 	;	add.w	d1,d1
 	;	move.w	ChunkAddrArray(pc,d1.w),d1
 		lsl.w	#7,d1	; (chunk number)*$80 ; $80 bytes per chunk
@@ -400,7 +410,9 @@ GetFloorPosition:
 		add.w	d0,d1
 		andi.w	#$E,d4
 		add.w	d4,d1
-		movea.l	d1,a1
+		movea.l	d1,a2
+		move.w	(a2),d4		; copy contents of the block it point to into d4
+		move.w	d4,d0
 		rts
 ; ---------------------------------------------------------------------------
 
@@ -430,7 +442,7 @@ FindCollision_macro macro failbra,wallflag
 +
 		andi.w	#$F,d1
 		lsl.w	#4,d0
-		add.w	d0,d1
+		or.w	d0,d1		; 0000AAAA AAAABBBB
 
 		btst	#$B,d4
 		beq.s	+
@@ -451,7 +463,7 @@ FindCollision_macro macro failbra,wallflag
 +
 		andi.w	#$F,d1
 		lsl.w	#4,d0
-		add.w	d0,d1
+		or.w	d0,d1		; 0000AAAA AAAABBBB
 
 		btst	#$A,d4
 		beq.s	+
@@ -459,10 +471,10 @@ FindCollision_macro macro failbra,wallflag
 +
 		lea	(HeightMapsRot),a2
 	endif
-		move.b	d6,(a4)		; copy final angle into (a4)
+		move.b	d6,(a1)		; copy final angle into (a1)
 		move.b	(a2,d1.w),d0	; use HeightMaps to get final collision data
 		ext.w	d0
-		eor.w	d6,d4
+		eor.w	d6,d4	; WARNING: low byte of d4 gets trashed!
 	if ("wallflag"="")
 		btst	#$B,d4
 	else
@@ -474,8 +486,6 @@ FindCollision_macro macro failbra,wallflag
 	endm
 FindFloor:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d4
-		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F274	; edgecase for block 0, hardcoded to have no collision
 		btst	d5,d4
@@ -517,8 +527,6 @@ loc_F2FE:
 
 FindFloor2:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d4
-		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F31C
 		btst	d5,d4
@@ -553,8 +561,6 @@ loc_F394:
 ; loc_F3A4:
 FindFloor_Ring:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d4
-		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F3EE
 		btst	d5,d4
@@ -595,8 +601,6 @@ loc_F470:
 
 FindWall:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d4
-		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F4EC
 		btst	d5,d4
@@ -640,8 +644,6 @@ loc_F576:
 
 FindWall2:
 		bsr.w	GetFloorPosition
-		move.w	(a1),d4
-		move.w	d4,d0
 		andi.w	#$3FF,d0
 		beq.s	loc_F594
 		btst	d5,d4
@@ -674,51 +676,65 @@ loc_F60C:
 		rts
 
 ; =============== S U B R O U T I N E =======================================
-
+; INPUT
+; d0 = angle
 sub_F61C:
 CalcRoomInFront:
 		SetCollAddrPlane_macro
-		move.b	lrb_solid_bit(a0),d5
+		movem.w	x_vel(a0),d1/d5		; get x_vel in d1, y_vel in d5, sign extended
 		move.l	x_pos(a0),d3
 		move.l	y_pos(a0),d2
-		move.w	x_vel(a0),d1
-		ext.l	d1
-		asl.l	#8,d1
-		add.l	d1,d3
-		move.w	y_vel(a0),d1
+	if ReverseGravity
 		tst.b	(Reverse_gravity_flag).w
 		beq.s	+
-		neg.w	d1
-+		ext.l	d1
+		neg.w	d5
+		ext.l	d5
++
+	endif
 		asl.l	#8,d1
-		add.l	d1,d2
+		asl.l	#8,d5
+		add.l	d1,d3
+		add.l	d5,d2
 		swap	d2
 		swap	d3
+		moveq	#0,d5	; just in case
+		move.b	lrb_solid_bit(a0),d5
+
 		move.b	d0,(Primary_Angle).w
 		move.b	d0,(Secondary_Angle).w
 		move.b	d0,d1
 		addi.b	#$20,d0
-		bpl.s	++
-		move.b	d1,d0
-		bpl.s	+
+		bpl.s	.angleonground
+;		move.b	angle(a0),d0
+;		bpl.s	+
+;		subq.b	#1,d0	; if bmi, +$1F
+;+		addi.b	#$20,d0	; if bpl, +$20
+		tst.b	d1
+		bpl.s	.angleonaircont
+		bra.s	.angleonairsubtract
+
+.angleonground
+;		move.b	angle(a0),d0
+;		bpl.s	+
+;		addq.b	#1,d0	; if bmi, +$20
+;+		addi.b	#$1F,d0	; if bpl, +$1F
+		tst.b	d1
+		bmi.s	.angleonaircont
+
+.angleonairsubtract
 		subq.b	#1,d0
-+		addi.b	#$20,d0
-		bra.s	+++
-; ---------------------------------------------------------------------------
-+		move.b	d1,d0
-		bpl.s	+
-		addq.b	#1,d0
-+		addi.b	#$1F,d0
-+		andi.b	#$C0,d0
+
+.angleonaircont
+		andi.b	#%11000000,d0
 		beq.w	CheckFloorDist_Part2
 		cmpi.b	#$80,d0
 		beq.w	CheckCeilingDist_Part2
-		andi.b	#$38,d1
+		andi.b	#%00111000,d1	; $38
 		bne.s	+
-		addq.w	#8,d2
+		addq.w	#8,d2		; if those bits aren't set, bump up ypos by 8
 +		cmpi.b	#$40,d0
 		beq.w	CheckLeftWallDist_Part2
-		bra.w	CheckRightWallDist_Part2
+		bra.w	CheckRightWallDist_Part2	; angle $C0
 ; ---------------------------------------------------------------------------
 ; Subroutine to calculate how much space is empty above Sonic's/Tails' head
 ; d0 = input angle perpendicular to the spine
@@ -760,7 +776,7 @@ Sonic_CheckFloor2:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindFloor
@@ -773,7 +789,7 @@ Sonic_CheckFloor2:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindFloor
@@ -783,7 +799,7 @@ Sonic_CheckFloor2:
 loc_F7E2:
 		move.b	(Secondary_Angle).w,d3
 		cmp.w	d0,d1
-		ble.s		+
+		ble.s	+
 		move.b	(Primary_Angle).w,d3
 		exg	d0,d1
 +		btst	#0,d3
@@ -797,7 +813,7 @@ loc_F7E2:
 ; d2 = y_pos
 ; d3 = x_pos
 ; d5 = ($c,$d) or ($e,$f) - solidity type bit (L/R/B or top)
-; returns relevant block ID in (a1)
+; returns relevant block ID in (a2)
 ; returns distance in d1
 ; returns angle in d3, or zero if angle was odd
 ; ---------------------------------------------------------------------------
@@ -810,7 +826,7 @@ CheckFloorDist:
 
 CheckFloorDist_Part2:
 		addi.w	#$A,d2
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindFloor
@@ -819,7 +835,8 @@ CheckFloorDist_Part2:
 ; d2 what to use as angle if (Primary_Angle).w is odd
 ; returns angle in d3, or value in d2 if angle was odd
 loc_F81A:
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
+	;	move.b	(Primary_Angle).w,d3
 		btst	#0,d3
 		beq.s	+
 		move.b	d2,d3
@@ -831,7 +848,7 @@ sub_F828:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindFloor
@@ -845,15 +862,13 @@ sub_F846:
 		move.w	y_pos(a0),d2
 		subq.w	#4,d2
 		SetCollAddrPlane_lrb_macro
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#$10,a3
 		moveq	#0,d6
 		move.b	lrb_solid_bit(a0),d5
-		movem.l	a4-a6,-(sp)
 		bsr.w	FindFloor
-		movem.l	(sp)+,a4-a6
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#0,d3
@@ -872,15 +887,13 @@ ChkFloorEdge_Part2:
 
 ChkFloorEdge_Part3:
 		SetCollAddrPlane_macro
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#$10,a3
 		moveq	#0,d6
 		move.b	top_solid_bit(a0),d5
-		movem.l	a4-a6,-(sp)
 		bsr.w	FindFloor
-		movem.l	(sp)+,a4-a6
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#0,d3
@@ -897,13 +910,13 @@ SonicOnObjHitFloor2:
 		ext.w	d0
 		add.w	d0,d2
 		SetCollAddrPlane_macro
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		move.b	top_solid_bit(a1),d5
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#$10,a3
 		moveq	#0,d6
-		move.b	top_solid_bit(a1),d5
-		bsr.w	FindFloor
-		move.b	(Primary_Angle).w,d3
+		bsr.w	FindFloor		; original game corrupted a1 at this point
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#0,d3
@@ -928,13 +941,13 @@ ObjCheckFloorDist2:
 		move.b	y_radius(a0),d0		; Get object height
 		ext.w	d0
 		add.w	d0,d2
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#$10,a3
 		moveq	#0,d6
 		moveq	#$C,d5
 		bsr.w	FindFloor
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#0,d3
@@ -948,8 +961,8 @@ RingCheckFloorDist:
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d2
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#$10,a3
 		moveq	#0,d6
 		moveq	#$C,d5
@@ -966,7 +979,7 @@ CheckRightCeilingDist:
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindWall
@@ -979,7 +992,7 @@ CheckRightCeilingDist:
 		move.b	y_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindWall
@@ -988,36 +1001,36 @@ CheckRightCeilingDist:
 		bra.w	loc_F7E2
 
 ; =============== S U B R O U T I N E =======================================
-
-sub_FA1A:
-		move.w	y_pos(a0),d2
-		move.w	x_pos(a0),d3
-		move.b	y_radius(a0),d0
-		ext.w	d0
-		sub.w	d0,d2
-		move.b	x_radius(a0),d0
-		ext.w	d0
-		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
-		movea.w	#$10,a3
-		moveq	#0,d6
-		bsr.w	FindWall
-		move.w	d1,-(sp)
-		move.w	y_pos(a0),d2
-		move.w	x_pos(a0),d3
-		move.b	y_radius(a0),d0
-		ext.w	d0
-		add.w	d0,d2
-		move.b	x_radius(a0),d0
-		ext.w	d0
-		add.w	d0,d3
-		lea	(Secondary_Angle).w,a4
-		movea.w	#$10,a3
-		moveq	#0,d6
-		bsr.w	FindWall
-		move.w	(sp)+,d0
-		move.b	#-$40,d2
-		bra.w	loc_F7E2
+; used for the MGZ spinning top and MHZ mushroom parachute
+;sub_FA1A:
+	;	move.w	y_pos(a0),d2
+	;	move.w	x_pos(a0),d3
+	;	move.b	y_radius(a0),d0
+	;	ext.w	d0
+	;	sub.w	d0,d2
+	;	move.b	x_radius(a0),d0
+	;	ext.w	d0
+	;	add.w	d0,d3
+	;	lea	(Primary_Angle).w,a1
+	;	movea.w	#$10,a3
+	;	moveq	#0,d6
+	;	bsr.w	FindWall
+	;	move.w	d1,-(sp)
+	;	move.w	y_pos(a0),d2
+	;	move.w	x_pos(a0),d3
+	;	move.b	y_radius(a0),d0
+	;	ext.w	d0
+	;	add.w	d0,d2
+	;	move.b	x_radius(a0),d0
+	;	ext.w	d0
+	;	add.w	d0,d3
+	;	lea	(Secondary_Angle).w,a1
+	;	movea.w	#$10,a3
+	;	moveq	#0,d6
+	;	bsr.w	FindWall
+	;	move.w	(sp)+,d0
+	;	move.b	#-$40,d2
+	;	bra.w	loc_F7E2
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -1027,19 +1040,19 @@ CheckRightWallDist:
 
 CheckRightWallDist_Part2:
 		addi.w	#$A,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#$10,a3
 		moveq	#0,d6
 		bsr.w	FindWall
 		move.b	#-$40,d2
 		bra.w	loc_F81A
 ; ---------------------------------------------------------------------------
-
+; for Knuckles climbing walls
 loc_FAA4:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#$10,a3
 		move.w	#0,d6
 		bsr.w	FindWall
@@ -1053,13 +1066,13 @@ ObjHitWallRight:
 ObjCheckRightWallDist:
 		add.w	x_pos(a0),d3
 		move.w	y_pos(a0),d2
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#$10,a3
 		moveq	#0,d6
 		moveq	#$D,d5
 		bsr.w	FindWall
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#-$40,d3
@@ -1077,7 +1090,7 @@ Sonic_CheckCeiling:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		bsr.w	FindFloor
@@ -1091,7 +1104,7 @@ Sonic_CheckCeiling:
 		move.b	x_radius(a0),d0
 		ext.w	d0
 		sub.w	d0,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		bsr.w	FindFloor
@@ -1112,7 +1125,7 @@ sub_FB5A:
 		ext.w	d0
 		subq.w	#2,d0
 		add.w	d0,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		bsr.w	FindFloor
@@ -1127,7 +1140,7 @@ sub_FB5A:
 		ext.w	d0
 		subq.w	#2,d0
 		sub.w	d0,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		bsr.w	FindFloor
@@ -1144,7 +1157,7 @@ CheckCeilingDist:
 CheckCeilingDist_Part2:
 		subi.w	#$A,d2
 		eori.w	#$F,d2
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		bsr.w	FindFloor
@@ -1159,7 +1172,7 @@ CheckCeilingDist_WithRadius:
 		ext.w	d0
 		sub.w	d0,d2
 		eori.w	#$F,d2
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		bsr.w	FindFloor
@@ -1181,11 +1194,11 @@ ObjCheckCeilingDist_Part3:
 		ext.w	d0
 		sub.w	d0,d2
 		eori.w	#$F,d2
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		bsr.w	FindFloor
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#$80,d3
@@ -1202,15 +1215,13 @@ ChkFloorEdge_ReverseGravity:
 
 ChkFloorEdge_ReverseGravity_Part2:
 		SetCollAddrPlane_macro
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		move.b	top_solid_bit(a0),d5
-		movem.l	a4-a6,-(sp)
 		bsr.w	FindFloor
-		movem.l	(sp)+,a4-a6
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#0,d3
@@ -1226,8 +1237,8 @@ RingCheckFloorDist_ReverseGravity:
 		ext.w	d0
 		sub.w	d0,d2
 		eori.w	#$F,d2
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#-$10,a3
 		move.w	#$800,d6
 		moveq	#$C,d5
@@ -1245,7 +1256,7 @@ CheckLeftCeilingDist:
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$400,d6
 		bsr.w	FindWall
@@ -1259,7 +1270,7 @@ CheckLeftCeilingDist:
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$400,d6
 		bsr.w	FindWall
@@ -1279,7 +1290,7 @@ sub_FD32:
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$400,d6
 		bsr.w	FindWall
@@ -1293,7 +1304,7 @@ sub_FD32:
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
-		lea	(Secondary_Angle).w,a4
+		lea	(Secondary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$400,d6
 		bsr.w	FindWall
@@ -1310,7 +1321,7 @@ CheckLeftWallDist:
 CheckLeftWallDist_Part2:
 		subi.w	#$A,d3
 		eori.w	#$F,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$400,d6
 		bsr.w	FindWall
@@ -1323,7 +1334,7 @@ loc_FDC8:
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
-		lea	(Primary_Angle).w,a4
+		lea	(Primary_Angle).w,a1
 		movea.w	#-$10,a3
 		move.w	#$400,d6
 		bsr.w	FindWall
@@ -1340,13 +1351,13 @@ sub_FDEC:
 		ext.w	d0
 		sub.w	d0,d3
 		eori.w	#$F,d3
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#-$10,a3
 		move.w	#$400,d6
 		move.b	lrb_solid_bit(a0),d5
 		bsr.w	FindWall
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#$40,d3
@@ -1362,13 +1373,13 @@ ObjCheckLeftWallDist:
 
 ObjCheckLeftWallDist_Part2:
 		move.w	y_pos(a0),d2
-		lea	(Primary_Angle).w,a4
-		clr.b	(a4)
+		lea	(Primary_Angle).w,a1
+		clr.b	(a1)
 		movea.w	#-$10,a3
 		move.w	#$400,d6
 		moveq	#$D,d5
 		bsr.w	FindWall
-		move.b	(Primary_Angle).w,d3
+		move.b	(a1),d3
 		btst	#0,d3
 		beq.s	+
 		move.b	#$40,d3
