@@ -101,8 +101,8 @@ Sonic_Normal:
 	endif
 		moveq	#0,d0
 		move.b	routine(a0),d0
-		move.w	Sonic_Index(pc,d0.w),d1
-		jmp	Sonic_Index(pc,d1.w)
+		move.w	Sonic_Index(pc,d0.w),d0
+		jmp	Sonic_Index(pc,d0.w)
 ; ---------------------------------------------------------------------------
 
 Sonic_Index: offsetTable
@@ -190,7 +190,7 @@ loc_10C0C:
 		movem.l	a4-a6,-(sp)
 		moveq	#0,d0
 		move.b	status(a0),d0
-		andi.w	#6,d0
+		andi.w	#(1<<Status_InAir|1<<Status_Roll),d0
 		move.w	Sonic_Modes(pc,d0.w),d1
 		jsr	Sonic_Modes(pc,d1.w)	; run Sonic's movement control code
 		movem.l	(sp)+,a4-a6
@@ -224,12 +224,11 @@ loc_10C26:
 +		rts
 ; ---------------------------------------------------------------------------
 ; secondary states under state Sonic_Control
-
 Sonic_Modes: offsetTable
-		offsetTableEntry.w Sonic_MdNormal	; 0
-		offsetTableEntry.w Sonic_MdAir		; 2
-		offsetTableEntry.w Sonic_MdRoll		; 4
-		offsetTableEntry.w Sonic_MdJump		; 6
+	offsetTableEntry.w Sonic_MdNormal,(0<<Status_InAir|0<<Status_Roll)
+	offsetTableEntry.w Sonic_MdAir,(1<<Status_InAir|0<<Status_Roll)
+	offsetTableEntry.w Sonic_MdRoll,(0<<Status_InAir|1<<Status_Roll)
+	offsetTableEntry.w Sonic_MdJump,(1<<Status_InAir|1<<Status_Roll)
 
 ; =============== S U B R O U T I N E =======================================
 

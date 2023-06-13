@@ -36,18 +36,18 @@ loc_136A8:
 Tails_Normal:
 		moveq	#0,d0
 		move.b	routine(a0),d0
-		move.w	Tails_Index(pc,d0.w),d1
-		jmp	Tails_Index(pc,d1.w)
+		move.w	Tails_Index(pc,d0.w),d0
+		jmp	Tails_Index(pc,d0.w)
 ; ---------------------------------------------------------------------------
 
-Tails_Index:
-		dc.w Tails_Init-Tails_Index
-		dc.w Tails_Control-Tails_Index
-		dc.w loc_1569C-Tails_Index
-		dc.w loc_1578E-Tails_Index
-		dc.w loc_157E0-Tails_Index
-		dc.w loc_157F4-Tails_Index
-		dc.w loc_15810-Tails_Index
+Tails_Index:	offsetTable
+	offsetTableEntry.w Tails_Init,id_SonicInit
+	offsetTableEntry.w Tails_Control,id_SonicControl
+	offsetTableEntry.w Tails_Hurt,id_SonicHurt
+	offsetTableEntry.w Tails_Death,id_SonicDeath
+	offsetTableEntry.w Tails_Restart,id_SonicRestart
+	offsetTableEntry.w loc_157F4
+	offsetTableEntry.w Tails_Drown,id_SonicDrown
 ; ---------------------------------------------------------------------------
 
 Tails_Init:
@@ -179,7 +179,7 @@ loc_13872:
 		movem.l	a4-a6,-(sp)
 		moveq	#0,d0
 		move.b	status(a0),d0
-		andi.w	#6,d0
+		andi.w	#(1<<Status_InAir|1<<Status_Roll),d0
 		move.w	Tails_Modes(pc,d0.w),d1
 		jsr	Tails_Modes(pc,d1.w)
 		movem.l	(sp)+,a4-a6
@@ -222,10 +222,11 @@ loc_138E4:
 locret_138F4:
 		rts
 ; ---------------------------------------------------------------------------
-Tails_Modes:	dc.w Tails_Stand_Path-Tails_Modes
-		dc.w Tails_Stand_Freespace-Tails_Modes
-		dc.w Tails_Spin_Path-Tails_Modes
-		dc.w Tails_Spin_Freespace-Tails_Modes
+Tails_Modes: offsetTable
+	offsetTableEntry.w Tails_Stand_Path,(0<<Status_InAir|0<<Status_Roll)
+	offsetTableEntry.w Tails_Stand_Freespace,(1<<Status_InAir|0<<Status_Roll)
+	offsetTableEntry.w Tails_Spin_Path,(0<<Status_InAir|1<<Status_Roll)
+	offsetTableEntry.w Tails_Spin_Freespace,(1<<Status_InAir|1<<Status_Roll)
 ; ---------------------------------------------------------------------------
 
 Tails_Display = Player_Display
@@ -2485,7 +2486,7 @@ loc_1565E:
 		rts
 ; ---------------------------------------------------------------------------
 
-loc_1569C:
+Tails_Hurt:
 		cmpi.w	#2,(Player_mode).w
 		bne.s	loc_156BE
 		tst.b	(Debug_mode_flag).w
@@ -2571,7 +2572,7 @@ loc_15788:
 		jmp	(Kill_Character).l
 ; ---------------------------------------------------------------------------
 
-loc_1578E:
+Tails_Death:
 		cmpi.w	#2,(Player_mode).w
 		bne.s	loc_157B0
 		tst.b	(Debug_mode_flag).w
@@ -2599,15 +2600,13 @@ loc_157C8:
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 
-loc_157E0:
+Tails_Restart:
 		tst.w	restart_timer(a0)
-		beq.s	locret_157F2
+		beq.s	+
 		subq.w	#1,restart_timer(a0)
-		bne.s	locret_157F2
+		bne.s	+
 		st	(Restart_level_flag).w
-
-locret_157F2:
-		rts
++		rts
 ; ---------------------------------------------------------------------------
 
 loc_157F4:
@@ -2622,7 +2621,7 @@ loc_15806:
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 
-loc_15810:
+Tails_Drown:
 		tst.b	(Flying_carrying_Sonic_flag).w
 		beq.s	loc_15828
 		lea	(Player_1).w,a1

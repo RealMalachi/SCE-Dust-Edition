@@ -1099,7 +1099,16 @@ __LABEL__ label *
     endm
 
 ; macro to declare an entry in an offset table
-offsetTableEntry macro ptr
+; you can specify a number for how far into the offset table an offset should be in
+; Basically, this represents the intended routine ID that the offset should point to
+offsetTableEntry macro ptr,addrdist
+    if "addrdist"<>""
+      if MOMPASS>=3	; magic mompass
+	if addrdist <> (*)-(current_offset_table)
+	fatal "Offset entry doesn't match its intended ID! Off by $\{((*)-(current_offset_table))-addrdist}. $\{(*)}, $\{(current_offset_table)}, $\{(addrdist)}"
+	endif
+      endif
+    endif
 	dc.ATTRIBUTE ptr-current_offset_table
     endm
 offsetEntry macro ptr

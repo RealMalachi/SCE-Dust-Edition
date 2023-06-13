@@ -32,18 +32,18 @@ loc_16488:
 Knuckles_Normal:
 		moveq	#0,d0
 		move.b	routine(a0),d0
-		move.w	Knuckles_Index(pc,d0.w),d1
-		jmp	Knuckles_Index(pc,d1.w)
+		move.w	Knuckles_Index(pc,d0.w),d0
+		jmp	Knuckles_Index(pc,d0.w)
 ; ---------------------------------------------------------------------------
 
-Knuckles_Index:
-		dc.w Knuckles_Init-Knuckles_Index
-		dc.w Knuckles_Control-Knuckles_Index
-		dc.w loc_17BB6-Knuckles_Index
-		dc.w loc_17C88-Knuckles_Index
-		dc.w loc_17CBA-Knuckles_Index
-		dc.w loc_17CCE-Knuckles_Index
-		dc.w loc_17CEA-Knuckles_Index
+Knuckles_Index: offsetTable
+	offsetTableEntry.w Knuckles_Init,id_SonicInit
+	offsetTableEntry.w Knuckles_Control,id_SonicControl
+	offsetTableEntry.w Knuckles_Hurt,id_SonicHurt
+	offsetTableEntry.w Knuckles_Death,id_SonicDeath
+	offsetTableEntry.w Knuckles_Restart,id_SonicRestart
+	offsetTableEntry.w loc_17CCE
+	offsetTableEntry.w Knuckles_Drown,id_SonicDrown
 ; ---------------------------------------------------------------------------
 
 Knuckles_Init:
@@ -117,7 +117,7 @@ loc_165BE:
 		movem.l	a4-a6,-(sp)
 		moveq	#0,d0
 		move.b	status(a0),d0
-		andi.w	#6,d0
+		andi.w	#(1<<Status_InAir|1<<Status_Roll),d0
 		move.w	Knux_Modes(pc,d0.w),d1
 		jsr	Knux_Modes(pc,d1.w)
 		movem.l	(sp)+,a4-a6
@@ -160,10 +160,11 @@ loc_16630:
 locret_16640:
 		rts
 ; ---------------------------------------------------------------------------
-Knux_Modes:	dc.w Knux_Stand_Path-Knux_Modes
-		dc.w Knux_Stand_Freespace-Knux_Modes
-		dc.w Knux_Spin_Path-Knux_Modes
-		dc.w Knux_Spin_Freespace-Knux_Modes
+Knux_Modes: offsetTable
+	offsetTableEntry.w Knux_Stand_Path,(0<<Status_InAir|0<<Status_Roll)
+	offsetTableEntry.w Knux_Stand_Freespace,(1<<Status_InAir|0<<Status_Roll)
+	offsetTableEntry.w Knux_Spin_Path,(0<<Status_InAir|1<<Status_Roll)
+	offsetTableEntry.w Knux_Spin_Freespace,(1<<Status_InAir|1<<Status_Roll)
 
 ; =============== S U B R O U T I N E =======================================
 
@@ -1735,7 +1736,7 @@ locret_17BB4:
 		rts
 ; ---------------------------------------------------------------------------
 
-loc_17BB6:
+Knuckles_Hurt:
 		tst.b	(Debug_mode_flag).w
 		beq.s	loc_17BD0
 		btst	#4,(Ctrl_1_pressed).w
@@ -1811,7 +1812,7 @@ loc_17C82:
 		jmp	(Kill_Character).l
 ; ---------------------------------------------------------------------------
 
-loc_17C88:
+Knuckles_Death:
 		tst.b	(Debug_mode_flag).w
 		beq.s	loc_17CA2
 		btst	#4,(Ctrl_1_pressed).w
@@ -1829,7 +1830,7 @@ loc_17CA2:
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 
-loc_17CBA:
+Knuckles_Restart:
 		tst.w	restart_timer(a0)
 		beq.s	locret_17CCC
 		subq.w	#1,restart_timer(a0)
@@ -1852,7 +1853,7 @@ loc_17CE0:
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 
-loc_17CEA:
+Knuckles_Drown:
 		tst.b	(Debug_mode_flag).w
 		beq.s	loc_17D04
 		btst	#4,(Ctrl_1_pressed).w
