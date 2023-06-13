@@ -1198,7 +1198,7 @@ SonicKnux_Roll:
 		move.w	playctrl_hd(a4),d0
 		andi.w	#btnLR,d0
 		bne.s	locret_1177E
-		btst	#button_down,(Ctrl1_Player_Hd_ABC).w	;playctrl_hd_abc(a4)
+		btst	#button_down,playctrl_hd_abc(a4)
 		beq.s	loc_11780
 		move.w	ground_vel(a0),d0
 		bpl.s	+
