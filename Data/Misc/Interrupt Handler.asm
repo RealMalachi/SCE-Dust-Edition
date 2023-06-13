@@ -5,30 +5,61 @@ UpdatePaletteVint macro
 	bra.s	++
 +	dma68kToVDP Normal_palette,$0000,$80,CRAM
 +
+	move.w	#bytes_to_word($87,$20),VDP_control_port-VDP_control_port(a5)
 	endm
-
+; if PAL, slow down the CPU to umm ehh mmm aaaah
 PALAdjustVint macro
 ;	btst	#6,(Graphics_flags).w
-;	beq.s	+								; branch if it's not a PAL system
+;	beq.s	+			; branch if it's not a PAL system
 ;	move.w	#$700,d0
-;	dbf	d0,*										; otherwise, waste a bit of time here
+;	dbf	d0,*			; otherwise, waste a bit of time here
 ;+
+	endm
+; test if the console is currently handling the Vblank
+TestVblank macro reg
+	if "reg"=""
+-	btst	#3,(VDP_control_port+1)
+	else
+-	btst	#3,reg
+	endif
+	beq.s	-
+	endm
+; test if the console is handling a Hblank
+TestHblank macro reg
+	if "reg"=""
+-	btst	#2,(VDP_control_port+1)
+	else
+-	btst	#2,reg
+	endif
+	beq.s	-
+	endm
+; hand-written code would be faster, but these are a massive edgecase
+QuickController macro polltype
+	if polltype=0
+	moveq	#0,d0
+	else
+	move.w	#bytes_to_word(polltype,polltype),d0
+	endif
+	lea	(HW_Port_1_Data),a1
+	movep.w	d0,HW_Port_1_Data-HW_Port_1_Data(a1)	; poll both control ports at the same time
+;	move.l	#words_to_long(polltype,polltype),(HW_Port_1_Data-1)	; poll both control ports at the same time
+	move.b	HW_Port_1_Data-HW_Port_1_Data(a1),d0
+	move.b	HW_Port_2_Data-HW_Port_1_Data(a1),d1
 	endm
 ; ---------------------------------------------------------------------------
 ; Vertical interrupt handler
 ; ---------------------------------------------------------------------------
 
 VInt:
-		movem.l	d0-a6,-(sp)							; save all the registers to the stack
+		movem.l	d0-a6,-(sp)				; save all the registers to the stack
 		lea	(VDP_data_port).l,a6
 		lea	VDP_control_port-VDP_data_port(a6),a5
+	;	lea	(VDP_control_port+1)-VDP_data_port(a6),a5
+	;TestVblank (VDP_control_port+1)-(VDP_control_port+1)(a5)	; wait until vertical blanking is taking place
+	;	subq.w	#1,a5			; VDP_control_port
 
-		tst.b	(V_int_flag).w	; has the game finished its routines before the end of the frame?
-		beq.s	VInt_Lag_Main	; if not, handle lag
-
--		move.w	VDP_control_port-VDP_control_port(a5),d0
-		andi.w	#8,d0
-		beq.s	-	; wait until vertical blanking is taking place
+		tst.b	(V_int_flag).w		; has the game finished its routines before the end of the frame?
+		beq.s	VInt_Lag_Main		; if not, handle lag
 
 		move.l	#vdpComm($0000,VSRAM,WRITE),VDP_control_port-VDP_control_port(a5)
 		move.l	(V_scroll_value).w,VDP_data_port-VDP_data_port(a6) ; send screen ypos to VSRAM
@@ -40,15 +71,15 @@ VInt:
 		jsr	(a0)			; run code
 
 VInt_Music:
-		UpdateSoundDriver						; update SMPS	; warning: a5-a6 will be overwritten
+		UpdateSoundDriver		; update SMPS	; warning: a5-a6 will be overwritten
 
 VInt_Done:
 		jsr	(Random_Number).w
 		addq.l	#1,(V_int_run_count).w
 	if Lagometer
-		move.w	#$9193,(VDP_control_port).l			; window H right side, base point $80
+		move.w	#$9193,(VDP_control_port).l	; window H right side, base point $80
 	endif
-		movem.l	(sp)+,d0-a6							; return saved registers from the stack
+		movem.l	(sp)+,d0-a6		; return saved registers from the stack
 		rte
 ExtInt:
 	move.l	d0,-(sp)
@@ -79,7 +110,6 @@ VInt_Lag_Main:
 VInt_Lag_Level:
 		tst.b	(Water_flag).w
 		beq.w	VInt_Lag_NoWater
-		move.w	VDP_control_port-VDP_control_port(a5),d0
 	PALAdjustVint
 		st	(H_int_flag).w							; set HInt flag
 		stopZ80
@@ -90,7 +120,6 @@ VInt_Lag_Level:
 ; ---------------------------------------------------------------------------
 
 VInt_Lag_NoWater:
-		move.w	VDP_control_port-VDP_control_port(a5),d0
 	PALAdjustVint
 		st	(H_int_flag).w
 		move.w	(H_int_counter_command).w,VDP_control_port-VDP_control_port(a5)
@@ -275,6 +304,14 @@ Do_Updates:
 ; =============== S U B R O U T I N E =======================================
 
 HInt:
+	tst.b	(H_int_flag).w
+	beq.s	.done
+	clr.b	(H_int_flag).w
+	TestHblank
+	move.w	#bytes_to_word($87,$2B),(VDP_control_port).l
+.done
+	rte
+
 		disableInts
 		tst.b	(H_int_flag).w
 		beq.s	HInt_Done
