@@ -19,10 +19,11 @@ VDP_control_port =			$C00004
 VDP_counter =				$C00008
 VDP_h_counter =				VDP_counter
 VDP_v_counter =				VDP_counter+1
-
+; $C0000A-0F should be a mirror
 PSG_input =				$C00011
 
 VDP_debug_reg =				$C0001C
+VDP_debug_reg_mirror =			$C0001E
 
 ; ---------------------------------------------------------------------------
 ; Address equates

@@ -1103,7 +1103,7 @@ __LABEL__ label *
 ; Basically, this represents the intended routine ID that the offset should point to
 offsetTableEntry macro ptr,addrdist
     if "addrdist"<>""
-      if MOMPASS>=3	; magic mompass
+      if MOMPASS>=4	; magic mompass
 	if addrdist <> (*)-(current_offset_table)
 	fatal "Offset entry doesn't match its intended ID! Off by $\{((*)-(current_offset_table))-addrdist}. $\{(*)}, $\{(current_offset_table)}, $\{(addrdist)}"
 	endif

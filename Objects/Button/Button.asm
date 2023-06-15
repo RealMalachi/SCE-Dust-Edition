@@ -63,7 +63,7 @@ loc_2C62C:
 		moveq	#$10,d1
 		moveq	#6,d3
 		move.w	x_pos(a0),d4
-		jsr	(SolidObjectTop).w
+		jsr	(SolidObjectTop)
 		clr.b	mapping_frame(a0)
 		move.b	subtype(a0),d0
 		andi.w	#$F,d0

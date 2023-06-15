@@ -1,7 +1,14 @@
 
+Sonic Retro	- Documentation, source code, disassembler(s)
+clownacy	- a good majority of the afformentioned Retro stuff
 lavagaming1	- Draw_Sprite optimization, ObjectRamMarker idea
 vladikcomper	- Kosinski+
 flamewing	- Optimized MoveSprite routine
 MDTravis	- https://github.com/MDTravisYT/Hiroshi-Kubota-SMPS-Decomps
 Devon		- https://github.com/DevsArchive/genesis-emulator-detector
+
+
+
+
+
 
