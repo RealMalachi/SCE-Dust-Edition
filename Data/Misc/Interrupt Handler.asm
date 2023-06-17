@@ -302,14 +302,14 @@ HInt:
 
 		move.l	a5,-(sp)
 		lea	(VDP_control_port).l,a5
-		move.w	#bytes_to_word($87,$10),VDP_control_port-VDP_control_port(a5)
+		move.w	#bytes_to_word($87,$10),VDP_control_port-VDP_control_port(a5)	; red
 		move.w	#bytes_to_word($8A,ScreenSize_LineCount-1),VDP_control_port-VDP_control_port(a5)
 		TestHblank
+		move.w	#bytes_to_word($87,0),VDP_control_port-VDP_control_port(a5)	; blue, black
 		dma68kToVDP Water_palette,$0000,$80,CRAM
-		move.w	#bytes_to_word($87,$20),VDP_control_port-VDP_control_port(a5)
+		move.w	#bytes_to_word($87,$20),VDP_control_port-VDP_control_port(a5)	; pink
 		TestHblank
-		move.w	#bytes_to_word($87,$30),VDP_control_port-VDP_control_port(a5)
-
+		move.w	#bytes_to_word($87,$30),VDP_control_port-VDP_control_port(a5)	; black
 		move.l	(sp)+,a5
 .done
 	enableIntsSave
