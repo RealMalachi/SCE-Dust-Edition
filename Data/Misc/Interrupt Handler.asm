@@ -69,7 +69,7 @@ VInt:
 		st	(V_int_flag).w		; set that Vsync was successful
 		movea.l	(V_int_routine).w,a0	; load address to the gamemodes Vint routine
 		jsr	(a0)			; run code
-
+		clr.b	(Hint_count).w
 VInt_Music:
 		UpdateSoundDriver		; update SMPS	; warning: a5-a6 will be overwritten
 
@@ -270,16 +270,7 @@ VInt_Level_Cont:
 		jsr	(Process_DMA_Queue).w
 		jsr	(VInt_DrawLevel).w
 		startZ80
-		enableInts
-;		tst.b	(Water_flag).w
-;		beq.s	.notwater
-;		cmpi.b	#92,(H_int_counter).w	; is H-int occuring on or below line 92?
-;		bhs.s	.notwater				; if it is, branch
-;		st	(Do_Updates_in_H_int).w
-;		jsr	(Set_Kos_Bookmark).w
-;		addq.l	#4,sp
-;		bra.w	VInt_Done
-;.notwater
+		enableInts	; enables Hint
 		bsr.s	Do_Updates
 		jmp	(Set_Kos_Bookmark).w
 
@@ -304,31 +295,24 @@ Do_Updates:
 ; =============== S U B R O U T I N E =======================================
 
 HInt:
-	tst.b	(H_int_flag).w
-	beq.s	.done
-	clr.b	(H_int_flag).w
-	TestHblank
-	move.w	#bytes_to_word($87,$2B),(VDP_control_port).l
-.done
-	rte
-
-		disableInts
 		tst.b	(H_int_flag).w
-		beq.s	HInt_Done
+		beq.s	.nohint
+	disableIntsSave			; prevent Vint from interrupting this
 		clr.b	(H_int_flag).w
 
 		move.l	a5,-(sp)
 		lea	(VDP_control_port).l,a5
-		move.w	#$8A00+223,VDP_control_port-VDP_control_port(a5)
+		move.w	#bytes_to_word($87,$10),VDP_control_port-VDP_control_port(a5)
+		move.w	#bytes_to_word($8A,ScreenSize_LineCount-1),VDP_control_port-VDP_control_port(a5)
+		TestHblank
 		dma68kToVDP Water_palette,$0000,$80,CRAM
-		move.l	(sp)+,a5
+		move.w	#bytes_to_word($87,$20),VDP_control_port-VDP_control_port(a5)
+		TestHblank
+		move.w	#bytes_to_word($87,$30),VDP_control_port-VDP_control_port(a5)
 
-	;	tst.b	(Do_Updates_in_H_int).w
-	;	beq.s	HInt_Done
-	;	clr.b	(Do_Updates_in_H_int).w
-	;	movem.l	d0-a6,-(sp)		; move all the registers to the stack
-	;	bsr.w	Do_Updates
-	;	UpdateSoundDriver		; Update SMPS
-	;	movem.l	(sp)+,d0-a6		; load saved registers from the stack
-HInt_Done:
+		move.l	(sp)+,a5
+.done
+	enableIntsSave
+.nohint
+		addq.b	#1,(Hint_count).w	; debugging
 		rte

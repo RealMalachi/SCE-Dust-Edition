@@ -340,7 +340,7 @@ DMA_data_thunk:					= *			; Used as a RAM holder for the final DMA command word.
 DMA_trigger_word:				ds.w 1			; Transferred from RAM to avoid crashing the Mega Drive
 f_hbla_pal:					= *
 H_int_flag:					ds.b 1			; Unless this is set H-int will return immediately
-Do_Updates_in_H_int:				ds.b 1			; If this is set Do_Updates will be called from H-int instead of V-int
+Hint_count:					ds.b 1		; Debug ; the amount of times a H-int occurs every frame
 
 f_lockctrl:					= *
 Ctrl_1_locked:					ds.b 1

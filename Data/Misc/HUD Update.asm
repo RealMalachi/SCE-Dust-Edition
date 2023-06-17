@@ -164,9 +164,10 @@ HudDebug:
 		move.w	(Ring_count).w,d1			; load number of rings
 		bsr.w	DrawThreeDigitNumber
 .objcounter
-	;	locVRAM	tiles_to_bytes(ArtTile_HUD+$28),d0	; set VRAM address
-	;	moveq	#0,d1
-	;	bsr.w	DrawSingleDigitNumber
+		locVRAM	tiles_to_bytes(ArtTile_HUD+$28),d0	; set VRAM address
+		moveq	#0,d1
+		move.b	(Hint_count).w,d1
+		bsr.w	DrawSingleDigitNumber
 
 		locVRAM	tiles_to_bytes(ArtTile_HUD+$2C),d0	; set VRAM address
 		moveq	#0,d1
