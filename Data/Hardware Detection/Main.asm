@@ -61,10 +61,10 @@ DetectHardware:
 		rol.b	#1,d0			; put bit 7 into bit 0
 		move.b	d1,(a0)			; restore RAM
 
+		move.b	(Emulator_ID).w,d3	; get emulator id
 ; last, set two bits for V30
 ; check systems that'll support V30 on either
 		moveq	#signextendB(1<<hard_v3050|1<<hard_v3060),d4
-		move.b	(Emulator_ID).w,d3	; get emulator id
 		moveq	#(VDP_V30_emu.end-VDP_V30_emu)-1,d1
 		lea	VDP_V30_emu(pc),a1
 -		move.b	(a1)+,d2
@@ -85,7 +85,6 @@ DetectHardware:
 		or.b	d4,d0
 
 		moveq	#signextendB(1<<hard_cramdot),d4
-		move.b	(Emulator_ID).w,d3	; get emulator id
 		moveq	#(BlastProc_NoList.end-BlastProc_NoList)-1,d1
 		lea	BlastProc_NoList(pc),a1
 -		move.b	(a1)+,d2
@@ -95,6 +94,15 @@ DetectHardware:
 		moveq	#0,d4
 .end2
 		or.b	d4,d0
+; widescreen
+		cmp.b	#EMU_GPGX,d3
+		bne.s	.nowidescreen
+		if hard_widescreen=7
+		tas.b	d0	; set bit 7
+		else
+		btst	#hard_widescreen,d0
+		endif
+.nowidescreen
 		rts
 
 ; list of all the emulators that support V30 60Hz...
@@ -163,7 +171,7 @@ DetectAddon:
 		move.b	#$07,UART_FCR-UART_RHR(a1)	; flush send/receive fifos
 		move.b	#$00,UART_IER-UART_RHR(a1)
 	  if addon_wifi=7
-		tas	d0
+		tas.b	d0
 	  else
 		bset	#addon_wifi,d0
 	  endif

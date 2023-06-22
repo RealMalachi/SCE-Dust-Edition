@@ -229,12 +229,18 @@ nop5	macro
 ; ---------------------------------------------------------------------------
 ; compatibility with other compiler labels
 
-; alias binclude as incbin from asm68k compiler
-incbin	macro file
-	binclude	file
-	endm
 
+; asm68k labels
+
+; alias binclude as incbin from asm68k compiler
+incbin macro file
+	binclude file
+	endm
 ; dcb from asm68k compiler
-dcb	macro fill, byte
+dcb macro fill,byte
 	dc.ATTRIBUTE [fill]byte
+	endm
+; ds for asm68k compiler
+rs macro 
+	ds.ATTRIBUTE ALLARGS
 	endm

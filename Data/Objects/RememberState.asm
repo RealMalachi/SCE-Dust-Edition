@@ -8,7 +8,7 @@ Sprite_OnScreen_Test:
 		move.w	x_pos(a0),d0
 
 Sprite_OnScreen_Test2:
-		out_of_xrange2.s	.offscreen
+		out_of_xrange2.s .offscreen
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ Sprite_OnScreen_Test_Collision:
 		move.w	x_pos(a0),d0
 
 .skipxpos
-		out_of_xrange2.s	.offscreen
+		out_of_xrange2.s .offscreen
 		jsr	(Add_SpriteToCollisionResponseList).w
 		jmp	(Draw_Sprite).w
 ; ---------------------------------------------------------------------------

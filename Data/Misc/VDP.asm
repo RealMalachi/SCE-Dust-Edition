@@ -3,31 +3,31 @@
 ; ---------------------------------------------------------------------------
 
 VDP_register_values:
-	dc.w $8004			; H-int disabled
-;	dc.w $8100+%00111100		; V-int enabled, display blanked, DMA enabled, 240 line display
-;	dc.w $8100+%00110100		; V-int enabled, display blanked, DMA enabled, 224 line display
-	dc.w $8200+(vram_fg>>10)	; Scroll A PNT base $C000
-	dc.w $8300+(vram_window>>10)	; Window PNT base $C000
-	dc.w $8400+(vram_bg>>13)	; Scroll B PNT base $E000
-	dc.w $8500+(vram_sprites>>9)	; Sprite attribute table base $F800
-	dc.w $8600			; Sprite Pattern Generator Base Address: low 64KB VRAM
-	dc.w $8700+(0<<4)		; Backdrop color is color 0 of the first palette line
-;	dc.w $8800			; unused
-;	dc.w $8900			; unused
-	dc.w $8A00			; default H.interrupt register
-	dc.w $8B00			; Full-screen horizontal and vertical scrolling
-	dc.w $8C81			; 40 cell wide display, no interlace, S/H disabled
-	dc.w $8D00+(vram_hscroll>>10)	; Horizontal scroll table base $F000
-	dc.w $8E00			; Nametable Pattern Generator Base Address: low 64KB VRAM
-	dc.w $8F02			; VDP auto increment is 2
-	dc.w $9001			; Scroll planes are 64x32 cells (512x256)
-	dc.w $9100			; Window horizontal position
-	dc.w $9200			; Window vertical position
-;	dc.w $9300			; DMA related
-;	dc.w $9400			; ditto
-;	dc.w $9500			; ditto.
-;	dc.w $9600			; ditto..
-;	dc.w $9700			; ditto...
+	dc.w bytes_to_word($80,4)			; H-int disabled, 9-bit color mode
+;	dc.w bytes_to_word($81,%00111100)		; V-int enabled, display blanked, DMA enabled, 240 line display
+;	dc.w bytes_to_word($81,%00110100)		; V-int enabled, display blanked, DMA enabled, 224 line display
+	dc.w bytes_to_word($82,vram_fg>>10)		; Scroll A PNT base $C000
+	dc.w bytes_to_word($83,vram_window>>10)		; Window PNT base $C000
+	dc.w bytes_to_word($84,vram_bg>>13)		; Scroll B PNT base $E000
+	dc.w bytes_to_word($85,vram_sprites>>9)		; Sprite attribute table base $F800
+	dc.w bytes_to_word($86,00)			; Sprite Pattern Generator Base Address: low 64KB VRAM
+	dc.w bytes_to_word($87,00)			; Backdrop color is color 0 of the first palette line
+;	dc.w bytes_to_word($88,00)			; unused
+;	dc.w bytes_to_word($89,00)			; unused
+	dc.w bytes_to_word($8A,00)			; default H.interrupt register
+	dc.w bytes_to_word($8B,00)			; Full-screen horizontal and vertical scrolling
+	dc.w bytes_to_word($8C,$81)			; 40 cell wide display, no interlace, S/H disabled
+	dc.w bytes_to_word($8D,vram_hscroll>>10)	; Horizontal scroll table base $F000
+	dc.w bytes_to_word($8E,00)			; Nametable Pattern Generator Base Address: low 64KB VRAM
+	dc.w bytes_to_word($8F,02)			; VDP auto increment is 2
+	dc.w bytes_to_word($90,01)			; Scroll planes are 64x32 cells (512x256)
+	dc.w bytes_to_word($91,00)			; Window horizontal position
+	dc.w bytes_to_word($92,00)			; Window vertical position
+;	dc.w bytes_to_word($93,00)			; DMA related
+;	dc.w bytes_to_word($94,00)			; ditto
+;	dc.w bytes_to_word($95,00)			; ditto.
+;	dc.w bytes_to_word($96,00)			; ditto..
+;	dc.w bytes_to_word($97,00)			; ditto...
 	dc.w 0				; end
 
 ; =============== S U B R O U T I N E =======================================

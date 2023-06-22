@@ -8,6 +8,9 @@ hard_v3050		ds.b 1		; note: set if hardware support V30 at all
 hard_v3060		ds.b 1
 hard_cramdot		ds.b 1		; set if CRAM dots aren't displayed
 hard_opll		ds.b 1		; TODO: test if it's even possible ; YM2413 detected
+	ds.b 1
+	ds.b 1
+hard_widescreen		ds.b 1		; 
 	dephase
 ; Addons bitfield
 ; I feel like there are gonna be more in the future. So, the code is built to be safely extended into a long

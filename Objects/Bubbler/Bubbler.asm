@@ -55,7 +55,7 @@ loc_2F9B0:
 loc_2F9CA:
 		move.w	(Water_level).w,d0
 		cmp.w	y_pos(a0),d0
-		blo.s		loc_2F9E2
+		blo.s	loc_2F9E2
 		move.b	#6,routine(a0)
 		addq.b	#4,anim(a0)
 		bra.s	loc_2FA2C
@@ -103,24 +103,21 @@ loc_2FA50:
 		bpl.w	loc_2FB50
 		move.w	#1,$36(a0)
 
-loc_2FA78:
-		jsr	(Random_Number).w
+-		jsr	(Random_Number).w
 		move.w	d0,d1
 		andi.w	#7,d0
 		cmpi.w	#6,d0
-		bhs.s	loc_2FA78
+		bhs.s	-
 		move.b	d0,$34(a0)
 		andi.w	#$C,d1
 		lea	Bub_BblTypes(pc),a1
 		adda.w	d1,a1
 		move.l	a1,$3C(a0)
 		subq.b	#1,$32(a0)
-		bpl.s	loc_2FAB0
+		bpl.s	+
 		move.b	$33(a0),$32(a0)
 		bset	#7,$36(a0)
-
-loc_2FAB0:
-		bra.s	loc_2FABA
++		bra.s	loc_2FABA
 ; ---------------------------------------------------------------------------
 
 loc_2FAB2:
@@ -132,9 +129,8 @@ loc_2FABA:
 		andi.w	#$1F,d0
 		move.w	d0,$38(a0)
 		jsr	(Create_New_Sprite).w
-		bne.s	loc_2FB34
-		move.l	address(a0),address(a1)
-		clr.b	routine(a1)
+		bne.s	.end
+		move.l	#Obj_Bubbler,address(a1)
 		move.w	x_pos(a0),x_pos(a1)
 		jsr	(Random_Number).w
 		andi.w	#$F,d0
@@ -146,22 +142,20 @@ loc_2FABA:
 		movea.l	$3C(a0),a2
 		move.b	(a2,d0.w),$2C(a1)
 		btst	#7,$36(a0)
-		beq.s	loc_2FB34
+		beq.s	.end
 		jsr	(Random_Number).w
 		andi.w	#3,d0
-		bne.s	loc_2FB20
+		bne.s	+
 		bset	#6,$36(a0)
-		bne.s	loc_2FB34
+		bne.s	.end
 		move.b	#2,$2C(a1)
 
-loc_2FB20:
-		tst.b	$34(a0)
-		bne.s	loc_2FB34
++		tst.b	$34(a0)
+		bne.s	.end
 		bset	#6,$36(a0)
-		bne.s	loc_2FB34
+		bne.s	.end
 		move.b	#2,$2C(a1)
-
-loc_2FB34:
+.end
 		subq.b	#1,$34(a0)
 		bpl.s	loc_2FB50
 		jsr	(Random_Number).w
@@ -180,8 +174,7 @@ loc_2FB5C:
 		cmp.w	y_pos(a0),d0
 		bhs.s	+
 		jmp	(Draw_Sprite).w
-+
-		rts
++		rts
 ; ---------------------------------------------------------------------------
 
 loc_2FB7E:

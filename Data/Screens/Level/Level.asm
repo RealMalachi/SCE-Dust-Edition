@@ -3,17 +3,17 @@
 ; ---------------------------------------------------------------------------
 
 Level_VDP:
-		dc.w $8004			; disable HInt, HV counter, 8-colour mode
-		dc.w $8200+(vram_fg>>10)	; set foreground nametable address
-		dc.w $8300+(vram_window>>10)	; set window nametable address
-		dc.w $8400+(vram_bg>>13)	; set background nametable address
-		dc.w $8700+(2<<4)		; set background colour (line 3; colour 0)
-		dc.w $8B03			; line scroll mode
-		dc.w $8C81			; set 40cell screen size, no interlacing, no s/h
-		dc.w $9001			; 64x32 cell nametable area
-		dc.w $9100			; set window H position at default
-		dc.w $9200			; set window V position at default
-		dc.w 0				; end
+		dc.w bytes_to_word($80,$04)		; disable HInt, HV counter, 8-colour mode
+		dc.w bytes_to_word($82,vram_fg>>10)	; set foreground nametable address
+		dc.w bytes_to_word($83,vram_window>>10)	; set window nametable address
+		dc.w bytes_to_word($84,vram_bg>>13)	; set background nametable address
+		dc.w bytes_to_word($87,2<<4)		; set background colour (line 3; colour 0)
+		dc.w bytes_to_word($8B,$03)		; line scroll mode
+		dc.w bytes_to_word($8C,$81)		; set 40cell screen size, no interlacing, no s/h
+		dc.w bytes_to_word($90,$01)		; 64x32 cell nametable area
+		dc.w bytes_to_word($91,$00)		; set window H position at default
+		dc.w bytes_to_word($92,$00)		; set window V position at default
+		dc.w 0					; end
 
 ; =============== S U B R O U T I N E =======================================
 

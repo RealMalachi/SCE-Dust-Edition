@@ -273,65 +273,59 @@ clearRAM3 macro addr,length
 
 out_of_xrange macro exit,xpos
 	if ("xpos"<>"")
-		move.w	xpos,d0							; get object position (if specified as not x_pos)
+	move.w	xpos,d0				; get object position (if specified as not x_pos)
 	else
-		move.w	x_pos(a0),d0						; get object position
+	move.w	x_pos(a0),d0			; get object position
 	endif
-	andi.w	#$FF80,d0							; round down to nearest $80
-	sub.w	(Camera_X_pos_coarse_back).w,d0		; get screen position
-	cmpi.w	#$80+320+$40+$80,d0				; this gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
-	bhi.ATTRIBUTE	exit
-    endm
+	out_of_xrange2 exit
+	endm
 
 out_of_xrange2 macro exit
-	andi.w	#$FF80,d0							; round down to nearest $80
-	sub.w	(Camera_X_pos_coarse_back).w,d0		; get screen position
-	cmpi.w	#$80+320+$40+$80,d0				; this gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
+;	sub.w	(Camera_X_pos).w,d0
+;	addi.w	#$80,d0
+;	cmpi.w	#$80+ScreenSize_H40+$80,d0
+	andi.w	#$FF80,d0			; round down to nearest $80
+	sub.w	(Camera_X_pos_coarse_back).w,d0	; get screen position
+	cmpi.w	#$80+320+$40+$80,d0		; this gives an object $80 pixels of room offscreen before being unloaded (the $40 is there to round up 320 to a multiple of $80)
 	bhi.ATTRIBUTE	exit
-    endm
+	endm
 
 ; ---------------------------------------------------------------------------
 ; check if object moves out of range
-; input: location to jump to if out of range, x-axis pos (y_pos(a0) by default)
+; input: location to jump to if out of range, y-axis pos (y_pos(a0) by default)
 ; ---------------------------------------------------------------------------
 
 out_of_yrange macro exit,ypos
 	if ("ypos"<>"")
-		move.w	ypos,d0							; get object position (if specified as not y_pos)
+	move.w	ypos,d0				; get object position (if specified as not y_pos)
 	else
-		move.w	y_pos(a0),d0						; get object position
+	move.w	y_pos(a0),d0			; get object position
 	endif
-	sub.w	(Camera_Y_pos).w,d0
-	addi.w	#$80,d0
-	cmpi.w	#$80+256+$80,d0
-	bhi.ATTRIBUTE	exit
-    endm
+	out_of_yrange2 exit
+	endm
 
 out_of_yrange2 macro exit
 	sub.w	(Camera_Y_pos).w,d0
 	addi.w	#$80,d0
 	cmpi.w	#$80+256+$80,d0
 	bhi.ATTRIBUTE	exit
-    endm
+	endm
 
 out_of_yrange3 macro exit,ypos
 	if ("ypos"<>"")
-		move.w	ypos,d0							; get object position (if specified as not y_pos)
+	move.w	ypos,d0				; get object position (if specified as not y_pos)
 	else
-		move.w	y_pos(a0),d0						; get object position
+	move.w	y_pos(a0),d0			; get object position
 	endif
-	andi.w	#$FF80,d0
-	sub.w	(Camera_Y_pos_coarse_back).w,d0
-	cmpi.w	#$80+256+$80,d0
-	bhi.ATTRIBUTE	exit
-    endm
+	out_of_yrange4 exit
+	endm
 
 out_of_yrange4 macro exit
 	andi.w	#$FF80,d0
 	sub.w	(Camera_Y_pos_coarse_back).w,d0
 	cmpi.w	#$80+256+$80,d0
 	bhi.ATTRIBUTE	exit
-    endm
+	endm
 
 ; ---------------------------------------------------------------------------
 ; Macro for marking the boundaries of an object layout file
