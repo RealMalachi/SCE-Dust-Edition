@@ -233,6 +233,23 @@ Ctrl2_Hd_ABC:		ds.b 1
 Ctrl2_Pr:		; word
 Ctrl2_Pr_XYZ:		ds.b 1
 Ctrl2_Pr_ABC:		ds.b 1
+	if Joypad_MultiSupport
+Ctrl3:			; longword
+Ctrl3_Hd:		; word
+Ctrl3_Hd_XYZ:		ds.b 1
+Ctrl3_Hd_ABC:		ds.b 1
+Ctrl3_Pr:		; word
+Ctrl3_Pr_XYZ:		ds.b 1
+Ctrl3_Pr_ABC:		ds.b 1
+Ctrl4:			; longword
+Ctrl4_Hd:		; word
+Ctrl4_Hd_XYZ:		ds.b 1
+Ctrl4_Hd_ABC:		ds.b 1
+Ctrl4_Pr:		; word
+Ctrl4_Pr_XYZ:		ds.b 1
+Ctrl4_Pr_ABC:		ds.b 1
+	endif
+
 ; TODO: Merge logical with player variables
 Ctrl1_Player =		v_Tails_tails+playctrl	; longword
 Ctrl1_Player_Hd =	v_Tails_tails+playctrl_hd	; word

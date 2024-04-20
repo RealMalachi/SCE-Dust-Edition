@@ -1,32 +1,310 @@
 {
     "Flex": 2,
     "name": "",
-    "node": "b20d4d21-4377-4968-a351-f8a37deb289d",
+    "node": "4ad10e2c-a447-42d7-ba82-2bf7d76d52d5",
     "objects": [
         {
-            "uuid": "b20d4d21-4377-4968-a351-f8a37deb289d",
-            "format": "Sonic 3&K Player.js",
-            "name": "Sonic",
-            "palettes": [
+            "name": "Players",
+            "children": [
                 {
-                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
-                    "length": 1
+                    "name": "Shields",
+                    "children": [
+                        {
+                            "uuid": "d10e2ca4-4792-477a-822b-f7d76d52d56d",
+                            "format": "Sonic 3&K Player.js",
+                            "name": "Fire Shield",
+                            "palettes": [
+                                {
+                                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                                    "length": 1
+                                }
+                            ],
+                            "art": {
+                                "path": "Objects\\Shields\\Uncompressed Art\\Fire Shield.bin",
+                                "compression": "Uncompressed",
+                                "offset": 0
+                            },
+                            "mappings": {
+                                "path": "Objects\\Shields\\Object Data\\Map - Fire Shield.asm",
+                                "label": ""
+                            },
+                            "dplcs": {
+                                "enabled": true,
+                                "path": "Objects\\Shields\\Object Data\\DPLC - Fire Shield.asm",
+                                "label": ""
+                            }
+                        },
+                        {
+                            "uuid": "2ca44792-d77a-422b-b7d7-6d52d56d437d",
+                            "format": "Sonic 3&K Player.js",
+                            "name": "Lightning Shield",
+                            "palettes": [
+                                {
+                                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                                    "length": 1
+                                }
+                            ],
+                            "art": {
+                                "path": "Objects\\Shields\\Uncompressed Art\\Lightning Shield.bin",
+                                "compression": "Uncompressed",
+                                "offset": 0
+                            },
+                            "mappings": {
+                                "path": "Objects\\Shields\\Object Data\\Map - Lightning Shield.asm",
+                                "label": ""
+                            },
+                            "dplcs": {
+                                "enabled": true,
+                                "path": "Objects\\Shields\\Object Data\\DPLC - Lightning Shield.asm",
+                                "label": ""
+                            }
+                        },
+                        {
+                            "uuid": "0e2ca447-92d7-4a82-abf7-d76d52d56d43",
+                            "format": "Sonic 3&K Player.js",
+                            "name": "Lightning Sparks",
+                            "palettes": [
+                                {
+                                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                                    "length": 1
+                                }
+                            ],
+                            "art": {
+                                "path": "Objects\\Shields\\Uncompressed Art\\Sparks.bin",
+                                "compression": "Uncompressed",
+                                "offset": 0
+                            },
+                            "mappings": {
+                                "path": "Objects\\Shields\\Object Data\\Map - Lightning Shield.asm",
+                                "label": ""
+                            },
+                            "dplcs": {
+                                "enabled": false,
+                                "path": "",
+                                "label": ""
+                            }
+                        },
+                        {
+                            "uuid": "4ad10e2c-a447-42d7-ba82-2bf7d76d52d5",
+                            "format": "Sonic 3&K Player.js",
+                            "name": "Bubble Shield",
+                            "palettes": [
+                                {
+                                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                                    "length": 1
+                                }
+                            ],
+                            "art": {
+                                "path": "Objects\\Shields\\Uncompressed Art\\Bubble Shield.bin",
+                                "compression": "Uncompressed",
+                                "offset": 0
+                            },
+                            "mappings": {
+                                "path": "Objects\\Shields\\Object Data\\Map - Bubble Shield.asm",
+                                "label": ""
+                            },
+                            "dplcs": {
+                                "enabled": true,
+                                "path": "Objects\\Shields\\Object Data\\DPLC - Bubble Shield.asm",
+                                "label": ""
+                            }
+                        },
+                        {
+                            "uuid": "114ad10e-2ca4-4792-977a-822bf7d76d52",
+                            "format": "Sonic 3&K Player.js",
+                            "name": "Invincibility",
+                            "palettes": [
+                                {
+                                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                                    "length": 1
+                                }
+                            ],
+                            "art": {
+                                "path": "Objects\\Shields\\Uncompressed Art\\Invincibility.bin",
+                                "compression": "Uncompressed",
+                                "offset": 0
+                            },
+                            "mappings": {
+                                "path": "Objects\\Shields\\Object Data\\Map - Invincibility.asm",
+                                "label": ""
+                            },
+                            "dplcs": {
+                                "enabled": false,
+                                "path": "",
+                                "label": ""
+                            }
+                        },
+                        {
+                            "uuid": "23ec114a-d10e-4ca4-8792-d77a822bf7d7",
+                            "format": "Sonic 3&K Player.js",
+                            "name": "Super Stars",
+                            "palettes": [
+                                {
+                                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                                    "length": 1
+                                }
+                            ],
+                            "art": {
+                                "path": "Objects\\Shields\\KosinskiM Art\\Super Sonic Stars.bin",
+                                "compression": "Kosinski-M",
+                                "offset": 0
+                            },
+                            "mappings": {
+                                "path": "Objects\\Shields\\Object Data\\Map - Super Sonic Stars.asm",
+                                "label": ""
+                            },
+                            "dplcs": {
+                                "enabled": false,
+                                "path": "",
+                                "label": ""
+                            }
+                        }
+                    ],
+                    "isDirectory": true,
+                    "expanded": true,
+                    "uuid": "a05a472b-7b74-43a9-83a4-68951554b570"
+                },
+                {
+                    "name": "Additional",
+                    "children": [
+                        {
+                            "uuid": "9823ec11-4ad1-4e2c-a447-92d77a822bf7",
+                            "format": "Sonic 3&K Player.js",
+                            "name": "Spindash Dust",
+                            "palettes": [
+                                {
+                                    "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                                    "length": 1
+                                }
+                            ],
+                            "art": {
+                                "path": "Objects\\Spin Dust\\Uncompressed Art\\Dash Dust.bin",
+                                "compression": "Uncompressed",
+                                "offset": 0
+                            },
+                            "mappings": {
+                                "path": "Objects\\Spin Dust\\Object Data\\Map - Dash Dust.asm",
+                                "label": ""
+                            },
+                            "dplcs": {
+                                "enabled": true,
+                                "path": "Objects\\Spin Dust\\Object Data\\DPLC - Dash Splash Drown.asm",
+                                "label": ""
+                            }
+                        }
+                    ],
+                    "isDirectory": true,
+                    "expanded": true,
+                    "uuid": "5a472b7b-7463-49c3-a468-951554b570aa"
+                },
+                {
+                    "uuid": "a44792d7-7a82-4bf7-976d-52d56d437d67",
+                    "format": "Sonic 3&K Player.js",
+                    "name": "Sonic",
+                    "palettes": [
+                        {
+                            "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                            "length": 1
+                        }
+                    ],
+                    "art": {
+                        "path": "Objects\\Sonic\\Uncompressed Art\\Sonic.bin",
+                        "compression": "Uncompressed",
+                        "offset": 0
+                    },
+                    "mappings": {
+                        "path": "Objects\\Sonic\\Object Data\\Map - Sonic.asm",
+                        "label": ""
+                    },
+                    "dplcs": {
+                        "enabled": true,
+                        "path": "Objects\\Sonic\\Object Data\\Sonic pattern load cues.asm",
+                        "label": ""
+                    }
+                },
+                {
+                    "uuid": "92d77a82-2bf7-476d-92d5-6d437d6711d3",
+                    "format": "Sonic 3&K Player.js",
+                    "name": "Tails",
+                    "palettes": [
+                        {
+                            "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                            "length": 1
+                        }
+                    ],
+                    "art": {
+                        "path": "Objects\\Tails\\Uncompressed Art\\Tails.bin",
+                        "compression": "Uncompressed",
+                        "offset": 0
+                    },
+                    "mappings": {
+                        "path": "Objects\\Tails\\Object Data\\Map - Tails.asm",
+                        "label": ""
+                    },
+                    "dplcs": {
+                        "enabled": true,
+                        "path": "Objects\\Tails\\Object Data\\Tails pattern load cues.asm",
+                        "label": ""
+                    }
+                },
+                {
+                    "uuid": "4792d77a-822b-47d7-ad52-d56d437d6711",
+                    "format": "Sonic 3&K Player.js",
+                    "name": "Tails' tails",
+                    "palettes": [
+                        {
+                            "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                            "length": 1
+                        }
+                    ],
+                    "art": {
+                        "path": "Objects\\Tails\\Uncompressed Art\\Tails tails.bin",
+                        "compression": "Uncompressed",
+                        "offset": 0
+                    },
+                    "mappings": {
+                        "path": "Objects\\Tails\\Object Data\\Map - Tails tails.asm",
+                        "label": ""
+                    },
+                    "dplcs": {
+                        "enabled": true,
+                        "path": "Objects\\Tails\\Object Data\\Tails tails pattern load cues.asm",
+                        "label": ""
+                    }
+                },
+                {
+                    "uuid": "274b671f-9823-4c11-8ad1-0e2ca44792d7",
+                    "format": "Sonic 3&K Player.js",
+                    "name": "Knuckles",
+                    "palettes": [
+                        {
+                            "path": "Objects\\Sonic\\Palettes\\Sonic.bin",
+                            "length": 1
+                        },
+                        {
+                            "path": "Objects\\Knuckles\\Palettes\\Knuckles.bin",
+                            "length": 1
+                        }
+                    ],
+                    "art": {
+                        "path": "Objects\\Knuckles\\Uncompressed Art\\Knuckles.bin",
+                        "compression": "Uncompressed",
+                        "offset": 0
+                    },
+                    "mappings": {
+                        "path": "Objects\\Knuckles\\Object Data\\Map - Knuckles.asm",
+                        "label": ""
+                    },
+                    "dplcs": {
+                        "enabled": true,
+                        "path": "Objects\\Knuckles\\Object Data\\Knuckles pattern load cues.asm",
+                        "label": ""
+                    }
                 }
             ],
-            "art": {
-                "path": "Objects\\Sonic\\Uncompressed Art\\Sonic.bin",
-                "compression": "Uncompressed",
-                "offset": 0
-            },
-            "mappings": {
-                "path": "Objects\\Sonic\\Object Data\\Map - Sonic.asm",
-                "label": ""
-            },
-            "dplcs": {
-                "enabled": true,
-                "path": "Objects\\Sonic\\Object Data\\Sonic pattern load cues.asm",
-                "label": ""
-            }
+            "isDirectory": true,
+            "expanded": true,
+            "uuid": "21a05a47-2b7b-4463-a9c3-a468951554b5"
         }
     ]
 }

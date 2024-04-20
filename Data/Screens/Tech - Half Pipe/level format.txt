@@ -1,0 +1,249 @@
+HD Half Pipe level command format. format is byte-sized, so words require bit shifts
+
+$00 = wait timer; don't do any commands for a set amount of time. Followed up by an unsigned word-sized timer
+
+$01-$7E = set half pipe type -1
+
+$7F = do nothing this frame
+
+$8x-$Fx = spawn objects, then check the next command unless otherwise stated
+lower byte serves as a subtype flag
+- $8x = rings
+- $9x = rings 2
+- $Ax = bombs
+- $Bx = checkpoint, chaos emerald
+- $Cx = unique objects
+- $Dx =
+- $Ex =
+- $Fx =
+
+since objects can check multiple commands, it's best to handle objects first
+
+PipeLvlMacro_end macro
+	dc.b	$7F
+	endm
+PipeLvlMacro_timer macro time
+	if time = 0
+	fatal "Time is set to nothing"
+	elseif time<3	; use smaller delay type when possible
+	  rept time
+	PipeLvlMacro_end
+	  endr
+	else
+	dc.b	0
+	dc.w	time
+	endif
+	endm
+PipeLvlMacro_pipe macro pipe
+	dc.b	pipe
+	endm
+PipeLvlMacro_obj macro object,xpos,ypos,type
+	if "object"=""
+	fatal "no object"
+	elseif "object"="ring"||"object"="rings"
+;	  if "type"="ring"||"type"="snake"
+;	dc.b	$80
+;	  else
+	dc.b	$80|((xpos>>8)&1),xpos,ypos	; TTTT-RRRX XXXXXXXX YYYYYYYY
+;	  endif
+	elseif "object"="bomb"||"object"="bombs"
+	  if "type"="ring"||"type"="snake"
+	dc.b	$80
+	  else
+	dc.b	$80|((xpos>>8)&1),xpos,ypos	; TTTT-RRRX XXXXXXXX YYYYYYYY
+	  endif
+	elseif "object"="checkpoint"||"object"="emerald"
+	dc.b	$80
+	else
+	fatal "undefined object"
+	endif
+	endm
+
+HDPipe_LevelAddr:	ds.l 1
+HDPipe_CommandTimer:	ds.w 1
+
+
+
+HDPipe_LevelCommand:
+	tst.w	(HDPipe_CommandTimer).w
+	beq.s	+
+	subq.w	#1,(HDPipe_CommandTimer).w
+	rts
++
+	movea.l	(HDPipe_LevelAddr).w,a0
+
+.mainloop
+	move.b	(a0)+,d0
+	beq.s	.timer
+	bmi.s	.spawnobj
+	cmp.w	#$7F,d0
+	beq.s	.endframe
+; level curve data
+	subq.b	#1,d0
+	move.b	d0,().w
+.endframe
+	move.l	a0,(HDPipe_LevelAddr).w
+	rts
+
+.timer
+	move.b	(a0)+,d0
+	lsl.w	#8,d0
+	move.b	(a0)+,d0
+	move.w	d0,(HDPipe_CommandTimer).w
+	move.l	a0,(HDPipe_LevelAddr).w
+	rts
+
+.spawnobj
+;	move.b	d0,d2		; just in case
+	sub.b	#$80,d0
+	move.b	d0,d1
+	lsr.b	#4-1,d0
+	and.w	#$F<<1,d0
+	and.w	#$F,d1
+	move.w	HDPipe_LevelCommand_ObjIndex(pc,d0.w),d0
+	jsr	HDPipe_LevelCommand_ObjIndex(pc,d0.w)
+	bra.w	.mainloop
+
+HDPipe_LevelCommand_ObjIndex:
+	offsetTableEntry.w HDPipe_LevelCommand_SpawnRings		; 8x
+	offsetTableEntry.w HDPipe_LevelCommand_SpawnRings		; 9x
+	offsetTableEntry.w HDPipe_LevelCommand_SpawnBombs		; Ax
+	offsetTableEntry.w HDPipe_LevelCommand_SpawnCheckpoint		; Bx
+	offsetTableEntry.w HDPipe_LevelCommand_SpawnUniquePatterns	; Cx
+	offsetTableEntry.w HDPipe_LevelCommand_SpawnPlaceholder		; Dx
+	offsetTableEntry.w HDPipe_LevelCommand_SpawnPlaceholder		; Ex
+	offsetTableEntry.w HDPipe_LevelCommand_SpawnPlaceholder		; Fx
+
+HDPipe_LevelCommand_SpawnRings:
+	jsr	(Create_New_Sprite)
+	bne.s	.end
+	move.l	#Obj_HDPipe_RingSpawner,address(a0)
+	move.b	d1,routine(a0)
+
+	moveq	#0,d0
+	bclr	#0,d1
+	beq.s	+
+	move.w	#1<<8,d0
++	move.b	(a0)+,d0
+	move.w	d0,x_pos(a0)
+
+	moveq	#0,d0
+	move.b	(a0)+,d0
+	move.w	d0,y_pos(a0)
+.end
+HDPipe_LevelCommand_SpawnPlaceholder:
+	rts
+
+HDPipe_LevelCommand_SpawnBombs:
+	jsr	(Create_New_Sprite)
+	bne.s	.end
+	move.l	#Obj_HDPipe_BombSpawner,address(a0)
+	move.b	d1,routine(a0)
+
+	moveq	#0,d0
+	bclr	#0,d1
+	beq.s	+
+	move.w	#1<<8,d0
++	move.b	(a0)+,d0
+	move.w	d0,x_pos(a0)
+
+	moveq	#0,d0
+	move.b	(a0)+,d0
+	move.w	d0,y_pos(a0)
+.end
+	rts
+
+HDPipe_LevelCommand_SpawnCheckpoint:
+-	jsr	(Create_New_Sprite)
+	bne.s	.end
+.end
+	rts
+
+HDPipe_LevelCommand_SpawnUniquePatterns:
+-	jsr	(Create_New_Sprite)
+	bne.s	.end
+.end
+	rts
+
+Obj_HDPipe_RingSpawner:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	.index(pc,d0.w),d0
+	jsr	.index(pc,d0.w)
+	bra.w	Obj_HDPipe_Ring
+.index
+	offsetTableEntry.w .1
+	offsetTableEntry.w .2
+	offsetTableEntry.w .3
+	offsetTableEntry.w .4
+	offsetTableEntry.w .5
+	offsetTableEntry.w .6
+	offsetTableEntry.w .7
+	offsetTableEntry.w .8
+.1
+	lea	(LUT_HDPipe_RingSpawner_1_Positions).l,a2
+.main
+	move.l	#Obj_HDPipe_Ring,d0
+	move.l	#bytes_word_to_long(ren_screenpos|ren_wordframe|ren_excessive,objflag_continue,0),d1
+	move.l	#words_to_long((make_priority(4),make_art_tile(ArtTile_Shield,0,0))),d2
+	move.l	#Map_HDPipe_Ring,d3
+	move.w	x_pos(a0),d4
+	move.w	y_pos(a0),d5
+	move.w	(a2)+,d7
+	lea	(a0),a1
+-	movem.l	d0-d3,address(a1)
+	add.w	(a2)+,d4
+	add.w	(a2)+,d5
+	move.w	d4,x_pos(a1)
+	move.w	d5,y_pos(a1)
+	jsr	(Create_New_Sprite4)
+	dbne	d7,-
+	rts
+.2
+	lea	(LUT_HDPipe_RingSpawner_1_Positions).l,a2
+	bra	.main
+.3
+	lea	(LUT_HDPipe_RingSpawner_1_Positions).l,a2
+	bra	.main
+.4
+	lea	(LUT_HDPipe_RingSpawner_1_Positions).l,a2
+	bra	.main
+.5
+	lea	(LUT_HDPipe_RingSpawner_1_Positions).l,a2
+	bra	.main
+.6
+	lea	(LUT_HDPipe_RingSpawner_1_Positions).l,a2
+	bra	.main
+.7
+	lea	(LUT_HDPipe_RingSpawner_1_Positions).l,a2
+	bra	.main
+.8
+	lea	(LUT_HDPipe_RingSpawner_1_Positions).l,a2
+	bra	.main
+
+Obj_HDPipe_Ring:
+	bsr.w	Obj_HDPipe_CheckIfOffscreen
+	bsr.w	Obj_HDPipe_CheckPlayerCollision
+	jmp	(Draw_Sprite)
+
+; positions relative to eachother
+LUT_HDPipe_RingSpawner_1_Positions:
+	dc.w	((.end-.start)/4)-1
+.start
+	dc.w	0,0
+.end
+	even
+
+Obj_HDPipe_RingSparkle:
+	move.l	#.main,address(a0)
+.main
+	jmp	(Draw_Sprite)
+
+Obj_HDPipe_BombSpawner:
+
+
+
+Obj_HDPipe_Bomb:
+
+
+

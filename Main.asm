@@ -14,8 +14,11 @@ RollInAir:		= 1	; if 1, enable roll in air for Sonic
 ReverseGravity:		= 1	; if 1, enable reverse gravity functionality
 ; controllers
 Joypad_2PSupport:	= 1	; if 1, enable second controller functionality
-Joypad_StateSupport:	= 0	; if 1, set controller type into CtrlXState
 Joypad_6BSupport:	= 1	; if 1, enable 6 button pad functionality
+Joypad_MultiSupport:	= 1	; if 1, enable multitap support (currently only EA)
+Joypad_JCartSupport:	= 0	; if 1, enable J-Cart multitap
+Joypad_StateSupport:	= 0|Joypad_MultiSupport	; if 1, save controller type into CtrlXState
+
 ; general performance
 HardwareSafety:		= 1	; if 1, have extra code for safety on unintented hardware/emulation
 ;OptimiseSound:	  	= 1	; change to 1 to optimise sound queuing
@@ -25,7 +28,7 @@ AllOptimizations:	= 1	; if 1, enables all optimizations
 ; misc
 EnableSRAM:		= 1	; change to 1 to enable SRAM
 BackupSRAM:		= 0
-AddressSRAM:		= 3	; 0 = odd+even; 2 = even only; 3 = odd only
+AddressSRAM:		= 3	; 0 = odd+even, 2 = even only, 3 = odd only
 
 EnableModem:		= 0	; change to 1 to enable modem support (not implemented)
 EnableWifi:		= 0	; change to 1 to enable wifi support
@@ -79,7 +82,10 @@ Serial_Number:	dc.b "GM H-00000 -00"	; new serial type, since MK is apparently S
 Checksum:	dc.w 0	; calculated later
 Input:		dc.b "J"
 	if Joypad_6BSupport=1
-		dc.b "6"
+	dc.b "6"
+	endif
+	if Joypad_MultiSupport=1
+	dc.b "4"
 	endif
 	dcb.b $1A0-*, ' '
 RomStartLoc:	dc.l StartOfROM
@@ -544,6 +550,7 @@ KosDec_ByteMap:
 	include "Data/Addon/32x.asm"
 	cpu 68000
 
+;	tpress button_A,3
 ; ---------------------------------------------------------------
 ; Error handling module
 ; ---------------------------------------------------------------
