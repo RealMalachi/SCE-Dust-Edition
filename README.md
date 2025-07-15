@@ -1,3 +1,8 @@
+Modified version of SCE that isn't being worked on anymore. Has some neat features like Knuckles' initial gliding velocity, BCD-based life counter, MD+ support and 6-button pad support, but shouldn't be used for full projects. Take whatever you want from it, but at your own risk
+
+
+Old SCE readme continues below
+
 SONIC-CLEAN-ENGINE-S.C.E.-EXTENDED-
 
 Source code with the returned the Sonic & Tails, Tails and Knuckles characters, Life/Continue count, Continue screen.
